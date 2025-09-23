@@ -11,7 +11,7 @@ import AITryOn from './pages/AITryOn';
 import Design from './pages/Design';
 import './styles/globals.css';
 import './styles/variables.css';
-
+import AuthPage from './pages/Login/AuthPage';
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -88,6 +88,7 @@ function App() {
                   <Route path="/products" element={<Products />} />
                   <Route path="/ai-try-on" element={<AITryOn />} />
                   <Route path="/design" element={<Design />} />
+                  <Route path="/login" element={<AuthPage />} />
                 </Routes>
               </ErrorBoundary>
             </main>
