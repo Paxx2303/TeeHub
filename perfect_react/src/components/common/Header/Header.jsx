@@ -32,7 +32,7 @@ const Header = () => {
       <div className={styles.container}>
         {/* Logo */}
         <Link to="/" className={styles.logo}>
-          <div className={styles.logoIcon}>👕</div>
+          <div className={styles.logoIcon}>👽</div>
           <span className={styles.logoText}>TeeHub</span>
         </Link>
 
