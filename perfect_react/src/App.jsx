@@ -7,6 +7,7 @@ import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 import Home from './pages/Home';
 import Products from './pages/Products';
+import { ProductDetail } from './pages/Products/index.detail';
 import AITryOn from './pages/AITryOn';
 import Design from './pages/Design';
 import './styles/globals.css';
@@ -86,6 +87,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<Products />} />
+                  <Route path="/products/:id" element={<ProductDetail />} />
                   <Route path="/ai-try-on" element={<AITryOn />} />
                   <Route path="/design" element={<Design />} />
                 </Routes>
