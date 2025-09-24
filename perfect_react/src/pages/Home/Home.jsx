@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { MOCK_PRODUCTS } from '../../services/mockProducts';
 import styles from './Home.module.css';
 
 const Home = () => {
@@ -40,6 +42,7 @@ const Home = () => {
     { id: 3, name: "Colorful Design", price: "399,000đ", image: "🌈", rating: 4 },
     { id: 4, name: "Premium Cotton", price: "459,000đ", image: "✨", rating: 5 },
   ];
+  const mockProduct = { ...(MOCK_PRODUCTS?.[0] || {}), name: 'Mockproduct' };
 
   // Tự động chuyển slide
   useEffect(() => {
@@ -190,11 +193,33 @@ const Home = () => {
             </p>
           </div>
           <div className={styles.productsGrid}>
+            {mockProduct?.id && (
+              <div
+                className={`${styles.productCard} ${isVisible.products ? styles.slideInUp : ''}`}
+                style={{ animationDelay: `0s` }}
+              >
+                <div className={styles.productImage}>
+                  <div className={styles.productIcon}>🧪</div>
+                  <div className={styles.productBadge}>MOCK</div>
+                </div>
+                <div className={styles.productInfo}>
+                  <h3 className={styles.productName}>{mockProduct.name}</h3>
+                  <div className={styles.productPrice}>
+                    {mockProduct.price
+                      ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(mockProduct.price)
+                      : '—'}
+                  </div>
+                </div>
+                <Link to={`/products/${mockProduct.id}`} className={styles.productButton}>
+                  Xem chi tiết
+                </Link>
+              </div>
+            )}
             {featuredProducts.map((product, index) => (
               <div
                 key={product.id}
                 className={`${styles.productCard} ${isVisible.products ? styles.slideInUp : ''}`}
-                style={{ animationDelay: `${index * 0.1}s` }}
+                style={{ animationDelay: `${(index + 1) * 0.1}s` }}
               >
                 <div className={styles.productImage}>
                   <div className={styles.productIcon}>{product.image}</div>
