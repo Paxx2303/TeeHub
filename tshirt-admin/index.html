@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T-Shirt Admin Dashboard</title>
+    <meta name="description" content="Dashboard quản trị website bán áo thun - Quản lý đơn hàng, sản phẩm, khách hàng một cách hiệu quả" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com">
+    
+    <!-- Meta tags for SEO -->
+    <meta name="keywords" content="admin dashboard, quản trị, áo thun, e-commerce, quản lý bán hàng">
+    <meta name="author" content="T-Shirt Admin">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="T-Shirt Admin Dashboard">
+    <meta property="og:description" content="Dashboard quản trị website bán áo thun">
+    <meta property="og:image" content="/og-image.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="T-Shirt Admin Dashboard">
+    <meta property="twitter:description" content="Dashboard quản trị website bán áo thun">
+    <meta property="twitter:image" content="/twitter-image.png">
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    
+    <!-- Prevent zoom on iOS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <style>
+      /* Critical CSS for faster loading */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background-color: #f9fafb;
+      }
+      
+      #root {
+        min-height: 100vh;
+      }
+      
+      /* Loading spinner */
+      .loading-spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f4f6;
+        border-top: 3px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 9999;
+      }
+      
+      @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+      
+      .loading-text {
+        position: fixed;
+        top: 60%;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #6b7280;
+        font-size: 14px;
+        z-index: 9999;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Loading fallback -->
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Đang tải dashboard...</div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
