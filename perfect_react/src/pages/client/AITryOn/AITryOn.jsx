@@ -2,10 +2,10 @@ import React, { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { FiUpload, FiDownload, FiRefreshCw, FiSettings, FiClock } from 'react-icons/fi';
 import { useDropzone } from 'react-dropzone';
-import Button from '../../components/ui/Button';
-import Modal from '../../components/ui/Modal';
-import { uploadImage, processTryOn, generateVariations } from '../../store/slices/aiTryOnSlice';
-import { AI_TRY_ON_STATUS } from '../../utils/constants';
+import Button from '../../../components/ui/Button';
+import Modal from '../../../components/ui/Modal';
+import { uploadImage, processTryOn, generateVariations } from '../../../store/slices/aiTryOnSlice';
+import { AI_TRY_ON_STATUS } from '../../../utils/constants';
 import styles from './AITryOn.module.css';
 
 const AITryOn = () => {
@@ -13,7 +13,7 @@ const AITryOn = () => {
   const { userImage, productImage, resultImage, variations, status, progress, error, history } = useSelector(
     (state) => state.aiTryOn
   );
-  
+
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -145,9 +145,8 @@ const AITryOn = () => {
               {sampleProducts.map((product) => (
                 <div
                   key={product.id}
-                  className={`${styles.productCard} ${
-                    selectedProduct?.id === product.id ? styles.selected : ''
-                  }`}
+                  className={`${styles.productCard} ${selectedProduct?.id === product.id ? styles.selected : ''
+                    }`}
                   onClick={() => handleProductSelect(product)}
                 >
                   <img
@@ -181,7 +180,7 @@ const AITryOn = () => {
             >
               {isProcessing ? 'Đang xử lý...' : 'Thử đồ ngay'}
             </Button>
-            
+
             {isProcessing && (
               <div className={styles.progressSection}>
                 <div className={styles.progressBar}>

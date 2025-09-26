@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
+import { MOCK_PRODUCTS } from '../../../services/mockProducts';
 import styles from './Home.module.css';
 
 const Home = () => {
