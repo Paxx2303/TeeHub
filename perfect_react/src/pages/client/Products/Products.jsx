@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { productService } from '../../services/productService';
-import { MOCK_PRODUCTS } from '../../services/mockProducts';
+import { productService } from '../../../services/productService';
+import { MOCK_PRODUCTS } from '../../../services/mockProducts';
 import styles from './Products.module.css';
 
 const Products = () => {

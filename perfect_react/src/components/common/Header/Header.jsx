@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../../../hooks/useCart';
 import styles from './Header.module.css';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
+  const { itemCount } = useCart();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -70,7 +72,9 @@ const Header = () => {
           {/* Cart */}
           <Link to="/cart" className={styles.cartLink}>
             🛒
-            <span className={styles.cartBadge}>0</span>
+            {itemCount > 0 && (
+              <span className={styles.cartBadge}>{itemCount}</span>
+            )}
           </Link>
 
           {/* User Menu */}
