@@ -1,18 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store/store';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
-import Home from './pages/Home';
-import Products from './pages/Products';
-import { ProductDetail } from './pages/Products/index.detail';
-import AITryOn from './pages/AITryOn';
-import Design from './pages/Design';
+import AppRoutes from './routes';
 import './styles/globals.css';
 import './styles/variables.css';
-
+// Routes centralized in src/routes
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -72,42 +68,49 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Component để kiểm tra route và render layout phù hợp
+function AppContent() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
+  return (
+    <div className="App">
+      {!isLoginPage && (
+        <ErrorBoundary>
+          <Header />
+        </ErrorBoundary>
+      )}
+      <main>
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
+      </main>
+      {!isLoginPage && (
+        <ErrorBoundary>
+          <Footer />
+        </ErrorBoundary>
+      )}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'var(--bg-primary)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-color)',
+          },
+        }}
+      />
+    </div>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <Provider store={store}>
         <Router>
-          <div className="App">
-
-            <ErrorBoundary>
-              <Header />
-            </ErrorBoundary>
-            <main>
-              <ErrorBoundary>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
-                  <Route path="/ai-try-on" element={<AITryOn />} />
-                  <Route path="/design" element={<Design />} />
-                </Routes>
-              </ErrorBoundary>
-            </main>
-            <ErrorBoundary>
-              <Footer />
-            </ErrorBoundary>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--bg-primary)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
-                },
-              }}
-            />
-          </div>
+          <AppContent />
         </Router>
       </Provider>
     </ErrorBoundary>
