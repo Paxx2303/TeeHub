@@ -72,10 +72,12 @@ class ErrorBoundary extends React.Component {
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   return (
     <div className="App">
-      {!isLoginPage && (
+      {/* Render Header/Footer user nếu không phải trang login và không phải trang admin */}
+      {!isLoginPage && !isAdminPage && (
         <ErrorBoundary>
           <Header />
         </ErrorBoundary>
@@ -85,7 +87,7 @@ function AppContent() {
           <AppRoutes />
         </ErrorBoundary>
       </main>
-      {!isLoginPage && (
+      {!isLoginPage && !isAdminPage && (
         <ErrorBoundary>
           <Footer />
         </ErrorBoundary>
