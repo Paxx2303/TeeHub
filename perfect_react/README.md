@@ -1,30 +1,3 @@
-# T-Shirt Store - Trang web bán áo thun với AI
-
-Một ứng dụng web hiện đại để bán áo thun với tính năng thử đồ bằng AI và thiết kế áo thun tùy chỉnh.
-
-## 🚀 Tính năng chính
-
-- **Thử đồ AI**: Sử dụng công nghệ AI để thử áo thun trước khi mua
-- **Thiết kế áo thun**: Công cụ thiết kế mạnh mẽ để tạo ra những sản phẩm độc đáo
-- **Quản lý sản phẩm**: Hệ thống quản lý sản phẩm đầy đủ
-- **Giỏ hàng**: Tính năng giỏ hàng và thanh toán
-- **Responsive Design**: Giao diện thân thiện trên mọi thiết bị
-- **Dark Mode**: Hỗ trợ chế độ tối
-
-## 🛠️ Công nghệ sử dụng
-
-- **Frontend**: React 19, Vite
-- **State Management**: Redux Toolkit
-- **Routing**: React Router DOM
-- **Styling**: CSS Modules, CSS Variables
-- **UI Components**: Custom components với React Icons
-- **File Upload**: React Dropzone
-- **Notifications**: React Hot Toast
-- **Animations**: Framer Motion
-
-## 📁 Cấu trúc dự án
-
-```
 src/
 ├── components/
 │   ├── common/
@@ -77,147 +50,152 @@ src/
     ├── images/
     ├── icons/
     └── fonts/
-```
-
-## 🚀 Cài đặt và chạy
-
-### Yêu cầu hệ thống
-
-- Node.js >= 18.0.0
-- npm >= 8.0.0
-
-### Cài đặt
-
-1. Clone repository:
-```bash
-git clone <repository-url>
-cd perfect_react
-```
-
-2. Cài đặt dependencies:
-```bash
-npm install
-```
-
-3. Tạo file `.env` từ `env.example`:
-```bash
-cp env.example .env
-```
-
-4. Cấu hình các biến môi trường trong file `.env`
-
-5. Chạy ứng dụng:
-```bash
-npm run dev
-```
-
-Ứng dụng sẽ chạy tại `http://localhost:5173`
-
-## 📝 Scripts có sẵn
-
-- `npm run dev` - Chạy ứng dụng ở chế độ development
-- `npm run build` - Build ứng dụng cho production
-- `npm run preview` - Preview build production
-- `npm run lint` - Chạy ESLint để kiểm tra code
-
-## 🎨 Tính năng UI/UX
-
-### Design System
-- **Colors**: Hệ thống màu sắc nhất quán với CSS variables
-- **Typography**: Font Inter với các kích thước và weight chuẩn
-- **Spacing**: Hệ thống spacing 8px grid
-- **Components**: Các component tái sử dụng với props linh hoạt
-
-### Responsive Design
-- Mobile-first approach
-- Breakpoints: 640px, 768px, 1024px, 1280px, 1536px
-- Flexible grid system
-- Touch-friendly interface
-
-### Accessibility
-- Semantic HTML
-- ARIA labels
-- Keyboard navigation
-- Focus management
-- Color contrast compliance
-
-## 🔧 Cấu hình
-
-### Environment Variables
-
-Tạo file `.env` với các biến sau:
-
-```env
-# API Configuration
-VITE_API_BASE_URL=http://localhost:3001/api
-
-# AI Service Configuration
-VITE_AI_SERVICE_URL=https://api.ai-service.com
-VITE_AI_API_KEY=your_ai_api_key_here
-
-# File Upload Configuration
-VITE_MAX_FILE_SIZE=5242880
-VITE_ALLOWED_FILE_TYPES=image/jpeg,image/jpg,image/png,image/webp
-```
-
-### Redux Store
-
-Store được cấu hình với các slices:
-- `auth`: Quản lý authentication
-- `cart`: Quản lý giỏ hàng
-- `products`: Quản lý sản phẩm
-- `aiTryOn`: Quản lý AI try-on
-- `design`: Quản lý thiết kế
-- `ui`: Quản lý UI state
-
-## 🧪 Testing
-
-```bash
-# Chạy tests (khi có)
 npm test
+# TeeHub
 
-# Chạy tests với coverage
-npm run test:coverage
+TeeHub là một nền tảng quản lý và bán áo thun, hỗ trợ cả giao diện người dùng (client) và quản trị viên (admin).
+
+## Cấu trúc thư mục chính
+
+```
+src/
+├── App.css
+├── App.jsx
+├── index.css
+├── main.jsx
+├── assets/
+│   ├── react.svg
+│   ├── fonts/
+│   ├── icons/
+│   └── images/
+├── components/
+│   ├── admin/
+│   │   ├── AdminHeader/
+│   │   │   ├── AdminHeader.jsx
+│   │   │   ├── AdminHeader.module.css
+│   │   │   └── index.js
+│   │   ├── AdminLayout/
+│   │   │   ├── AdminLayout.jsx
+│   │   │   ├── AdminLayout.module.css
+│   │   │   └── index.js
+│   │   └── AdminSidebar/
+│   │       ├── AdminSidebar.jsx
+│   │       ├── AdminSidebar.module.css
+│   │       └── index.js
+│   ├── common/
+│   │   ├── Footer/
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Footer.module.css
+│   │   │   └── index.js
+│   │   └── Header/
+│   │       ├── Header.jsx
+│   │       ├── Header.module.css
+│   │       └── index.js
+│   ├── dev/
+│   │   ├── CartMockHelper.jsx
+│   │   └── index.js
+│   └── ui/
+│       ├── Button/
+│       │   ├── Button.jsx
+│       │   ├── Button.module.css
+│       │   └── index.js
+│       ├── Canvas/
+│       ├── ColorPicker/
+│       ├── ImageUploader/
+│       ├── Input/
+│       │   ├── Input.jsx
+│       │   ├── Input.module.css
+│       │   └── index.js
+│       └── Modal/
+│           ├── Modal.jsx
+│           ├── Modal.module.css
+│           └── index.js
+├── hooks/
+│   ├── useApi.js
+│   ├── useAuth.js
+│   ├── useCart.js
+│   └── useLocalStorage.js
+├── pages/
+│   ├── admin/
+│   │   ├── Dashboard/
+│   │   ├── Orders/
+│   │   ├── Products/
+│   │   └── Users/
+│   └── client/
+│       ├── About/
+│       ├── AITryOn/
+│       ├── Cart/
+│       ├── Checkout/
+│       ├── Contact/
+│       ├── Design/
+│       ├── Home/
+│       ├── Login/
+│       ├── Products/
+│       └── UserProfile/
+├── routes/
+│   ├── adminRoutes.jsx
+│   ├── index.jsx
+│   ├── PrivateRoute.jsx
+│   ├── PublicRoute.jsx
+│   ├── routeConfig.jsx
+│   └── guards/
+│       ├── AuthGuard.jsx
+│       ├── GuestGuard.jsx
+│       └── RoleGuard.jsx
+├── services/
+│   ├── aiService.js
+│   ├── api.js
+│   ├── authService.js
+│   ├── cartMockData.js
+│   ├── designService.js
+│   ├── httpClient.js
+│   ├── mockProducts.js
+│   └── productService.js
+├── store/
+│   ├── store.js
+│   └── slices/
+│       ├── aiTryOnSlice.js
+│       ├── authSlice.js
+│       ├── cartSlice.js
+│       ├── designSlice.js
+│       ├── productSlice.js
+│       └── uiSlice.js
+├── styles/
+│   ├── globals.css
+│   └── variables.css
+└── utils/
+    ├── constants.js
+    ├── helpers.js
+    └── validators.js
 ```
 
-## 📦 Build và Deploy
+## Hướng dẫn chạy dự án
 
-### Build cho production
+1. Cài đặt dependencies:
+    ```bash
+    npm install
+    ```
+2. Tạo file `.env` từ mẫu `env.example` và cấu hình các biến môi trường cần thiết.
+3. Chạy dự án:
+    ```bash
+    npm run dev
+    ```
+4. Truy cập giao diện client tại: `http://localhost:5173/`
 
-```bash
-npm run build
-```
+## Các thư mục chính
+- `components/`: Các thành phần UI dùng chung và riêng cho admin/client.
+- `pages/`: Các trang chính của client và admin.
+- `routes/`: Định nghĩa các route, guard, cấu hình điều hướng.
+- `services/`: Giao tiếp API, xử lý dữ liệu.
+- `store/`: Redux store và các slice quản lý state.
+- `styles/`: Các file CSS toàn cục và biến màu.
+- `utils/`: Hằng số, hàm tiện ích, validator.
 
-Files build sẽ được tạo trong thư mục `dist/`
+## Ghi chú
+- Để phát triển tính năng mới, tạo component/page trong thư mục tương ứng.
+- Đảm bảo cập nhật route nếu thêm trang mới.
+- Đọc kỹ comment trong code để hiểu luồng xử lý.
 
-### Deploy
+---
 
-Có thể deploy lên các platform:
-- Vercel
-- Netlify
-- GitHub Pages
-- AWS S3 + CloudFront
-
-## 🤝 Đóng góp
-
-1. Fork repository
-2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## 📞 Liên hệ
-
-- Email: info@tshirtstore.com
-- Website: https://tshirtstore.com
-
-## 🙏 Acknowledgments
-
-- React team cho framework tuyệt vời
-- Redux team cho state management
-- React Router team cho routing
-- Tất cả contributors của các thư viện open source được sử dụng
+Mọi góp ý, báo lỗi xin gửi về nhóm phát triển TeeHub.

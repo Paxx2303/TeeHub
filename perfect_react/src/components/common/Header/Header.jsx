@@ -87,9 +87,10 @@ const Header = () => {
             </button>
             <button
               className={styles.authButtonPrimary}
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/user-profile')}
             >
-              Đăng ký
+              <span className={styles.avatarPlaceholder}></span>
+              vanlong
             </button>
           </div>
 
