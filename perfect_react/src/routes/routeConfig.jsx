@@ -15,6 +15,8 @@ import Orders from '../pages/admin/Orders';
 import ProductsAdmin from '../pages/admin/Products';
 import Users from '../pages/admin/Users';
 import { Navigate } from 'react-router-dom';
+import UserProfile from '../pages/client/UserProfile/UserProfile';
+import Contact from '../pages/client/Contact';
 
 export const routes = [
   { path: '/', element: <Home />, public: true },
@@ -25,6 +27,8 @@ export const routes = [
   { path: '/about', element: <About />, public: true },
   { path: '/cart', element: <CartCheckout />, public: true },
   { path: '/login', element: <AuthPage />, public: true },
+  { path: '/user-profile', element: <UserProfile />, public: true },
+  { path: '/contact', element: <Contact />, public: true },
 
   // Các route admin
   { path: '/admin/dashboard', element: <AdminLayout><Dashboard /></AdminLayout>, public: true },

@@ -238,11 +238,13 @@
 }
 
 .authButtonPrimary {
+  background: rgb(71, 129, 237) !important;
   background: var(--primary-color);
   color: var(--text-white);
   border: 1px solid var(--primary-color);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
+
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
@@ -362,6 +364,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -386,4 +389,80 @@
 [data-theme="dark"] .mobileMenu {
   background-color: var(--bg-primary);
   border-bottom-color: var(--border-color);
+}
+
+.avatarPlaceholder {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #d0d0d0 0%, #e8e8e8 50%, #d0d0d0 100%);
+  position: relative;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.avatarPlaceholder::before {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.avatarPlaceholder::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50% 50% 0 0;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Header background */
+.header {
+  background-color: #d4e5f8;
+  /* Màu nền sáng, có thể đổi thành var(--bg-primary) */
+  border-bottom: 2px solid #ddd;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Navigation container giữ các link trên 1 dòng */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* khoảng cách giữa các mục */
+  white-space: nowrap;
+  /* ngăn không cho text xuống dòng */
+}
+
+/* Navigation item style */
+.navLink {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  /* viền xung quanh */
+  background-color: rgb(226, 234, 241);
+  /* nền trắng cho từng mục */
+  transition: all 0.2s ease;
+}
+
+/* Hover effect cho menu item */
+.navLink:hover {
+  background-color: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
 }
