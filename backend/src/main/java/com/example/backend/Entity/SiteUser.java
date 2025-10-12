@@ -1,4 +1,4 @@
-package com.example.backend.Entities;
+package com.example.backend.Entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -23,4 +23,5 @@ public class SiteUser {
     @Column(name = "password", nullable = false)
     private String password;
 
+    private String role;
 }

@@ -1,6 +1,5 @@
-package com.example.backend.Entities;
+package com.example.backend.Entity;
 
-import com.example.backend.Entities.SiteUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
