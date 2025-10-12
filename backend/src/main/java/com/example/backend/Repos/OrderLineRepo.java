@@ -1,15 +1,12 @@
 package com.example.backend.Repos;
 
-import com.example.backend.Entity.Address;
-import com.example.backend.Entity.SiteUser;
+import com.example.backend.Entity.OrderLine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface AddressRepo extends JpaRepository<Address, Integer> {
-
+public interface OrderLineRepo extends JpaRepository<OrderLine, Integer> {
 
 }

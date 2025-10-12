@@ -1,10 +1,8 @@
-package com.example.backend.Entities;
+package com.example.backend.Entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -15,11 +13,6 @@ public class VariationOption {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "variation_option_id", nullable = false)
     private Integer id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "variation_id")
-    private Variation variation;
 
     @Column(name = "value", length = 100)
     private String value;
