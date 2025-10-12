@@ -1,6 +1,5 @@
-package com.example.backend.Entities;
+package com.example.backend.Entity;
 
-import com.example.backend.Entities.SiteUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,11 +19,6 @@ public class ShopOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id", nullable = false)
     private Integer id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id")
-    private SiteUser user;
 
     @Column(name = "payment_type_name", length = 50)
     private String paymentTypeName;
