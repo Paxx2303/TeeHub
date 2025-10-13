@@ -1,6 +1,6 @@
 package com.example.backend.Controller;
 
-import com.example.backend.Entity.VariationOption;
+import com.example.backend.DTO.VariationOptionDTO;
 import com.example.backend.Service.VariationOptionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,44 +17,38 @@ public class VariationOptionController {
         this.variationOptionService = variationOptionService;
     }
 
-    // Lấy tất cả variation options
     @GetMapping
-    public List<VariationOption> getAllOptions() {
+    public List<VariationOptionDTO> getAllOptions() {
         return variationOptionService.getAllOptions();
     }
 
-    // Lấy option theo ID
     @GetMapping("/{id}")
-    public ResponseEntity<VariationOption> getOptionById(@PathVariable Integer id) {
+    public ResponseEntity<VariationOptionDTO> getOptionById(@PathVariable Integer id) {
         return variationOptionService.getOptionById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Lấy option theo variation
     @GetMapping("/variation/{variationId}")
-    public List<VariationOption> getOptionsByVariation(@PathVariable Integer variationId) {
+    public List<VariationOptionDTO> getOptionsByVariation(@PathVariable Integer variationId) {
         return variationOptionService.getOptionsByVariation(variationId);
     }
 
-    // Thêm option
     @PostMapping
-    public VariationOption createOption(@RequestBody VariationOption option) {
-        return variationOptionService.saveOption(option);
+    public ResponseEntity<VariationOptionDTO> createOption(@RequestBody VariationOptionDTO dto) {
+        return ResponseEntity.ok(variationOptionService.saveOption(dto));
     }
 
-    // Cập nhật option
     @PutMapping("/{id}")
-    public ResponseEntity<VariationOption> updateOption(
+    public ResponseEntity<VariationOptionDTO> updateOption(
             @PathVariable Integer id,
-            @RequestBody VariationOption option
+            @RequestBody VariationOptionDTO dto
     ) {
-        return variationOptionService.updateOption(id, option)
+        return variationOptionService.updateOption(id, dto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Xóa option
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOption(@PathVariable Integer id) {
         variationOptionService.deleteOption(id);
