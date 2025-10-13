@@ -17,43 +17,45 @@
 //        this.userReviewService = userReviewService;
 //    }
 //
+//    // 🟢 Lấy tất cả review
 //    @GetMapping
 //    public List<UserReviewDTO> getAllReviews() {
 //        return userReviewService.getAllReviews();
 //    }
 //
+//    // 🟢 Lấy review theo ID (đã bỏ Optional + map)
 //    @GetMapping("/{id}")
 //    public ResponseEntity<UserReviewDTO> getReviewById(@PathVariable Integer id) {
-//        return userReviewService.getReviewById(id)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
+//        return ResponseEntity.ok(userReviewService.getReviewById(id));
 //    }
 //
+//    // 🟢 Lấy review theo user ID
 //    @GetMapping("/user/{userId}")
 //    public List<UserReviewDTO> getReviewsByUser(@PathVariable Integer userId) {
 //        return userReviewService.getReviewsByUser(userId);
 //    }
 //
+//    // 🟢 Lấy review theo product ID
 //    @GetMapping("/product/{productId}")
 //    public List<UserReviewDTO> getReviewsByProduct(@PathVariable Integer productId) {
 //        return userReviewService.getReviewsByProduct(productId);
 //    }
 //
+//    // 🟢 Tạo mới review
 //    @PostMapping
 //    public ResponseEntity<UserReviewDTO> createReview(@RequestBody UserReviewDTO dto) {
 //        return ResponseEntity.ok(userReviewService.saveReview(dto));
 //    }
 //
+//    // 🟢 Cập nhật review (đã bỏ Optional + map)
 //    @PutMapping("/{id}")
-//    public ResponseEntity<UserReviewDTO> updateReview(@PathVariable Integer id, @RequestBody UserReviewDTO dto) {
-//        return userReviewService.updateReview(id, dto)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
+//    public ResponseEntity<UserReviewDTO> updateReview(
+//            @PathVariable Integer id,
+//            @RequestBody UserReviewDTO dto
+//    ) {
+//        return ResponseEntity.ok(userReviewService.updateReview(id, dto));
 //    }
 //
+//    // 🟢 Xóa review
 //    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteReview(@PathVariable Integer id) {
-//        userReviewService.deleteReview(id);
-//        return ResponseEntity.noContent().build();
-//    }
-//}
+//    public ResponseEntity<Void> deleteReview(@PathVariable Integer
