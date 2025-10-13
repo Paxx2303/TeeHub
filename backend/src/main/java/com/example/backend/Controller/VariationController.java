@@ -17,38 +17,40 @@
 //        this.variationService = variationService;
 //    }
 //
+//    // 🟢 Lấy tất cả variations
 //    @GetMapping
 //    public List<VariationDTO> getAllVariations() {
 //        return variationService.getAllVariations();
 //    }
 //
+//    // 🟢 Lấy variation theo ID (đã bỏ Optional + map)
 //    @GetMapping("/{id}")
 //    public ResponseEntity<VariationDTO> getVariationById(@PathVariable Integer id) {
-//        return variationService.getVariationById(id)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
+//        return ResponseEntity.ok(variationService.getVariationById(id));
 //    }
 //
+//    // 🟢 Lấy variations theo category
 //    @GetMapping("/category/{categoryId}")
 //    public List<VariationDTO> getVariationsByCategory(@PathVariable Integer categoryId) {
 //        return variationService.getVariationsByCategory(categoryId);
 //    }
 //
+//    // 🟢 Thêm variation mới
 //    @PostMapping
 //    public ResponseEntity<VariationDTO> createVariation(@RequestBody VariationDTO dto) {
 //        return ResponseEntity.ok(variationService.saveVariation(dto));
 //    }
 //
+//    // 🟢 Cập nhật variation (đã bỏ Optional + map)
 //    @PutMapping("/{id}")
 //    public ResponseEntity<VariationDTO> updateVariation(
 //            @PathVariable Integer id,
 //            @RequestBody VariationDTO dto
 //    ) {
-//        return variationService.updateVariation(id, dto)
-//                .map(ResponseEntity::ok)
-//                .orElse(ResponseEntity.notFound().build());
+//        return ResponseEntity.ok(variationService.updateVariation(id, dto));
 //    }
 //
+//    // 🟢 Xóa variation
 //    @DeleteMapping("/{id}")
 //    public ResponseEntity<Void> deleteVariation(@PathVariable Integer id) {
 //        variationService.deleteVariation(id);
