@@ -2,9 +2,11 @@ spring:
   application:
     name: store
   datasource:
+
     url: jdbc:postgresql://localhost:5432/Teehub
     username: postgres
     password: root
+
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: true
