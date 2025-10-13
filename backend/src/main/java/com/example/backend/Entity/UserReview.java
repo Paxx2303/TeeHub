@@ -1,6 +1,5 @@
 package com.example.backend.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,14 +18,7 @@ public class UserReview {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "user_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private SiteUser user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "ordered_product_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private ProductItem orderedProduct;
 
     @Column(name = "rating_value")
@@ -34,4 +26,6 @@ public class UserReview {
 
     @Column(name = "comment", length = Integer.MAX_VALUE)
     private String comment;
+
+
 }

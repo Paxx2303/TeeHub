@@ -1,5 +1,10 @@
 package com.example.backend.Entity;
 
+
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +16,12 @@ import org.hibernate.annotations.OnDeleteAction;
 @Setter
 @Entity
 @Table(name = "shopping_cart_item", schema = "ecommerce")
+
+
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ShoppingCartItem {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cart_item_id", nullable = false)
@@ -20,12 +30,12 @@ public class ShoppingCartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "cart_id")
+    @JsonIgnore
     private ShoppingCart cart;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "product_item_id")
-    private ProductItem productItem;
+
+
+
 
     @ColumnDefault("1")
     @Column(name = "qty")
