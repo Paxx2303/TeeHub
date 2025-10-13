@@ -18,7 +18,7 @@ public class UserReview {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "ordered_product_id")
+
     private ProductItem orderedProduct;
 
     @Column(name = "rating_value")
@@ -26,5 +26,6 @@ public class UserReview {
 
     @Column(name = "comment", length = Integer.MAX_VALUE)
     private String comment;
+
 
 }

@@ -1,5 +1,6 @@
 package com.example.backend.Entity;
 
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,9 +20,9 @@ public class Variation {
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "category_id")
+
     private ProductCategory category;
 
     @Column(name = "name", length = 100)
     private String name;
-
 }
