@@ -13,10 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     @Autowired
     UserAddressService userAddressService;
-
     @GetMapping("/users/{id}")
     public UserAddressDTO findById(@PathVariable Integer id) {
         return userAddressService.getUserWithAddressesById(id);
     }
-
 }

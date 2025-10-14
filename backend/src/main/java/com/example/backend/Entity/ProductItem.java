@@ -1,5 +1,6 @@
 package com.example.backend.Entity;
 
+import ch.qos.logback.classic.model.LoggerModel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -30,4 +31,5 @@ public class ProductItem {
 
     @Column(precision = 10, scale = 2)
     private BigDecimal price;
+
 }
