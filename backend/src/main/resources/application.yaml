@@ -2,7 +2,7 @@ spring:
   application:
     name: store
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/data
     username: postgres
     password: password123
     driver-class-name: org.postgresql.Driver
@@ -14,10 +14,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
         default_schema: ecommerce
 server:
   port: 8080
 logging:
   level:
     org.springframework: INFO
-    com.example.TeeHub: DEBUG
+    com.example.backend: DEBUG

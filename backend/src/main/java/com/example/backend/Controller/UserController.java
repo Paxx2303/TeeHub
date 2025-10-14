@@ -18,13 +18,10 @@ public class UserController {
 
     @Autowired
     SiteUserService SiteUserService;
+
     @GetMapping("/users/{id}")
     public UserAddressDTO findById(@PathVariable Integer id) {
         return userAddressService.getUserWithAddressesById(id);
     }
 
-    @GetMapping("/test/{id}")
-    public SiteUser test(@PathVariable Integer id) {
-        return SiteUserService.findById(id);
-    }
 }
