@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/data
     username: postgres
-    password: 111444
+    password: password123
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: true
@@ -14,10 +14,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        default_schema: ecommerce   # 👈 THÊM DÒNG NÀY
+
+        default_schema: ecommerce
 server:
   port: 8080
 logging:
   level:
     org.springframework: INFO
-    com.example.backend: DEBUG      # 👈 package thật của bạn là com.example.backend (không phải com.example.TeeHub)
+    com.example.backend: DEBUG
