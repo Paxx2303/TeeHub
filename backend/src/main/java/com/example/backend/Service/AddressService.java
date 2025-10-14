@@ -15,8 +15,6 @@ import java.util.List;
 public class AddressService {
     @Autowired
     private AddressRepo addressRepos;
-
-
     public Address findByUser(SiteUser user) {
         return addressRepos.findByUser(user);
     }
