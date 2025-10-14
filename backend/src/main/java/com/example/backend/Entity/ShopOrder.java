@@ -1,48 +1,46 @@
 package com.example.backend.Entity;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
+import lombok.*;
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "shop_order", schema = "ecommerce")
+@Table(name = "shop_order")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ShopOrder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_id", nullable = false)
-    private Integer id;
+    private Integer order_id;
 
-
-    // 🔹 Người dùng đặt hàng (nếu xóa user → xóa luôn order)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnore  // ⚠️ Tránh lỗi JSON khi trả về (lazy loading / vòng lặp)
-    private SiteUser user;
+    private SiteUser user_id;
 
+    private String payment_type_name;
+    private String payment_provider;
+    private String payment_account_number;
+    private String payment_status;
+    private LocalDateTime payment_date;
 
-    @Column(name = "payment_type_name", length = 50)
-    private String paymentTypeName;
+    @ManyToOne
+    @JoinColumn(name = "shipping_address_id")
+    private Address shipping_address_id;
 
-    @Column(name = "payment_provider", length = 100)
-    private String paymentProvider;
+    private String shipping_method_name;
 
-    @Column(name = "payment_account_number", length = 100)
-    private String paymentAccountNumber;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal shipping_price;
 
-    @Column(name = "payment_status", length = 50)
-    private String paymentStatus;
+    private String order_status;
 
-    @Column(name = "payment_date")
-    private Instant paymentDate;
+    @Column(columnDefinition = "timestamp default CURRENT_TIMESTAMP")
+    private LocalDateTime order_date;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal order_total;
 }

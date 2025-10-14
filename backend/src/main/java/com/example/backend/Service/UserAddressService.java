@@ -18,24 +18,25 @@ public class UserAddressService {
 
     public UserAddressDTO getUserWithAddressesById(Integer userId) {
 
-        SiteUser user = siteUserRepo.findById(userId);
+        SiteUser user = siteUserRepo.findById(userId).orElse(null);
+
 
 
         Address address = addressService.findByUser(user);
 
         UserAddressDTO dto = new UserAddressDTO();
         dto.setId(user.getId());
-        dto.setEmailAddress(user.getEmailAddress());
-        dto.setPhoneNumber(user.getPhoneNumber());
-        dto.setUnitNumber(address.getUnitNumber());
-        dto.setStreetNumber(address.getStreetNumber());
-        dto.setAddressLine1(address.getAddressLine1());
-        dto.setAddressLine2(address.getAddressLine2());
+        dto.setEmailAddress(user.getEmail_address());
+        dto.setPhoneNumber(user.getPhone_number());
+        dto.setUnitNumber(address.getUnit_number());
+        dto.setStreetNumber(address.getStreet_number());
+        dto.setAddressLine1(address.getAddress_line1());
+        dto.setAddressLine2(address.getAddress_line2());
         dto.setCity(address.getCity());
         dto.setRegion(address.getRegion());
-        dto.setPostalCode(address.getPostalCode());
-        dto.setCountryName(address.getCountryName());
-        dto.setIsDefault(address.getIsDefault());
+        dto.setPostalCode(address.getPostal_code());
+        dto.setCountryName(address.getCountry_name());
+        dto.setIsDefault(address.getIs_default());
         return dto;
     }
 }

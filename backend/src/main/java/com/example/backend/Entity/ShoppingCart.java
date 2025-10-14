@@ -13,29 +13,22 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
-@Entity
-@Table(name = "shopping_cart", schema = "ecommerce")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // ✅ FIX PROXY LỖI
+import jakarta.persistence.*;
+import lombok.*;
 
+@Entity
+@Table(name = "shopping_cart")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ShoppingCart {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_id", nullable = false)
-    private Integer id;
+    private Integer cart_id;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JsonBackReference
-    private SiteUser user;
-
-    @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private java.time.LocalDateTime createdAt;
-
-    @Column(name = "status", length = 50)
-    private String status;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private SiteUser user_id;
 }
-

@@ -1,54 +1,41 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import lombok.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
-@Getter
-@Setter
+
 @Entity
-@Table(name = "custom_product", schema = "ecommerce")
+@Table(name = "custom_product")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CustomProduct {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "custom_product_id", nullable = false)
-    private Integer id;
+    private Integer custom_product_id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "product_item_id")
-    private ProductItem productItem;
+    private ProductItem product_item_id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "user_id")
-    private SiteUser user;
+    private SiteUser user_id;
 
-    @Column(name = "custom_name")
-    private String customName;
+    private String custom_name;
 
-    @Column(name = "custom_description", length = Integer.MAX_VALUE)
-    private String customDescription;
+    @Column(columnDefinition = "TEXT")
+    private String custom_description;
 
-    @Column(name = "custom_color", length = 50)
-    private String customColor;
+    private String custom_color;
+    private String custom_text;
+    private String custom_image_url;
+    private String preview_image;
 
-    @Column(name = "custom_text")
-    private String customText;
-
-    @Column(name = "custom_image_url")
-    private String customImageUrl;
-
-    @Column(name = "preview_image")
-    private String previewImage;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private Instant createdAt;
-
+    @Column(columnDefinition = "timestamp default CURRENT_TIMESTAMP")
+    private LocalDateTime created_at;
 }

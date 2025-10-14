@@ -1,44 +1,29 @@
 package com.example.backend.Entity;
 
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import lombok.*;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "shopping_cart_item", schema = "ecommerce")
-
-
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Table(name = "shopping_cart_item")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ShoppingCartItem {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_item_id", nullable = false)
-    private Integer id;
+    private Integer cart_item_id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "cart_id")
-    @JsonIgnore
-    private ShoppingCart cart;
+    private ShoppingCart cart_id;
 
+    @ManyToOne
+    @JoinColumn(name = "product_item_id")
+    private ProductItem product_item_id;
 
-
-
-
-    @ColumnDefault("1")
-    @Column(name = "qty")
+    @Column(columnDefinition = "int default 1")
     private Integer qty;
-
 }

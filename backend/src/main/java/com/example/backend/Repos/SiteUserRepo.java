@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SiteUserRepo extends JpaRepository<SiteUser, Long> {
+public interface SiteUserRepo extends JpaRepository<SiteUser, Integer> {
 
-    public SiteUser findById(Integer id);
+
 
 }

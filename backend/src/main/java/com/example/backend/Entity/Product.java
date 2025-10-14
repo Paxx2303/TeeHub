@@ -1,33 +1,30 @@
 package com.example.backend.Entity;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "product", schema = "ecommerce")
-
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-
+@Table(name = "product")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Product {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "product_id", nullable = false)
-    private Integer id;
+    private Integer product_id;
 
-    @Column(name = "name", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private ProductCategory category_id;
+
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "description", length = Integer.MAX_VALUE)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "product_image")
-    private String productImage;
-
-
+    private String product_image;
 }
-

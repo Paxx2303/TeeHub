@@ -1,32 +1,38 @@
 package com.example.backend.Entity;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.*;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "order_line", schema = "ecommerce")
+@Table(name = "order_line")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class OrderLine {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_line_id", nullable = false)
-    private Integer id;
+    private Integer order_line_id;
 
-    @Column(name = "qty")
+    @ManyToOne
+    @JoinColumn(name = "product_item_id")
+    private ProductItem product_item_id;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private ShopOrder order_id;
+
     private Integer qty;
 
-    @Column(name = "price", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal price;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne
     @JoinColumn(name = "custom_product_id")
-    private CustomProduct customProduct;
-
+    private CustomProduct custom_product_id;
 }

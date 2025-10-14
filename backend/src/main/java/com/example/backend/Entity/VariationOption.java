@@ -1,37 +1,23 @@
 package com.example.backend.Entity;
 
-
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
-
-@Getter
-@Setter
 @Entity
-@Table(name = "variation_option", schema = "ecommerce")
+@Table(name = "variation_option")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class VariationOption {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "variation_option_id", nullable = false)
-    private Integer id;
+    private Integer variation_option_id;
 
-    @Column(name = "value", length = 100)
-    private String value;
-
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
+    @ManyToOne
     @JoinColumn(name = "variation_id")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Variation variation;
+    private Variation variation_id;
 
+    private String value;
 }
-

@@ -1,31 +1,30 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
+import lombok.*;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "site_user", schema = "ecommerce")
+@Table(name = "site_user")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class SiteUser {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
     private Integer id;
 
-    @Column(name = "email_address", nullable = false)
-    private String emailAddress;
 
-    @Column(name = "phone_number", length = 20)
-    private String phoneNumber;
+    @Column(nullable = false, unique = true)
+    private String email_address;
 
-    @Column(name = "password", nullable = false)
+    private String phone_number;
+
+    @Column(nullable = false)
     private String password;
 
-    @ColumnDefault("'USER'")
-    @Column(name = "role", length = 20)
+    @Column(columnDefinition = "varchar(50) default 'USER'")
     private String role;
-
 }

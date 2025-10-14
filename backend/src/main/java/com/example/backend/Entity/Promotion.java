@@ -1,46 +1,34 @@
 package com.example.backend.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
+import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "promotion", schema = "ecommerce")
+@Table(name = "promotion")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Promotion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "promotion_id", nullable = false)
-    private Integer id;
+    private Integer promotion_id;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne
     @JoinColumn(name = "category_id")
-    @JsonIgnore
-    private ProductCategory category;
+    private ProductCategory category_id;
 
-    @Column(name = "name", length = 255)
     private String name;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "discount_rate", precision = 5, scale = 2)
-    private BigDecimal discountRate;
+    @Column(precision = 5, scale = 2, columnDefinition = "decimal(5,2) check (discount_rate >= 0 and discount_rate <= 100)")
+    private BigDecimal discount_rate;
 
-    @Column(name = "start_date")
-    private LocalDate startDate;
-
-    @Column(name = "end_date")
-    private LocalDate endDate;
+    private LocalDate start_date;
+    private LocalDate end_date;
 }

@@ -12,7 +12,7 @@ public class SiteUserService {
     private SiteUserRepo siteUserRepo;
 
     public SiteUser findById(Integer id) {
-        return siteUserRepo.findById(id);
+        return siteUserRepo.findById(id).orElse(null);
     }
 
 
