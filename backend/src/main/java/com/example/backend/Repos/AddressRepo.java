@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public interface AddressRepo extends JpaRepository<Address, Integer> {
 
-
+    Address findByUser(SiteUser user);
 }

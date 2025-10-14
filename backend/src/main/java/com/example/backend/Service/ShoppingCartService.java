@@ -22,13 +22,13 @@ public class ShoppingCartService {
         return shoppingCartRepository.findById(id);
     }
 
-    public Optional<ShoppingCart> getCartByUserId(Integer userId) {
-        return shoppingCartRepository.findByUser_Id(userId);
-    }
-
-    public List<ShoppingCart> getAllCartsByUserId(Integer userId) {
-        return shoppingCartRepository.findAllByUser_Id(userId);
-    }
+//    public Optional<ShoppingCart> getCartByUserId(Integer userId) {
+//        return shoppingCartRepository.findByUser_Id(userId);
+//    }
+//
+//    public List<ShoppingCart> getAllCartsByUserId(Integer userId) {
+//        return shoppingCartRepository.findAllByUser_Id(userId);
+//    }
 
     public ShoppingCart createCart(ShoppingCart cart) {
         return shoppingCartRepository.save(cart);

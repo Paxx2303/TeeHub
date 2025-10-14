@@ -1,6 +1,6 @@
 //package com.example.backend.Service;
 //
-//import com.example.backend.DTO.UserReviewDTO;
+////import com.example.backend.DTO.UserReviewDTO;
 //import com.example.backend.Entity.ProductItem;
 //import com.example.backend.Entity.SiteUser;
 //import com.example.backend.Entity.UserReview;
@@ -45,50 +45,8 @@
 //        return new UserReviewDTO(review);
 //    }
 //
-//    // 🟢 Lấy review theo user_id
-//    public List<UserReviewDTO> getReviewsByUser(Integer userId) {
-//        if (!siteUserRepository.existsById(userId)) {
-//            throw new ResourceNotFoundException("User not found with id: " + userId);
-//        }
 //
-//        return userReviewRepository.findByUser_Id(userId)
-//                .stream()
-//                .map(UserReviewDTO::new)
-//                .collect(Collectors.toList());
-//    }
 //
-//    // 🟢 Lấy review theo product_id
-//    public List<UserReviewDTO> getReviewsByProduct(Integer productId) {
-//        if (!productItemRepository.existsById(productId)) {
-//            throw new ResourceNotFoundException("Product not found with id: " + productId);
-//        }
-//
-//        return userReviewRepository.findByOrderedProduct_Id(productId)
-//                .stream()
-//                .map(UserReviewDTO::new)
-//                .collect(Collectors.toList());
-//    }
-//
-//    // 🟢 Tạo mới review
-//    public UserReviewDTO saveReview(UserReviewDTO dto) {
-//        if (dto.getRatingValue() == null || dto.getRatingValue() < 1 || dto.getRatingValue() > 5) {
-//            throw new InvalidDataException("Rating value must be between 1 and 5");
-//        }
-//
-//        SiteUser user = siteUserRepository.findById(dto.getUserId())
-//                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.getUserId()));
-//
-//        ProductItem product = productItemRepository.findById(dto.getProductId())
-//                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + dto.getProductId()));
-//
-//        UserReview review = new UserReview();
-//        review.setUser(user);
-//        review.setOrderedProduct(product);
-//        review.setRatingValue(dto.getRatingValue());
-//        review.setComment(dto.getComment());
-//
-//        return new UserReviewDTO(userReviewRepository.save(review));
-//    }
 //
 //    // 🟢 Cập nhật review
 //    public UserReviewDTO updateReview(Integer id, UserReviewDTO dto) {

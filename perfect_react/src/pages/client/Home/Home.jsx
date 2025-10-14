@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import { MOCK_PRODUCTS } from '../../../services/mockProducts';
 import styles from './Home.module.css';
 
+
+
 const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVisible, setIsVisible] = useState({});
+
 
   // Dữ liệu slides cho hero section
   const slides = [
@@ -182,8 +185,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* New Products Section */}
-      <section className={styles.products} id="products" data-animate>
+      {/*New Products Section*/}
+      {/* <section className={styles.products} id="products" data-animate>
         <div className={styles.container}>
           <div className={`${styles.sectionHeader} ${isVisible.products ? styles.fadeInUp : ''}`}>
             <span className={styles.sectionBadge}>🔥 Sản phẩm hot</span>
@@ -239,7 +242,7 @@ const Home = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section - Enhanced */}
       <section className={styles.cta} id="cta" data-animate>

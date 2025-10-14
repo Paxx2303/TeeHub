@@ -31,12 +31,12 @@ public class ShoppingCartController {
     }
 
     // Lấy giỏ hàng theo user_id
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ShoppingCart> getCartByUserId(@PathVariable Integer userId) {
-        return shoppingCartService.getCartByUserId(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+//    @GetMapping("/user/{userId}")
+//    public ResponseEntity<ShoppingCart> getCartByUserId(@PathVariable Integer userId) {
+//        return shoppingCartService.getCartByUserId(userId)
+//                .map(ResponseEntity::ok)
+//                .orElse(ResponseEntity.notFound().build());
+//    }
 
     // Tạo mới giỏ hàng
     @PostMapping

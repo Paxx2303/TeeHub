@@ -24,10 +24,5 @@ public class ProductService {
         return productRepo.save(product);}
     public void deleteById(Integer id) {
         productRepo.deleteById(id);}
-    public List<Product> findByNameContainingIgnoreCase(String name) {
-        return productRepo.findByNameContainingIgnoreCase(name);
-    }
-    public List<Product> findByName(String name) {
-        return productRepo.findByName(name);
-    }
+
 }

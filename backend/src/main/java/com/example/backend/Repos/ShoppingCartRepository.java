@@ -11,8 +11,8 @@ import java.util.Optional;
 public interface ShoppingCartRepository extends JpaRepository<ShoppingCart, Integer> {
 
     // Lấy giỏ hàng theo user_id
-    Optional<ShoppingCart> findByUser_Id(Integer userId);
-
-    // Nếu bạn muốn hỗ trợ nhiều giỏ hàng trên 1 user
-    List<ShoppingCart> findAllByUser_Id(Integer userId);
+//    Optional<ShoppingCart> findByUser_Id(Integer userId);
+//
+//    // Nếu bạn muốn hỗ trợ nhiều giỏ hàng trên 1 user
+//    List<ShoppingCart> findAllByUser_Id(Integer userId);
 }

@@ -11,6 +11,6 @@ import java.util.Optional;
 @Repository
 public interface SiteUserRepo extends JpaRepository<SiteUser, Long> {
 
-
+    public SiteUser findById(Integer id);
 
 }

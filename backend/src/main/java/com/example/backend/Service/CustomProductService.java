@@ -18,7 +18,7 @@ import java.util.Optional;
 public class CustomProductService {
     private final CustomProductRepo customProductRepository;
     private final ProductItemRepo productItemRepository;
-    private final SiteUserRepo UserRepo ;
+    private final SiteUserRepo UserRepo;
 
     public CustomProductService(CustomProductRepo customProductRepository, ProductItemRepo productItemRepository, SiteUserRepo userRepo) {
         this.customProductRepository = customProductRepository;
@@ -74,33 +74,6 @@ public class CustomProductService {
         return customProductRepository.findAll();
     }
 
-    /**
-     * Lấy custom product theo user
-     */
-    public List<CustomProduct> getCustomProductsByUserId(Integer userId) {
-        return customProductRepository.findByUserId(userId);
-    }
-
-    /**
-     * Lấy custom product theo product item
-     */
-    public List<CustomProduct> getCustomProductsByProductItemId(Integer productItemId) {
-        return customProductRepository.findByProductItemId(productItemId);
-    }
-
-    /**
-     * Lấy custom product theo user và product item
-     */
-    public Optional<CustomProduct> getCustomProductByUserAndProductItem(Integer userId, Integer productItemId) {
-        return customProductRepository.findByUserIdAndProductItemId(userId, productItemId);
-    }
-
-    /**
-     * Tìm kiếm custom product theo keyword
-     */
-    public List<CustomProduct> searchCustomProducts(String keyword) {
-        return customProductRepository.findByCustomNameContainingIgnoreCase(keyword);
-    }
 
     @Transactional
     public CustomProduct updateCustomProduct(Integer id, CustomProduct updatedProduct) {
@@ -129,9 +102,6 @@ public class CustomProductService {
         return customProductRepository.save(existingProduct);
     }
 
-    /**
-     * Xóa custom product
-     */
     @Transactional
     public void deleteCustomProduct(Integer id) {
         if (!customProductRepository.existsById(id)) {
@@ -140,32 +110,4 @@ public class CustomProductService {
         customProductRepository.deleteById(id);
     }
 
-    /**
-     * Xóa tất cả custom product của user
-     */
-    @Transactional
-    public void deleteAllCustomProductsByUserId(Integer userId) {
-        customProductRepository.deleteByUserId(userId);
-    }
-
-    /**
-     * Đếm số lượng custom product của user
-     */
-    public long countCustomProductsByUserId(Integer userId) {
-        return customProductRepository.countByUserId(userId);
-    }
-
-    /**
-     * Kiểm tra user có custom product không
-     */
-    public boolean hasCustomProducts(Integer userId) {
-        return customProductRepository.existsByUserId(userId);
-    }
-
-    /**
-     * Lấy custom product mới nhất của user
-     */
-    public Optional<CustomProduct> getLatestCustomProduct(Integer userId) {
-        return customProductRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
-    }
 }

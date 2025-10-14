@@ -30,25 +30,25 @@ public class VariationOptionController {
     }
 
     // 🟢 Lấy option theo variation ID
-    @GetMapping("/variation/{variationId}")
-    public List<VariationOptionDTO> getOptionsByVariation(@PathVariable Integer variationId) {
-        return variationOptionService.getOptionsByVariation(variationId);
-    }
+//    @GetMapping("/variation/{variationId}")
+//    public List<VariationOptionDTO> getOptionsByVariation(@PathVariable Integer variationId) {
+//        return variationOptionService.getOptionsByVariation(variationId);
+//    }
 
     // 🟢 Tạo mới option
-    @PostMapping
-    public ResponseEntity<VariationOptionDTO> createOption(@RequestBody VariationOptionDTO dto) {
-        return ResponseEntity.ok(variationOptionService.saveOption(dto));
-    }
+//    @PostMapping
+//    public ResponseEntity<VariationOptionDTO> createOption(@RequestBody VariationOptionDTO dto) {
+//        return ResponseEntity.ok(variationOptionService.saveOption(dto));
+//    }
 
     // 🟢 Cập nhật option (đã bỏ .map)
-    @PutMapping("/{id}")
-    public ResponseEntity<VariationOptionDTO> updateOption(
-            @PathVariable Integer id,
-            @RequestBody VariationOptionDTO dto
-    ) {
-        return ResponseEntity.ok(variationOptionService.updateOption(id, dto));
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<VariationOptionDTO> updateOption(
+//            @PathVariable Integer id,
+//            @RequestBody VariationOptionDTO dto
+//    ) {
+//        return ResponseEntity.ok(variationOptionService.updateOption(id, dto));
+//    }
 
     // 🟢 Xóa option
     @DeleteMapping("/{id}")
