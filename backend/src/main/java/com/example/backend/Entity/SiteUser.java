@@ -27,4 +27,10 @@ public class SiteUser {
 
     @Column(columnDefinition = "varchar(50) default 'USER'")
     private String role;
+
+    public Integer getId(Integer userId) {
+        return id;
+
+    }
+
 }
