@@ -1,46 +1,58 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "shop_order")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "shop_order", schema = "ecommerce")
 public class ShopOrder {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer order_id;
+    @Column(name = "order_id", nullable = false)
+    private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private SiteUser user_id;
+    @Column(name = "payment_type_name", length = 50)
+    private String paymentTypeName;
 
-    private String payment_type_name;
-    private String payment_provider;
-    private String payment_account_number;
-    private String payment_status;
-    private LocalDateTime payment_date;
+    @Column(name = "payment_provider", length = 100)
+    private String paymentProvider;
 
-    @ManyToOne
+    @Column(name = "payment_account_number", length = 100)
+    private String paymentAccountNumber;
+
+    @Column(name = "payment_status", length = 50)
+    private String paymentStatus;
+
+    @Column(name = "payment_date")
+    private Instant paymentDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "shipping_address_id")
-    private Address shipping_address_id;
+    private Address shippingAddress;
 
-    private String shipping_method_name;
+    @Column(name = "shipping_method_name", length = 100)
+    private String shippingMethodName;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal shipping_price;
+    @Column(name = "shipping_price", precision = 10, scale = 2)
+    private BigDecimal shippingPrice;
 
-    private String order_status;
+    @Column(name = "order_status", length = 50)
+    private String orderStatus;
 
-    @Column(columnDefinition = "timestamp default CURRENT_TIMESTAMP")
-    private LocalDateTime order_date;
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "order_date")
+    private Instant orderDate;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal order_total;
+    @Column(name = "order_total", precision = 10, scale = 2)
+    private BigDecimal orderTotal;
 }

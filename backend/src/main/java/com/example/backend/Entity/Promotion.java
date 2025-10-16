@@ -1,34 +1,42 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "promotion")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "promotion", schema = "ecommerce")
 public class Promotion {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer promotion_id;
+    @Column(name = "promotion_id", nullable = false)
+    private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "category_id")
-    private ProductCategory category_id;
+    private ProductCategory category;
 
+    @Column(name = "name")
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @Column(precision = 5, scale = 2, columnDefinition = "decimal(5,2) check (discount_rate >= 0 and discount_rate <= 100)")
-    private BigDecimal discount_rate;
+    @Column(name = "discount_rate", precision = 5, scale = 2)
+    private BigDecimal discountRate;
 
-    private LocalDate start_date;
-    private LocalDate end_date;
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
 }

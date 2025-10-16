@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
-@CrossOrigin(origins = {"http://localhost:8080"})
 @RequiredArgsConstructor
 public class UserReviewController {
 

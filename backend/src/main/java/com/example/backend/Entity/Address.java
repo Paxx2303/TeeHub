@@ -1,37 +1,31 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+
+@Getter
+@Setter
 @Entity
-@Table(name = "address")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class  Address {
+@Table(name = "address", schema = "ecommerce")
+public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer address_id;
+    @Column(name = "address_id", nullable = false)
+    private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private SiteUser user;
+    @Column(name = "unit_number", length = 50)
+    private String unitNumber;
 
-    private String unit_number;
-    private String street_number;
-    private String address_line1;
-    private String address_line2;
-    private String city;
-    private String region;
-    private String postal_code;
-    private String country_name;
+    @Column(name = "street_number", length = 50)
+    private String streetNumber;
 
-    @Column(columnDefinition = "boolean default false")
-    private Boolean is_default;
+    @Column(name = "address_line")
+    private String addressLine;
+
+    @ColumnDefault("false")
+    @Column(name = "is_default")
+    private Boolean isDefault;
 
 }

@@ -1,33 +1,23 @@
 package com.example.backend.Entity;
+
 import jakarta.persistence.*;
-import lombok.*;
-import java.io.Serializable;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "product_configuration")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@IdClass(ProductConfigurationId.class)
+@Table(name = "product_configuration", schema = "ecommerce")
 public class ProductConfiguration {
+    @EmbeddedId
+    private ProductConfigurationId id;
 
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "product_item_id")
-    private ProductItem product_item_id;
+    @MapsId("variationOptionId")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "variation_option_id", nullable = false)
+    private VariationOption variationOption;
 
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "variation_option_id")
-    private VariationOption variation_option_id;
-}
-
-// Composite Key Class
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class ProductConfigurationId implements Serializable {
-    private Integer product_item_id;
-    private Integer variation_option_id;
 }
