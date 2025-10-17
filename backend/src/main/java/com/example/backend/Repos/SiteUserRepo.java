@@ -7,7 +7,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SiteUserRepo extends JpaRepository<SiteUser, Integer> {
-
-
-
 }
