@@ -1,4 +1,4 @@
-import { apiRequest } from './httpClient';
+
 import { API_ENDPOINTS } from '../utils/constants';
 
 export const designService = {

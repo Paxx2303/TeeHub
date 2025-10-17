@@ -1,7 +1,7 @@
 package com.example.backend.Controller;
 
 import com.example.backend.DTO.Response.UserReviewDTO;
-import com.example.backend.Service.UserReviewService;
+import com.example.backend.Service.Not_Done.UserReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

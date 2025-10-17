@@ -1,6 +1,6 @@
 package com.example.backend.Repos;
 
-import com.example.backend.DTO.Response.VariationOptionDTO;
+import com.example.backend.DTO.Response.Cart.VariationOptionDTO;
 import com.example.backend.Entity.VariationOption;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;

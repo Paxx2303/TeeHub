@@ -1,20 +1,11 @@
 package com.example.backend.Entity;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Collection;
 
 @Entity
 @Table(name = "shopping_cart")
@@ -22,6 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
 public class ShoppingCart {
 
     @Id
@@ -31,4 +23,6 @@ public class ShoppingCart {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private SiteUser user_id;
+
+
 }

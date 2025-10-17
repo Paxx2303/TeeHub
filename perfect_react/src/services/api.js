@@ -3,7 +3,7 @@ import { authService } from './authService';
 import { productService } from './productService';
 import { aiService } from './aiService';
 import { designService } from './designService';
-import { apiRequest } from './httpClient';
+
 
 import axios from 'axios';
 

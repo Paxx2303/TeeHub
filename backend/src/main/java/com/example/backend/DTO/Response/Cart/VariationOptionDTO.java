@@ -1,4 +1,4 @@
-package com.example.backend.DTO.Response;
+package com.example.backend.DTO.Response.Cart;
 
 import lombok.*;
 

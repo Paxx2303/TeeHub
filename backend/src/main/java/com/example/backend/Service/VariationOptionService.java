@@ -1,6 +1,6 @@
 package com.example.backend.Service;
 
-import com.example.backend.DTO.Response.VariationOptionDTO;
+import com.example.backend.DTO.Response.Cart.VariationOptionDTO;
 import com.example.backend.Repos.VariationOptionRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

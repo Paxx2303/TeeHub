@@ -1,25 +1,14 @@
 package com.example.backend.DTO.Response;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Entity
-@Getter
-@Setter
+@Data
 public class UserAddressDTO {
-    @Id
-    private Integer id;
+    private Integer user_id;
+    private Integer address_id;
     private String unitNumber;
-    private String streetNumber;
     private String addressLine1;
-    private String addressLine2;
     private String city;
-    private String region;
-    private String postalCode;
-    private String countryName;
-    private Boolean isDefault;
-    private  String emailAddress;
+    private String emailAddress;
     private String phoneNumber;
 }

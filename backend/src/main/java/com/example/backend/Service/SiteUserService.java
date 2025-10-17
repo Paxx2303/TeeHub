@@ -5,6 +5,8 @@ import com.example.backend.Repos.SiteUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 
 @Service
 public class SiteUserService {
@@ -12,9 +14,26 @@ public class SiteUserService {
     private SiteUserRepo siteUserRepo;
 
     public SiteUser findById(Integer id) {
-        return siteUserRepo.findById(id).orElse(null);
+        return siteUserRepo.findById(id).orElse(null);    }
+
+    public SiteUser createUser(SiteUser user) {
+        return siteUserRepo.save(user);
     }
 
+    public SiteUser updateUser(Integer id, SiteUser userDetails) {
+        Optional<SiteUser> optionalUser = siteUserRepo.findById(id);
+        if (optionalUser.isPresent()) {
+            SiteUser user = optionalUser.get();
+            user.setPassword(userDetails.getPassword());
+            user.setEmail_address(userDetails.getEmail_address());
+            user.setPhone_number(userDetails.getPhone_number());
+            return siteUserRepo.save(user);
+        }
+        return null;
+    }
 
+    public void deleteUser(Integer id) {
+        siteUserRepo.deleteById(id);
+    }
 }
 

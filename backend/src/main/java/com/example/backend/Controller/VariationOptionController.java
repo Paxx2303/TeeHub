@@ -1,6 +1,6 @@
 package com.example.backend.Controller;
 
-import com.example.backend.DTO.Response.VariationOptionDTO;
+import com.example.backend.DTO.Response.Cart.VariationOptionDTO;
 import com.example.backend.Service.VariationOptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

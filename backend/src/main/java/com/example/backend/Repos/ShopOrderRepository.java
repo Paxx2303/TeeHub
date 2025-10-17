@@ -4,8 +4,6 @@ import com.example.backend.Entity.ShopOrder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface ShopOrderRepository extends JpaRepository<ShopOrder, Integer> {
 //    public List<ShopOrder> findByUserId(Integer userId);

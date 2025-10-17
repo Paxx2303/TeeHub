@@ -1,6 +1,5 @@
 package com.example.backend.Entity;
 
-import ch.qos.logback.classic.model.LoggerModel;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

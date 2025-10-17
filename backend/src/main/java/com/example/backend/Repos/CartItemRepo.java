@@ -1,0 +1,17 @@
+package com.example.backend.Repos;
+
+import com.example.backend.DTO.Response.Cart.CartItemDTO;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@SuppressWarnings("ALL")
+@Repository
+@Getter
+@Setter
+public interface CartItemRepo extends JpaRepository<CartItemDTO, Integer> {
+    List<CartItemDTO> findByCart_item_id(Integer cartId);
+}
