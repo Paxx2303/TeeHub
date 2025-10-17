@@ -1,10 +1,12 @@
 package com.example.backend.Controller;
 
 import com.example.backend.DTO.Response.UserAddressDTO;
+
 import com.example.backend.Entity.Address;
 import com.example.backend.Entity.SiteUser;
 import com.example.backend.Service.AddressService;
 import com.example.backend.Service.SiteUserService;
+
 import com.example.backend.Service.UserAddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,8 +19,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
+
 @CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/users")
+
+
 public class UserController {
 
     @Autowired
@@ -98,3 +103,6 @@ public class UserController {
 //        }
 //    }
 }
+
+
+

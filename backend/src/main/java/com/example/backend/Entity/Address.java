@@ -15,7 +15,7 @@ public class  Address {
     private Integer addressId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",nullable = false)
+    @JoinColumn(name = "user_id")
     private SiteUser user;
 
     private String unit_number;
