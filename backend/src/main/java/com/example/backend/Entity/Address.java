@@ -24,7 +24,10 @@ public class Address {
     private String addressLine;
 
     @ManyToOne(fetch = FetchType.LAZY)
+<<<<<<< HEAD
     @OnDelete(action = OnDeleteAction.CASCADE)
+=======
+>>>>>>> main
     @JoinColumn(name = "user_id")
     private SiteUser user;
 

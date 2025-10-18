@@ -32,5 +32,8 @@ public class SiteUser {
     @ColumnDefault("'USER'")
     @Column(name = "role", nullable = false, length = 20)
     private String role;
+<<<<<<< HEAD
 
+=======
+>>>>>>> main
 }
