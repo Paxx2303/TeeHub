@@ -5,24 +5,39 @@ import { aiService } from './aiService';
 import { designService } from './designService';
 import { apiRequest } from './httpClient';
 
-import axios from 'axios';
-
-// Tạo instance Axios với cấu hình mặc định
-const api = axios.create({
-  baseURL: 'http://localhost:8080/',
-  headers: {
-    'Content-Type': 'application/json',
+export const api = {
+  auth: authService,
+  products: productService,
+  ai: aiService,
+  design: designService,
+  
+  // General API methods
+  health: async () => {
+    const response = await apiRequest.get('/health');
+    return response;
   },
-  timeout: 5000, // Thời gian chờ tối đa 5 giây
-});
-
-// Interceptor để xử lý lỗi toàn cục
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API error:', error);
-    throw error;
-  }
-);
+  
+  // File upload
+  uploadFile: async (file, type = 'image') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    
+    const response = await apiRequest.upload('/upload', formData);
+    return response;
+  },
+  
+  // Get app configuration
+  getConfig: async () => {
+    const response = await apiRequest.get('/config');
+    return response;
+  },
+  
+  // Get app statistics
+  getStats: async () => {
+    const response = await apiRequest.get('/stats');
+    return response;
+  },
+};
 
 export default api;
