@@ -1,5 +1,4 @@
 package com.example.backend.Entity;
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,17 +14,23 @@ public class SiteUser {
     @Column(name = "user_id", nullable = false)
     private Integer id;
 
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "user_avatar")
+    private String userAvatar;
+
     @Column(name = "email_address", nullable = false)
-    private String email_address;
+    private String emailAddress;
 
     @Column(name = "phone_number", length = 20)
-    private String phone_number;
+    private String phoneNumber;
 
     @Column(name = "password", nullable = false)
     private String password;
 
     @ColumnDefault("'USER'")
-    @Column(name = "role", length = 20)
+    @Column(name = "role", nullable = false, length = 20)
     private String role;
 
 }

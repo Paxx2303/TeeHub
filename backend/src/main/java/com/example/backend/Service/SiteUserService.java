@@ -25,8 +25,7 @@ public class SiteUserService {
         if (optionalUser.isPresent()) {
             SiteUser user = optionalUser.get();
             user.setPassword(userDetails.getPassword());
-            user.setEmail_address(userDetails.getEmail_address());
-            user.setPhone_number(userDetails.getPhone_number());
+
             return siteUserRepo.save(user);
         }
         return null;

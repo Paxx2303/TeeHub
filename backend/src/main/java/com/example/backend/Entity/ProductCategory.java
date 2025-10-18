@@ -1,23 +1,26 @@
 package com.example.backend.Entity;
-
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "product_category")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "product_category", schema = "ecommerce")
 public class ProductCategory {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer category_id;
+    @Column(name = "category_id", nullable = false)
+    private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "parent_category_id")
-    private ProductCategory parent_category_id;
+    private ProductCategory parentCategory;
 
-    private String category_name;
+    @Column(name = "category_name", length = 100)
+    private String categoryName;
+
 }

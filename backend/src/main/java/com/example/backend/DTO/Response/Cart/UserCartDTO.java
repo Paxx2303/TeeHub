@@ -11,11 +11,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CartDTO {
-    private Integer cart_id;
-    private Integer user_id;
+public class UserCartDTO {
+    private Integer cartId;
+    private Integer userId;
     private List<CartItemDTO> items;
-    private Double total_price;
 
 
 }

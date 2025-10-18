@@ -1,3 +1,4 @@
+import { apiRequest } from './httpClient';
 import { API_ENDPOINTS } from '../utils/constants';
 
 export const aiService = {
@@ -5,7 +6,7 @@ export const aiService = {
   uploadImage: async (file) => {
     const formData = new FormData();
     formData.append('image', file);
-
+    
     const response = await apiRequest.upload(`${API_ENDPOINTS.AI_TRY_ON}/upload`, formData);
     return response;
   },

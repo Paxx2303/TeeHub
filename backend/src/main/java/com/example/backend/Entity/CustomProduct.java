@@ -1,41 +1,30 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-
+@Getter
+@Setter
 @Entity
-@Table(name = "custom_product")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "custom_product", schema = "ecommerce")
 public class CustomProduct {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer custom_product_id;
+    @Column(name = "custom_product_id", nullable = false)
+    private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_item_id")
-    private ProductItem product_item_id;
+    @Column(name = "custom_name")
+    private String customName;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private SiteUser user_id;
+    @Column(name = "custom_image_url")
+    private String customImageUrl;
 
-    private String custom_name;
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
+    private Instant createdAt;
 
-    @Column(columnDefinition = "TEXT")
-    private String custom_description;
-
-    private String custom_color;
-    private String custom_text;
-    private String custom_image_url;
-    private String preview_image;
-
-    @Column(columnDefinition = "timestamp default CURRENT_TIMESTAMP")
-    private LocalDateTime created_at;
 }

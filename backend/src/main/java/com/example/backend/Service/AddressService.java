@@ -30,15 +30,7 @@ public class AddressService {
         Address existingAddress = optionalAddress.get();
 
         // Cập nhật các trường
-        existingAddress.setUnit_number(newAddressData.getUnit_number());
-        existingAddress.setStreet_number(newAddressData.getStreet_number());
-        existingAddress.setAddress_line1(newAddressData.getAddress_line1());
-        existingAddress.setAddress_line2(newAddressData.getAddress_line2());
-        existingAddress.setCity(newAddressData.getCity());
-        existingAddress.setRegion(newAddressData.getRegion());
-        existingAddress.setPostal_code(newAddressData.getPostal_code());
-        existingAddress.setCountry_name(newAddressData.getCountry_name());
-        existingAddress.setIs_default(newAddressData.getIs_default());
+
 
         // Nếu bạn muốn cập nhật cả user:
         if (newAddressData.getUser() != null) {

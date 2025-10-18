@@ -1,28 +1,18 @@
 package com.example.backend.Entity;
 
-
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.*;
-
-import java.util.Collection;
-
-@Entity
-@Table(name = "shopping_cart")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Getter
+@Setter
+@Entity
+@Table(name = "shopping_cart", schema = "ecommerce")
 public class ShoppingCart {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer cart_id;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private SiteUser user_id;
-
-
+    @Column(name = "cart_id", nullable = false)
+    private Integer cartId;
+    @Column(name = "user_id")
+    private Integer userId;
 }

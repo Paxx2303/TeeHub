@@ -1,31 +1,35 @@
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
+@Getter
+@Setter
 @Entity
-@Table(name = "user_review")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "user_review", schema = "ecommerce")
 public class UserReview {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer review_id;
+    @Column(name = "review_id", nullable = false)
+    private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id")
-    private SiteUser user_id;
+    private SiteUser user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "ordered_product_id")
-    private ProductItem ordered_product_id;
+    private ProductItem orderedProduct;
 
-    @Column(columnDefinition = "int check (rating_value between 1 and 5)")
-    private Integer rating_value;
+    @Column(name = "rating_value")
+    private Integer ratingValue;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "comment", length = Integer.MAX_VALUE)
     private String comment;
+
 }
