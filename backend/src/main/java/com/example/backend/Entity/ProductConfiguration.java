@@ -1,10 +1,10 @@
 package com.example.backend.Entity;
 
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -14,5 +14,10 @@ public class ProductConfiguration {
     @EmbeddedId
     private ProductConfigurationId id;
 
-    //TODO [Reverse Engineering] generate columns from DB
+    @MapsId("productItemId")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "product_item_id", nullable = false)
+    private ProductItem productItem;
+
 }

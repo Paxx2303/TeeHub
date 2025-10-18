@@ -1,7 +1,5 @@
 package com.example.backend.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,23 +14,20 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "promotion", schema = "ecommerce")
 public class Promotion {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "promotion_id", nullable = false)
     private Integer id;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "category_id")
-    @JsonIgnore
     private ProductCategory category;
 
-    @Column(name = "name", length = 255)
+    @Column(name = "name")
     private String name;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
     @Column(name = "discount_rate", precision = 5, scale = 2)
@@ -43,4 +38,5 @@ public class Promotion {
 
     @Column(name = "end_date")
     private LocalDate endDate;
+
 }

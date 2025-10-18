@@ -1,78 +1,59 @@
 package com.example.backend.Service;
 
-import com.example.backend.DTO.VariationOptionDTO;
-import com.example.backend.Entity.Variation;
-import com.example.backend.Entity.VariationOption;
+import com.example.backend.DTO.Response.VariationOptionResponse;
 import com.example.backend.Repos.VariationOptionRepo;
-import com.example.backend.Repos.VariationRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class VariationOptionService {
 
-    private final VariationOptionRepo variationOptionRepository;
-    private final VariationRepo variationRepository;
+    private final VariationOptionRepo variationOptionRepo;
 
-    public VariationOptionService(VariationOptionRepo variationOptionRepository,
-                                  VariationRepo variationRepository) {
-        this.variationOptionRepository = variationOptionRepository;
-        this.variationRepository = variationRepository;
+    public List<VariationOptionResponse> getAll() {
+        var list = variationOptionRepo.findAllAsDto();
+        if (list.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không có variation option nào.");
+        }
+        return list;
     }
 
-    // Lấy tất cả options
-    public List<VariationOptionDTO> getAllOptions() {
-        return variationOptionRepository.findAll()
-                .stream()
-                .map(VariationOptionDTO::new)
-                .collect(Collectors.toList());
+    public List<VariationOptionResponse> getByVariationId(Integer variationId) {
+        var list = variationOptionRepo.findByVariationIdAsDto(variationId);
+        if (list.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Variation " + variationId + " chưa có option."
+            );
+        }
+        return list;
     }
 
-    // Lấy option theo ID
-    public Optional<VariationOptionDTO> getOptionById(Integer id) {
-        return variationOptionRepository.findById(id).map(VariationOptionDTO::new);
+    public List<VariationOptionResponse> getByCategoryId(Integer categoryId) {
+        var list = variationOptionRepo.findByCategoryIdAsDto(categoryId);
+        if (list.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Category " + categoryId + " chưa có option."
+            );
+        }
+        return list;
     }
 
-    // Lấy option theo variation_id
-    public List<VariationOptionDTO> getOptionsByVariation(Integer variationId) {
-        return variationOptionRepository.findByVariation_Id(variationId)
-                .stream()
-                .map(VariationOptionDTO::new)
-                .collect(Collectors.toList());
-    }
-
-    // Thêm option mới
-    public VariationOptionDTO saveOption(VariationOptionDTO dto) {
-        Variation variation = variationRepository.findById(dto.getVariationId())
-                .orElseThrow(() -> new RuntimeException("Variation not found"));
-
-        VariationOption option = new VariationOption();
-        option.setValue(dto.getValue());
-        option.setVariation(variation);
-
-        return new VariationOptionDTO(variationOptionRepository.save(option));
-    }
-
-    // Cập nhật option theo ID
-    public Optional<VariationOptionDTO> updateOption(Integer id, VariationOptionDTO dto) {
-        return variationOptionRepository.findById(id).map(existing -> {
-            existing.setValue(dto.getValue());
-
-            if (dto.getVariationId() != null) {
-                Variation variation = variationRepository.findById(dto.getVariationId())
-                        .orElseThrow(() -> new RuntimeException("Variation not found"));
-                existing.setVariation(variation);
-            }
-
-            return new VariationOptionDTO(variationOptionRepository.save(existing));
-        });
-    }
-
-    // Xóa option
-    public void deleteOption(Integer id) {
-        variationOptionRepository.deleteById(id);
+    public List<VariationOptionResponse> searchByValue(String keyword) {
+        var key = keyword == null ? "" : keyword.trim();
+        var list = variationOptionRepo.searchByValueAsDto(key);
+        if (list.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Không tìm thấy option với từ khóa: " + key
+            );
+        }
+        return list;
     }
 }

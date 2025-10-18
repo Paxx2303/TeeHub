@@ -1,7 +1,9 @@
 package com.example.backend.Repos;
 
+import com.example.backend.DTO.Response.UserReviewResponse;
 import com.example.backend.Entity.UserReview;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -9,15 +11,56 @@ import java.util.List;
 @Repository
 public interface UserReviewRepo extends JpaRepository<UserReview, Integer> {
 
-    // Lấy danh sách review theo user_id
-    List<UserReview> findByUser_Id(Integer userId);
+    @Query("""
+        select new com.example.backend.DTO.Response.UserReviewResponse(
+            ur.id,               
+            u.id,              
+            u.emailAddress,     
+            op.id,                
+            p.name,             
+            ur.ratingValue,     
+            ur.comment           
+        )
+        from UserReview ur
+        left join ur.user u
+        left join ur.orderedProduct op
+        left join op.product p
+        """)
+    List<UserReviewResponse> findAllAsDto();
 
-    // Lấy danh sách review theo product_id
-    List<UserReview> findByOrderedProduct_Id(Integer productId);
+    @Query("""
+        select new com.example.backend.DTO.Response.UserReviewResponse(
+            ur.id,
+            u.id,
+            u.emailAddress,
+            op.id,
+            p.name,
+            ur.ratingValue,
+            ur.comment
+        )
+        from UserReview ur
+        left join ur.user u
+        left join ur.orderedProduct op
+        left join op.product p
+        where u.id = :userId
+        """)
+    List<UserReviewResponse> findByUserIdAsDto(@Param("userId") Integer userId);
 
-    // Lấy danh sách review theo rating
-    List<UserReview> findByRatingValue(Integer ratingValue);
-
-    // Kiểm tra xem user đã review một sản phẩm chưa
-    boolean existsByUser_IdAndOrderedProduct_Id(Integer userId, Integer productId);
+    @Query("""
+        select new com.example.backend.DTO.Response.UserReviewResponse(
+            ur.id,
+            u.id,
+            u.emailAddress,
+            op.id,
+            p.name,
+            ur.ratingValue,
+            ur.comment
+        )
+        from UserReview ur
+        left join ur.user u
+        left join ur.orderedProduct op
+        left join op.product p
+        where op.id = :productItemId
+        """)
+    List<UserReviewResponse> findByProductItemIdAsDto(@Param("productItemId") Integer productItemId);
 }

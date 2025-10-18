@@ -18,14 +18,18 @@ public class UserReview {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "user_id")
+    private SiteUser user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "ordered_product_id")
     private ProductItem orderedProduct;
 
-    @Column(name = "rating_value")
+    @Column(name = "rating_value", nullable = false)
     private Integer ratingValue;
 
     @Column(name = "comment", length = Integer.MAX_VALUE)
     private String comment;
-
 
 }

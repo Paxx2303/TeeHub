@@ -18,7 +18,7 @@ public class OrderLine {
     @Column(name = "order_line_id", nullable = false)
     private Integer id;
 
-    @Column(name = "qty")
+    @Column(name = "qty", nullable = false)
     private Integer qty;
 
     @Column(name = "price", precision = 10, scale = 2)
