@@ -6,11 +6,14 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
 @Table(name = "variation_option", schema = "ecommerce")
 public class VariationOption {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "variation_option_id", nullable = false)
@@ -18,10 +21,13 @@ public class VariationOption {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "variation_id")
+    @JoinColumn(name = "variation_id", nullable = false)
     private Variation variation;
 
     @Column(name = "value", nullable = false, length = 100)
     private String value;
 
+    // ✅ Quan hệ ngược (inverse side)
+    @ManyToMany(mappedBy = "selectedOptions", fetch = FetchType.LAZY)
+    private List<ShoppingCartItem> cartItems;
 }

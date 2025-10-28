@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -14,5 +16,10 @@ public class ShoppingCart {
     @Column(name = "cart_id", nullable = false)
     private Integer id;
 
-    //TODO [Reverse Engineering] generate columns from DB
+    @Column(name = "User_id", nullable = false)
+    private Integer userId;
+
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ShoppingCartItem> items;
+
 }

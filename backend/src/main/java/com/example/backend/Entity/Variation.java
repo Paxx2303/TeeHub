@@ -6,6 +6,8 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -23,5 +25,9 @@ public class Variation {
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
+
+
+    @OneToMany(mappedBy = "variation", fetch = FetchType.LAZY)
+    private List<VariationOption> options;
 
 }

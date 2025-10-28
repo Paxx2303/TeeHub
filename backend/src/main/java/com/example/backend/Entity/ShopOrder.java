@@ -20,6 +20,10 @@ public class ShopOrder {
     @Column(name = "order_id", nullable = false)
     private Integer id;
 
+
+    @Column(name ="user_id")
+    private Integer userId;
+
     @Column(name = "payment_type_name", length = 50)
     private String paymentTypeName;
 

@@ -18,7 +18,7 @@ public class UserReviewService {
     public List<UserReviewResponse> getAllReviews() {
         var list = userReviewRepo.findAllAsDto();
         if (list.isEmpty()) {
-            // 404 khi không có dữ liệu
+
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không có đánh giá nào.");
         }
         return list;
