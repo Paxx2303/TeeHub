@@ -22,11 +22,18 @@ public class OrderLine {
     private Integer qty;
 
     @Column(name = "price", precision = 10, scale = 2)
-    private BigDecimal price;
+    private Integer price;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id") // ✅ liên kết đến ShopOrder
+    private ShopOrder shopOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "custom_product_id")
     private CustomProduct customProduct;
+
+    @Column(name = "product_item_id")
+    private Integer productItemId;
 
 }

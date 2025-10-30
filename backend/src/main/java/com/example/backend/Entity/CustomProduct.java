@@ -20,12 +20,16 @@ public class CustomProduct {
     @Column(name = "custom_name")
     private String customName;
 
+    @Column(name ="product_item_id")
+    private Integer productId;
+
     @Column(name = "custom_image_url")
     private String customImageUrl;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "user_id")
+    private Integer userId;
+
+
 
 
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -15,5 +17,9 @@ public class ShoppingCart {
     private Integer Id;
     @Column(name = "user_id")
     private Integer userId;
+
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ShoppingCartItem> items;
+
 
 }

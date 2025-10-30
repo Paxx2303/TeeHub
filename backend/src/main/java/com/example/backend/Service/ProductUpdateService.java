@@ -104,8 +104,7 @@ public class ProductUpdateService {
             itemToSave.setSku(reqItem.getSku());
             itemToSave.setQtyInStock(reqItem.getQtyInStock());
             itemToSave.setProductImage(reqItem.getItemImage());
-            itemToSave.setPrice(reqItem.getPrice());
-
+            itemToSave.setPrice(Integer.valueOf(String.valueOf(reqItem.getPrice())));
             ProductItem savedItem = itemRepo.save(itemToSave);
 
             // --- 4. Hòa giải ProductConfiguration ---

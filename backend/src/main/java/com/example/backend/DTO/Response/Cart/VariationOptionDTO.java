@@ -1,19 +1,12 @@
 package com.example.backend.DTO.Response.Cart;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter
+@Setter
 public class VariationOptionDTO {
-    private Integer variation_option_id;
-
-    private Integer variation_id;     // từ Variation
-    private String  variation_name;   // từ Variation
-
-    private Integer category_id;      // từ ProductCategory (qua Variation)
-    private String  category_name;    // từ ProductCategory (qua Variation)
-
-    private String value;             // giá trị option
+    private Integer id;           // variation_option_id
+    private Integer variationId;  // variation_id
+    private String value;         // ví dụ: "Đỏ", "XXL"
 }

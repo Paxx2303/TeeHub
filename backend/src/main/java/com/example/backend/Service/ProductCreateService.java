@@ -63,7 +63,7 @@ public class ProductCreateService {
                 newItem.setSku(reqItem.getSku());
                 newItem.setQtyInStock(reqItem.getQtyInStock());
                 newItem.setProductImage(reqItem.getItemImage());
-                newItem.setPrice(reqItem.getPrice());
+                newItem.setPrice(Integer.valueOf(String.valueOf(reqItem.getPrice())));
 
                 // 4b. LƯU ProductItem
                 ProductItem savedItem = itemRepo.save(newItem);

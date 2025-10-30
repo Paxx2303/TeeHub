@@ -1,6 +1,4 @@
 package com.example.backend.Repos;
-
-
 import com.example.backend.DTO.Response.VariationOptionResponse;
 
 import com.example.backend.Entity.VariationOption;
@@ -12,6 +10,7 @@ import java.util.List;
 
 @Repository
 public interface VariationOptionRepo extends JpaRepository<VariationOption, Integer> {
+
 
     @Query("""
         select new com.example.backend.DTO.Response.VariationOptionResponse(

@@ -1,14 +1,12 @@
 package com.example.backend.DTO.Response.Cart;
 
+import lombok.Getter;
+import lombok.Setter;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 public class VariationDTO {
-    private String variationName;
-    private String optionValue;
+    private Integer id;
+    private Integer categoryId;
+    private String name;
 }

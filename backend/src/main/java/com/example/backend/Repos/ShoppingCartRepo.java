@@ -2,11 +2,8 @@ package com.example.backend.Repos;
 
 import com.example.backend.Entity.ShoppingCart;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.Optional;
 
-@Repository
 public interface ShoppingCartRepo extends JpaRepository<ShoppingCart, Integer> {
-
-
-    Integer findByUserId(Integer userId);
+    Optional<ShoppingCart> findByUserId(Integer userId);
 }
