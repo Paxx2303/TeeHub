@@ -1,50 +1,25 @@
 spring:
   application:
     name: store
-  datasource:
-<<<<<<< HEAD
 
+  datasource:
     url: jdbc:postgresql://localhost:5432/mydb
     username: admin
     password: 123456
-=======
-    url: jdbc:postgresql://localhost:5432/test1
-    username: postgres
-    password: '111444'
->>>>>>> main
     driver-class-name: org.postgresql.Driver
-<<<<<<< HEAD
-=======
     hikari:
       schema: ecommerce
->>>>>>> origin/tan
+
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
-<<<<<<< HEAD
-=======
     open-in-view: false
->>>>>>> origin/tan
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-<<<<<<< HEAD
-        default_schema: ecommerce   # 👈 THÊM DÒNG NÀY
-
-=======
-<<<<<<< HEAD
-
-        default_schema: ecommerce
->>>>>>> main
-server:
-  port: 8080
-logging:
-  level:
-    org.springframework: INFO
-=======
-        default_schema: ecommerce
+        default_schema: ecommerce   # 👈 thiết lập schema mặc định
 
 server:
   port: 8080
@@ -55,7 +30,5 @@ app:
 
 logging:
   level:
-    org.springframework.security: TRACE
     org.springframework: DEBUG
->>>>>>> origin/tan
-    com.example.backend: DEBUG
+    org.springframework.security: TRACE

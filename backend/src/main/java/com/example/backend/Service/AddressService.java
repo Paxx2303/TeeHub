@@ -3,64 +3,24 @@ package com.example.backend.Service;
 import com.example.backend.DTO.Request.AddressRequest;
 import com.example.backend.DTO.Response.AddressResponse;
 import com.example.backend.Entity.Address;
-<<<<<<< HEAD
-import com.example.backend.Repos.AddressRepo;
-=======
 import com.example.backend.Entity.SiteUser;
 import com.example.backend.Repos.AddressRepo;
-<<<<<<< HEAD
-import org.springframework.beans.factory.annotation.Autowired;
-=======
 import com.example.backend.Repos.SiteUserRepo;
 import jakarta.transaction.Transactional;
->>>>>>> origin/tan
 import lombok.RequiredArgsConstructor;
->>>>>>> main
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-<<<<<<< HEAD
-public class AddressService {
-<<<<<<< HEAD
-    @Autowired
-    private AddressRepo addressRepo;
-    public Address findByUser(SiteUser user) {
-        return addressRepo.findByUser(user);
-    }
-    public Address updateAddress(Integer addressId, Address newAddressData) {
-        // Tìm address theo id
-        Optional<Address> optionalAddress = addressRepo.findById(addressId);
-        if (optionalAddress.isEmpty()) {
-            throw new RuntimeException("Address with id " + addressId + " not found");
-        }
-
-        Address existingAddress = optionalAddress.get();
-
-        // Cập nhật các trường
-
-
-        // Nếu bạn muốn cập nhật cả user:
-        if (newAddressData.getUser() != null) {
-            existingAddress.setUser(newAddressData.getUser());
-        }
-
-        // Lưu lại
-        return addressRepo.save(existingAddress);
-=======
-
-    private final AddressRepo addressRepo;
-=======
 @Transactional
 public class AddressService {
 
     private final AddressRepo addressRepo;
     private final SiteUserRepo siteUserRepo;
->>>>>>> origin/tan
 
     private AddressResponse toResponse(Address a) {
         return AddressResponse.builder()
@@ -70,14 +30,10 @@ public class AddressService {
                 .address_line(a.getAddressLine())
                 .is_default(Boolean.TRUE.equals(a.getIsDefault()))
                 .build();
->>>>>>> main
     }
 
-<<<<<<< HEAD
-=======
     /* ====== Nhóm toàn bảng (giữ nguyên, KHÔNG ném 404 danh sách) ====== */
 
->>>>>>> origin/tan
     public List<AddressResponse> getAllAddresses() {
         return addressRepo.findAll().stream().map(this::toResponse).toList();
     }
@@ -121,8 +77,6 @@ public class AddressService {
         }
         addressRepo.deleteById(id);
     }
-<<<<<<< HEAD
-=======
 
     /* ====== Nhóm THEO USER (KHÔNG ném 404 danh sách) ====== */
 
@@ -172,5 +126,8 @@ public class AddressService {
                         HttpStatus.NOT_FOUND, "Địa chỉ không thuộc user hoặc không tồn tại"));
         addressRepo.delete(a);
     }
->>>>>>> origin/tan
+
+    public Address findByUser(SiteUser user) {
+        return addressRepo.findByUser(user);
+    }
 }

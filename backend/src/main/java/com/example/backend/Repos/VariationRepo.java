@@ -1,9 +1,7 @@
 package com.example.backend.Repos;
 
-<<<<<<< HEAD
-=======
+
 import com.example.backend.DTO.Response.VariationResponse;
->>>>>>> main
 import com.example.backend.Entity.Variation;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -14,9 +12,6 @@ import java.util.List;
 @Repository
 public interface VariationRepo extends JpaRepository<Variation, Integer> {
 
-<<<<<<< HEAD
-
-=======
     @Query("""
         select new com.example.backend.DTO.Response.VariationResponse(
             v.id,         
@@ -54,5 +49,5 @@ public interface VariationRepo extends JpaRepository<Variation, Integer> {
         where lower(v.name) like lower(concat('%', :keyword, '%'))
         """)
     List<VariationResponse> searchByNameAsDto(@Param("keyword") String keyword);
->>>>>>> main
+
 }

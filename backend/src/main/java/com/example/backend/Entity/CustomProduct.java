@@ -20,7 +20,6 @@ public class CustomProduct {
     @Column(name = "custom_name")
     private String customName;
 
-<<<<<<< HEAD
     @Column(name = "custom_image_url")
     private String customImageUrl;
 
@@ -28,25 +27,5 @@ public class CustomProduct {
     @Column(name = "created_at")
     private Instant createdAt;
 
-=======
-    @Column(name = "custom_description", length = Integer.MAX_VALUE)
-    private String customDescription;
 
-    @Column(name = "custom_color", length = 50)
-    private String customColor;
-
-    @Column(name = "custom_text")
-    private String customText;
-
-    @Column(name = "custom_image_url")
-    private String customImageUrl;
-
-    @Column(name = "preview_image")
-    private String previewImage;
-
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private Instant createdAt;
-
->>>>>>> main
 }

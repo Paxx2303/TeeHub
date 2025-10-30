@@ -1,10 +1,8 @@
 package com.example.backend.Repos;
 
-<<<<<<< HEAD
-import com.example.backend.DTO.Response.Cart.VariationOptionDTO;
-=======
+
 import com.example.backend.DTO.Response.VariationOptionResponse;
->>>>>>> main
+
 import com.example.backend.Entity.VariationOption;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -15,9 +13,6 @@ import java.util.List;
 @Repository
 public interface VariationOptionRepo extends JpaRepository<VariationOption, Integer> {
 
-<<<<<<< HEAD
-
-=======
     @Query("""
         select new com.example.backend.DTO.Response.VariationOptionResponse(
             vo.id,            
@@ -80,5 +75,5 @@ public interface VariationOptionRepo extends JpaRepository<VariationOption, Inte
         where lower(vo.value) like lower(concat('%', :keyword, '%'))
         """)
     List<VariationOptionResponse> searchByValueAsDto(@Param("keyword") String keyword);
->>>>>>> main
+
 }

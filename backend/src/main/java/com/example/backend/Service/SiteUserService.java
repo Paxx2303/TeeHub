@@ -158,4 +158,9 @@ public class SiteUserService {
                 .role(su.getRole())
                 .build();
     }
+
+    public SiteUser findById(Integer id) {
+        return siteUserRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User " + id + " không tồn tại."));
+    }
 }
