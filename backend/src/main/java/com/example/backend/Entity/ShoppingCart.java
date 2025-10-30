@@ -12,7 +12,13 @@ public class ShoppingCart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cart_id", nullable = false)
+<<<<<<< HEAD
     private Integer cartId;
     @Column(name = "user_id")
     private Integer userId;
+=======
+    private Integer id;
+
+    //TODO [Reverse Engineering] generate columns from DB
+>>>>>>> main
 }

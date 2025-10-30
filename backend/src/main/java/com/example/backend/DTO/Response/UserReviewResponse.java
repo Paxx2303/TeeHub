@@ -1,0 +1,40 @@
+package com.example.backend.DTO.Response;
+
+import com.example.backend.Entity.UserReview;
+import lombok.*;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserReviewResponse {
+    private Integer id;
+    private Integer ratingValue;
+    private String comment;
+    private String userName;     // Sửa thành fullName
+    private String userAvatar; // Thêm avatar
+    private String createdAt;
+
+    public UserReviewResponse(UserReview entity) {
+        this.id = entity.getId();
+        this.ratingValue = entity.getRatingValue();
+        this.comment = entity.getComment();
+
+        // Kiểm tra an toàn: tránh gọi getter trên proxy chưa được nạp
+        try {
+            if (entity.getUser() != null) {
+                this.userName = entity.getUser().getFullName();
+                this.userAvatar = entity.getUser().getUserAvatar();
+            } else {
+                this.userName = "Anonymous";
+            }
+        } catch (org.hibernate.LazyInitializationException ex) {
+            // user chưa được nạp — đặt giá trị mặc định
+            this.userName = "Anonymous";
+            this.userAvatar = null;
+        }
+
+        this.createdAt = entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null;
+    }
+
+}

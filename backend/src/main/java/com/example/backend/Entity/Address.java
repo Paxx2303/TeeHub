@@ -1,11 +1,9 @@
+// backend/src/main/java/com/example/backend/Entity/Address.java
 package com.example.backend.Entity;
 
-import com.example.backend.Entity.ShoppingCartItem;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -17,18 +15,20 @@ public class Address {
     @Column(name = "address_id", nullable = false)
     private Integer id;
 
+    /* Liên kết bắt buộc để gộp API theo user */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // FK -> site_user.user_id
+    private SiteUser user;
+
+    @Column(name = "unit_number", length = 50)   // dùng trong Service/DTO của bạn
+    private String unitNumber;
+
     @Column(name = "street_number", length = 50)
     private String streetNumber;
 
     @Column(name = "address_line")
     private String addressLine;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-<<<<<<< HEAD
-    @OnDelete(action = OnDeleteAction.CASCADE)
-=======
->>>>>>> main
-    @JoinColumn(name = "user_id")
-    private SiteUser user;
-
+    @Column(name = "is_default")
+    private Boolean isDefault;
 }

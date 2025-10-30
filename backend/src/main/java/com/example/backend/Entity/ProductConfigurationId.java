@@ -33,5 +33,12 @@ public class ProductConfigurationId implements Serializable {
     public int hashCode() {
         return Objects.hash(productItemId, variationOptionId);
     }
+<<<<<<< HEAD
 
+=======
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/tan
+>>>>>>> main
 }

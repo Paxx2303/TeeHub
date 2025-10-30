@@ -7,7 +7,17 @@ import org.hibernate.annotations.ColumnDefault;
 @Getter
 @Setter
 @Entity
+<<<<<<< HEAD
 @Table(name = "site_user", schema = "ecommerce")
+=======
+<<<<<<< HEAD
+@Table(name = "site_user", schema = "ecommerce")
+=======
+@Table(name = "site_user", schema = "ecommerce", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email_address")
+})
+>>>>>>> origin/tan
+>>>>>>> main
 public class SiteUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +30,15 @@ public class SiteUser {
     @Column(name = "user_avatar")
     private String userAvatar;
 
+<<<<<<< HEAD
     @Column(name = "email_address", nullable = false)
+=======
+<<<<<<< HEAD
+    @Column(name = "email_address", nullable = false)
+=======
+    @Column(name = "email_address", nullable = false, unique = true)
+>>>>>>> origin/tan
+>>>>>>> main
     private String emailAddress;
 
     @Column(name = "phone_number", length = 20)
@@ -33,7 +51,17 @@ public class SiteUser {
     @Column(name = "role", nullable = false, length = 20)
     private String role;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
+>>>>>>> main
+=======
+
+<<<<<<< HEAD
+=======
+    public Integer getUserId() {
+        return id;
+    }
+>>>>>>> origin/tan
 >>>>>>> main
 }
