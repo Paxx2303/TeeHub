@@ -4,7 +4,6 @@ import com.example.backend.DTO.Request.CreateOrderRequest;
 import com.example.backend.DTO.Response.Order.OrderResponse;
 import com.example.backend.Entity.*;
 import com.example.backend.Repos.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,26 +18,30 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
-    @Autowired
-    private OrderRepo orderRepo;
+    private final OrderRepo orderRepo;
+    private final OrderLineRepo orderLineRepo;
+    private final CustomProductRepo customProductRepo;
+    private final ShoppingCartRepo cartRepo;
+    private final ShoppingCartItemRepo cartItemRepo;
+    private final AddressRepo addressRepo;
+    private final ProductItemRepo productItemRepo;
 
-    @Autowired
-    private OrderLineRepo orderLineRepo;
-
-    @Autowired
-    private CustomProductRepo customProductRepo;
-
-    @Autowired
-    private ShoppingCartRepo cartRepo;
-
-    @Autowired
-    private ShoppingCartItemRepo cartItemRepo;
-
-    @Autowired
-    private AddressRepo addressRepo;
-
-    @Autowired
-    private ProductItemRepo productItemRepo;
+    public OrderService(
+            OrderRepo orderRepo,
+            OrderLineRepo orderLineRepo,
+            CustomProductRepo customProductRepo,
+            ShoppingCartRepo cartRepo,
+            ShoppingCartItemRepo cartItemRepo,
+            AddressRepo addressRepo,
+            ProductItemRepo productItemRepo) {
+        this.orderRepo = orderRepo;
+        this.orderLineRepo = orderLineRepo;
+        this.customProductRepo = customProductRepo;
+        this.cartRepo = cartRepo;
+        this.cartItemRepo = cartItemRepo;
+        this.addressRepo = addressRepo;
+        this.productItemRepo = productItemRepo;
+    }
 
     // ✅ Lấy danh sách đơn hàng của user
     public List<OrderResponse> getOrdersByUserId(Integer userId) {
@@ -58,6 +61,9 @@ public class OrderService {
     public ShopOrder createOrderFromCart(Integer userId, List<Integer> selectedCartItemIds) {
         ShoppingCart cart = cartRepo.findByUserId(userId)
                 .orElseThrow(() -> new com.example.backend.Exception.ResourceNotFoundException("Cart not found for userId " + userId));
+
+        // Validate ownership of all selected cart items
+        validateCartItemOwnership(userId, selectedCartItemIds);
 
         ShopOrder order = new ShopOrder();
         order.setUserId(userId);
@@ -88,6 +94,8 @@ public class OrderService {
 
         order.setItems(orderLines);
         ShopOrder savedOrder = orderRepo.save(order);
+        // Ensure order lines are persisted so IDs are available
+        orderLineRepo.saveAll(orderLines);
         cartItemRepo.deleteAllById(selectedCartItemIds);
 
         return savedOrder;
@@ -120,13 +128,10 @@ public class OrderService {
         order.setPaymentStatus("Chưa thanh toán");
         order.setOrderStatus("Đang xử lý");
 
-        // Tạo order lines từ các cart item đã chọn
-        // Validate ownership and existence
+        // Validate ownership first, then fetch items
+        validateCartItemOwnership(userId, selectedItemIds);
         List<ShoppingCartItem> selectedCartItems = new ArrayList<>();
         for (Integer id : selectedItemIds) {
-            if (!cartItemRepo.existsByIdAndCart_UserId(id, userId)) {
-                throw new com.example.backend.Exception.InvalidDataException("Cart item " + id + " does not belong to user " + userId);
-            }
             ShoppingCartItem ci = cartItemRepo.findById(id)
                     .orElseThrow(() -> new com.example.backend.Exception.ResourceNotFoundException("CartItem not found: " + id));
             selectedCartItems.add(ci);
@@ -174,15 +179,18 @@ public class OrderService {
             order.setPaymentDate(Instant.now());
         }
 
-        // Tính tổng tiền
+        // Tính tổng tiền hoàn toàn phía server
         BigDecimal itemsTotal = orderLines.stream()
                 .map(line -> BigDecimal.valueOf(line.getPrice()).multiply(BigDecimal.valueOf(line.getQty())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal shipping = request.getShippingPrice() != null ? request.getShippingPrice() : BigDecimal.ZERO;
+        if (shipping.compareTo(BigDecimal.ZERO) < 0) {
+            shipping = BigDecimal.ZERO;
+        }
         BigDecimal finalTotal = itemsTotal.add(shipping);
 
-        order.setOrderTotal(request.getOrderTotal() != null ? request.getOrderTotal() : finalTotal);
+        order.setOrderTotal(finalTotal);
 
         ShopOrder saved = orderRepo.save(order);
 
@@ -201,6 +209,21 @@ public class OrderService {
         response.setOrderDate(saved.getOrderDate());
         response.setOrderTotal(saved.getOrderTotal());
 
+        // Ensure lines are saved so IDs are set
+        orderLineRepo.saveAll(orderLines);
+
+        // Batch fetch product images to avoid N+1
+        List<Integer> nonCustomProductItemIds = orderLines.stream()
+                .filter(l -> l.getCustomProduct() == null)
+                .map(OrderLine::getProductItemId)
+                .distinct()
+                .toList();
+        var productItems = nonCustomProductItemIds.isEmpty()
+                ? java.util.List.<com.example.backend.Entity.ProductItem>of()
+                : productItemRepo.findAllById(nonCustomProductItemIds);
+        java.util.Map<Integer, String> productImageById = productItems.stream()
+                .collect(java.util.stream.Collectors.toMap(com.example.backend.Entity.ProductItem::getId, com.example.backend.Entity.ProductItem::getProductImage));
+
         // Map items in aligned order without indexOf
         List<com.example.backend.DTO.Response.Order.OrderItemDTO> respItems = new ArrayList<>();
         for (int i = 0; i < orderLines.size(); i++) {
@@ -218,9 +241,9 @@ public class OrderService {
                 itemDTO.setCustom_id(line.getCustomProduct().getId());
                 itemDTO.setProductImage(line.getCustomProduct().getCustomImageUrl());
             } else {
-                var pi = productItemRepo.findById(Long.valueOf(line.getProductItemId()));
                 itemDTO.setIs_customed(false);
-                itemDTO.setProductImage(pi.map(com.example.backend.Entity.ProductItem::getProductImage).orElse(null));
+                String img = productImageById.get(line.getProductItemId());
+                itemDTO.setProductImage(img);
             }
 
             if (src.getSelectedOptions() != null) {
@@ -274,7 +297,7 @@ public class OrderService {
                 itemDTO.setCustom_id(line.getCustomProduct().getId());
                 itemDTO.setProductImage(line.getCustomProduct().getCustomImageUrl());
             } else {
-                var pi = productItemRepo.findById(Long.valueOf(line.getProductItemId()));
+                var pi = productItemRepo.findById(line.getProductItemId());
                 itemDTO.setIs_customed(false);
                 itemDTO.setProductImage(pi.map(com.example.backend.Entity.ProductItem::getProductImage).orElse(null));
             }
@@ -286,5 +309,14 @@ public class OrderService {
         }).toList());
 
         return dto;
+    }
+
+    private void validateCartItemOwnership(Integer userId, List<Integer> cartItemIds) {
+        if (cartItemIds == null || cartItemIds.isEmpty()) return;
+        for (Integer id : cartItemIds) {
+            if (!cartItemRepo.existsByIdAndCart_UserId(id, userId)) {
+                throw new com.example.backend.Exception.InvalidDataException("Cart item " + id + " does not belong to user " + userId);
+            }
+        }
     }
 }

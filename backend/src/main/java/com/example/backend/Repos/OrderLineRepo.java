@@ -10,3 +10,4 @@ import java.util.List;
 public interface OrderLineRepo extends JpaRepository<OrderLine, Integer> {
     List<OrderLine> findByShopOrderId(Integer orderId);
 }
+

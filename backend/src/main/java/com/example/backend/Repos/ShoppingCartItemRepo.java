@@ -31,27 +31,9 @@ public interface ShoppingCartItemRepo extends JpaRepository<ShoppingCartItem, In
     """)
     String findProductImageByCartItemId(Integer cartItemId);
 
-    @Query("""
-        SELECT cp.customImageUrl
-        FROM CustomProduct cp
-        JOIN ShoppingCartItem sci ON cp.productId = sci.productItemId
-        JOIN ShoppingCart sc ON sci.cart.id = sc.id
-        WHERE sci.id = :cartItemId
-          AND cp.userId = sc.userId
-    """)
-    String findCustomProductImageByCartItemId(Integer cartItemId);
 
 
-    // 🔸 Kiểm tra sản phẩm có bản custom hay không
-    @Query("""
-        SELECT CASE WHEN COUNT(cp.id) > 0 THEN TRUE ELSE FALSE END
-        FROM CustomProduct cp
-        JOIN ShoppingCartItem sci ON cp.productId = sci.productItemId
-        JOIN ShoppingCart sc ON sci.cart.id = sc.id
-        WHERE sci.id = :cartItemId
-          AND cp.userId = sc.userId
-    """)
-    Boolean isCustomProduct(Integer cartItemId);
+
 
 
     List<ShoppingCartItem> findByCartId(Integer id);

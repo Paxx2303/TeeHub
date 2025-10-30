@@ -42,4 +42,5 @@ public class ShoppingCartItem {
     @Column(name = "custom_product_id")
     private Integer customProductId;
 
+
 }

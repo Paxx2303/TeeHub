@@ -1,5 +1,6 @@
 package com.example.backend.Entity;
 
+import com.example.backend.Entity.Address;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

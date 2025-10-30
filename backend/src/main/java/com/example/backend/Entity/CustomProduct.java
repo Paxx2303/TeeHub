@@ -29,8 +29,7 @@ public class CustomProduct {
     @Column(name = "user_id")
     private Integer userId;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "created_at")
-    private Instant createdAt;
+
+
 
 }

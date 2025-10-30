@@ -1,9 +1,9 @@
+// backend/src/main/java/com/example/backend/Entity/Address.java
 package com.example.backend.Entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Setter
@@ -15,7 +15,12 @@ public class Address {
     @Column(name = "address_id", nullable = false)
     private Integer id;
 
-    @Column(name = "unit_number", length = 50)
+    /* Liên kết bắt buộc để gộp API theo user */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // FK -> site_user.user_id
+    private SiteUser user;
+
+    @Column(name = "unit_number", length = 50)   // dùng trong Service/DTO của bạn
     private String unitNumber;
 
     @Column(name = "street_number", length = 50)
@@ -24,8 +29,6 @@ public class Address {
     @Column(name = "address_line")
     private String addressLine;
 
-    @ColumnDefault("false")
     @Column(name = "is_default")
     private Boolean isDefault;
-
 }
