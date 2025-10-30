@@ -4,8 +4,13 @@ import { FiUpload, FiDownload, FiRefreshCw, FiSettings, FiClock } from 'react-ic
 import { useDropzone } from 'react-dropzone';
 import Button from '../../../components/ui/Button';
 import Modal from '../../../components/ui/Modal';
+<<<<<<< HEAD
 import { uploadImage, processTryOn, generateVariations } from '../../../store/slices/aiTryOnSlice';
 import { AI_TRY_ON_STATUS } from '../../../utils/constants';
+=======
+import { uploadImage, processTryOn, generateVariations } from '../../../store/slices/aiTryOnSlice.js';
+import { AI_TRY_ON_STATUS } from '../../../utils/constants.js';
+>>>>>>> origin/tan
 import styles from './AITryOn.module.css';
 
 const AITryOn = () => {

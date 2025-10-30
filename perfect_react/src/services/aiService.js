@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import { apiRequest } from './httpClient';
 import { API_ENDPOINTS } from '../utils/constants';
+=======
+import apiRequest from './httpClient.js';
+import { API_ENDPOINTS } from '../utils/constants.js';
+>>>>>>> origin/tan
 
 export const aiService = {
   // Upload image for AI processing

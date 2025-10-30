@@ -6,14 +6,24 @@ spring:
     username: postgres
     password: '111444'
     driver-class-name: org.postgresql.Driver
+<<<<<<< HEAD
+=======
+    hikari:
+      schema: ecommerce
+>>>>>>> origin/tan
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
+<<<<<<< HEAD
+=======
+    open-in-view: false
+>>>>>>> origin/tan
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+<<<<<<< HEAD
 
         default_schema: ecommerce
 server:
@@ -21,4 +31,19 @@ server:
 logging:
   level:
     org.springframework: INFO
+=======
+        default_schema: ecommerce
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: "p6n8fBq7Yw7o2C0l3o2yQm1nq2VqV8yDk2Z9h3lE5yI="
+
+logging:
+  level:
+    org.springframework.security: TRACE
+    org.springframework: DEBUG
+>>>>>>> origin/tan
     com.example.backend: DEBUG

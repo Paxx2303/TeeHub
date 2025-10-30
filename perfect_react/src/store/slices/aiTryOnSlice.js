@@ -1,6 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+<<<<<<< HEAD
 import { aiService } from '../../services/aiService';
 import { AI_TRY_ON_STATUS } from '../../utils/constants';
+=======
+import { aiService } from '../../services/aiService.js';
+import { AI_TRY_ON_STATUS } from '../../utils/constants.js';
+>>>>>>> origin/tan
 
 // Async thunks
 export const uploadImage = createAsyncThunk(

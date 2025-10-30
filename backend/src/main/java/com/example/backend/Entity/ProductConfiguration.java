@@ -20,4 +20,12 @@ public class ProductConfiguration {
     @JoinColumn(name = "product_item_id", nullable = false)
     private ProductItem productItem;
 
+<<<<<<< HEAD
+=======
+    @MapsId("variationOptionId")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "variation_option_id", nullable = false)
+    private VariationOption variationOption;
+>>>>>>> origin/tan
 }

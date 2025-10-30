@@ -3,9 +3,18 @@ package com.example.backend.Entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+<<<<<<< HEAD
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+=======
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.time.LocalDateTime;
+
+>>>>>>> origin/tan
 @Getter
 @Setter
 @Entity
@@ -31,5 +40,11 @@ public class UserReview {
 
     @Column(name = "comment", length = Integer.MAX_VALUE)
     private String comment;
+<<<<<<< HEAD
 
+=======
+    @CreationTimestamp // Tự động gán thời gian khi tạo
+    @Column(name = "created_at", nullable = false, updatable = false) // Map với cột DB
+    private LocalDateTime createdAt; // Kiểu dữ liệu thời gian
+>>>>>>> origin/tan
 }

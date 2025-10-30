@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React from 'react';
 
 const PublicRoute = ({ children }) => {
@@ -7,3 +8,15 @@ const PublicRoute = ({ children }) => {
 export default PublicRoute;
 
 
+=======
+import { Navigate, useLocation } from "react-router-dom";
+import { isAuthenticated } from "../utils/auth";
+
+export default function PublicRoute({ children }) {
+  const authed = isAuthenticated();
+  const location = useLocation();
+  return authed
+    ? <Navigate to={location.state?.from?.pathname || "/"} replace />
+    : children;
+}
+>>>>>>> origin/tan

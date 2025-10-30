@@ -1,4 +1,30 @@
+<<<<<<< HEAD
 import { apiRequest } from './httpClient';
+=======
+import api from './httpClient.js';
+import axiosRetry from 'axios-retry';
+
+axiosRetry(api, {
+  retries: 3,
+  retryDelay: (retryCount) => retryCount * 1000,
+  retryCondition: (error) => {
+    return (
+      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      error.response?.status === 429
+    );
+  },
+});
+
+const handleApiError = (error, defaultMsg) => {
+  if (error.response) {
+    throw new Error(error.response.data?.message || defaultMsg);
+  } else if (error.request) {
+    throw new Error('Không thể kết nối đến server.');
+  } else {
+    throw new Error(error.message || defaultMsg);
+  }
+};
+>>>>>>> origin/tan
 import { API_ENDPOINTS } from '../utils/constants';
 
 export const designService = {

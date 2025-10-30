@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import routes from './routeConfig.jsx';
@@ -35,3 +36,12 @@ export const AppRoutes = () => {
 export default AppRoutes;
 
 
+=======
+// src/routes/index.jsx
+import { useRoutes } from "react-router-dom";
+import routes from "./routeConfig";
+
+export default function AppRoutes() {
+  return useRoutes(routes);
+}
+>>>>>>> origin/tan

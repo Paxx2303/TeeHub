@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export { default } from './Home';
 
 async function fetchData() {
@@ -23,3 +24,8 @@ async function fetchData() {
 
 // Gọi hàm khi trang load
 window.onload = fetchData;
+=======
+export { default } from './Home.jsx';
+
+
+>>>>>>> origin/tan

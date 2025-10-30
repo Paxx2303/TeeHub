@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// backend/src/main/java/com/example/backend/Repos/AddressRepo.java
+>>>>>>> origin/tan
 package com.example.backend.Repos;
 
 import com.example.backend.Entity.Address;
@@ -6,10 +10,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+<<<<<<< HEAD
+=======
+import java.util.Optional;
+>>>>>>> origin/tan
 
 @Repository
 public interface AddressRepo extends JpaRepository<Address, Integer> {
 
+<<<<<<< HEAD
     @Query("""
         select a from Address a
         where (:q is null or :q = '')
@@ -18,4 +27,34 @@ public interface AddressRepo extends JpaRepository<Address, Integer> {
            or lower(coalesce(a.streetNumber, '')) like lower(concat('%', :q, '%'))
     """)
     List<Address> search(@Param("q") String q);
+=======
+    /* Search toàn bảng (giữ như bạn đang dùng, thêm order cho đẹp) */
+    @Query("""
+        select a from Address a
+        where (:q is null or :q = '')
+           or lower(coalesce(a.addressLine,  '')) like lower(concat('%', :q, '%'))
+           or lower(coalesce(a.unitNumber,   '')) like lower(concat('%', :q, '%'))
+           or lower(coalesce(a.streetNumber, '')) like lower(concat('%', :q, '%'))
+        order by a.id desc
+    """)
+    List<Address> search(@Param("q") String q);
+
+    /* Địa chỉ theo user (phục vụ nested routes) */
+    @Query("""
+        select a from Address a
+        join a.user u
+        where u.id = :userId
+        order by a.id desc
+    """)
+    List<Address> findByUserId(@Param("userId") Integer userId);
+
+    /* Lấy 1 địa chỉ thuộc user (để bảo vệ update/delete đúng chủ) */
+    @Query("""
+        select a from Address a
+        join a.user u
+        where a.id = :addressId and u.id = :userId
+    """)
+    Optional<Address> findOneForUser(@Param("userId") Integer userId,
+                                     @Param("addressId") Integer addressId);
+>>>>>>> origin/tan
 }

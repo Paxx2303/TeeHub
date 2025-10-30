@@ -1,6 +1,9 @@
 package com.example.backend.Repos;
 
+<<<<<<< HEAD
 import com.example.backend.DTO.Response.UserReviewResponse;
+=======
+>>>>>>> origin/tan
 import com.example.backend.Entity.UserReview;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +14,7 @@ import java.util.List;
 @Repository
 public interface UserReviewRepo extends JpaRepository<UserReview, Integer> {
 
+<<<<<<< HEAD
     @Query("""
         select new com.example.backend.DTO.Response.UserReviewResponse(
             ur.id,               
@@ -63,4 +67,12 @@ public interface UserReviewRepo extends JpaRepository<UserReview, Integer> {
         where op.id = :productItemId
         """)
     List<UserReviewResponse> findByProductItemIdAsDto(@Param("productItemId") Integer productItemId);
+=======
+    List<UserReview> findByOrderedProduct_Product_IdOrderByCreatedAtDesc(Integer productId);
+
+    @Query("SELECT COALESCE(AVG(r.ratingValue), 0.0), COUNT(r) " +
+            "FROM UserReview r " +
+            "WHERE r.orderedProduct.product.id = :productId")
+    List<Object[]> getRatingStatsForProduct(@Param("productId") Integer productId);
+>>>>>>> origin/tan
 }
