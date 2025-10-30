@@ -597,16 +597,45 @@
   gap: 20px;
 }
 
+.commentsListContainer {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar cho commentsListContainer */
+.commentsListContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.commentsListContainer::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.commentsListContainer::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.commentsListContainer::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 .commentCard {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 20px;
   background: #f8fafc;
   transition: all 0.3s ease;
-  height: 140px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 20px;
 }
 
 .commentCard:hover {
@@ -771,6 +800,10 @@
   .commentCard {
     height: auto;
     min-height: 120px;
+  }
+
+  .commentsListContainer {
+    max-height: 300px;
   }
 
   .carouselBtn {

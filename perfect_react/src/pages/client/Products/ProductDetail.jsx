@@ -1,10 +1,77 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { productService } from '../../../services/productService';
-import { getMockProductById } from '../../../services/mockProducts';
 import styles from './ProductDetail.module.css';
+import { reviewService } from '../../../services/userReviewService';
 
-// Mock data for FAQs and suggested products (in real app, this would come from API)
+const Carousel = ({ children, itemsPerView = 3, className = '' }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const items = React.Children.toArray(children);
+  const totalSlides = Math.ceil(items.length / itemsPerView);
+
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % totalSlides);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + totalSlides) % totalSlides);
+  };
+
+  const visibleItems = items.slice(
+    currentIndex * itemsPerView,
+    (currentIndex + 1) * itemsPerView
+  );
+
+  return (
+    <div className={`${styles.carousel} ${className}`}>
+      <button
+        onClick={prevSlide}
+        className={styles.carouselBtn}
+        disabled={currentIndex === 0}
+      >
+        ◀
+      </button>
+      <div className={styles.carouselContent}>
+        {visibleItems}
+      </div>
+      <button
+        onClick={nextSlide}
+        className={styles.carouselBtn}
+        disabled={currentIndex >= totalSlides - 1}
+      >
+        ▶
+      </button>
+    </div>
+  );
+};
+
+const ImageModal = ({ src, alt, isOpen, onClose }) => {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.modalClose} onClick={onClose}>✕</button>
+        <img src={src} alt={alt} className={styles.modalImage} />
+      </div>
+    </div>
+  );
+};
+
 const mockFAQs = [
   {
     question: 'Sản phẩm này có bảo hành không?',
@@ -83,263 +150,179 @@ const mockSuggestedProducts = [
   }
 ];
 
-// Carousel Component
-const Carousel = ({ children, itemsPerView = 1, className = '' }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsToShow, setItemsToShow] = useState(itemsPerView);
-
-  useEffect(() => {
-    const updateItemsPerView = () => {
-      if (window.innerWidth < 640) {
-        setItemsToShow(1);
-      } else if (window.innerWidth < 900) {
-        setItemsToShow(Math.min(2, itemsPerView));
-      } else {
-        setItemsToShow(itemsPerView);
-      }
-    };
-
-    updateItemsPerView();
-    window.addEventListener('resize', updateItemsPerView);
-    return () => window.removeEventListener('resize', updateItemsPerView);
-  }, [itemsPerView]);
-
-  const totalItems = React.Children.count(children);
-  const maxIndex = Math.max(0, totalItems - itemsToShow);
-
-  const nextSlide = () => {
-    setCurrentIndex(prev => prev >= maxIndex ? 0 : prev + 1);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex(prev => prev <= 0 ? maxIndex : prev - 1);
-  };
-
-  const goToSlide = (index) => {
-    setCurrentIndex(Math.min(index, maxIndex));
-  };
-
-  return (
-    <div className={`${styles.carousel} ${className}`}>
-      <div className={styles.carouselContainer}>
-        <div
-          className={styles.carouselTrack}
-          style={{
-            transform: `translateX(-${currentIndex * (100 / itemsToShow)}%)`,
-            width: `${(totalItems / itemsToShow) * 100}%`
-          }}
-        >
-          {React.Children.map(children, (child, index) => (
-            <div
-              key={index}
-              className={styles.carouselItem}
-              style={{ width: `${100 / totalItems}%` }}
-            >
-              {child}
-            </div>
-          ))}
-        </div>
-
-        {totalItems > itemsToShow && (
-          <>
-            <button
-              className={`${styles.carouselBtn} ${styles.carouselPrev}`}
-              onClick={prevSlide}
-              aria-label="Previous"
-            >
-              ‹
-            </button>
-            <button
-              className={`${styles.carouselBtn} ${styles.carouselNext}`}
-              onClick={nextSlide}
-              aria-label="Next"
-            >
-              ›
-            </button>
-          </>
-        )}
-      </div>
-
-      {totalItems > itemsToShow && (
-        <div className={styles.carouselDots}>
-          {Array.from({ length: maxIndex + 1 }, (_, index) => (
-            <button
-              key={index}
-              className={`${styles.carouselDot} ${currentIndex === index ? styles.carouselDotActive : ''}`}
-              onClick={() => goToSlide(index)}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Image Modal Component
-const ImageModal = ({ src, alt, isOpen, onClose }) => {
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className={styles.imageModal} onClick={onClose}>
-      <div className={styles.imageModalContent} onClick={e => e.stopPropagation()}>
-        <button className={styles.imageModalClose} onClick={onClose}>
-          ×
-        </button>
-        <img src={src} alt={alt} className={styles.imageModalImg} />
-      </div>
-    </div>
-  );
-};
-
+const mockComments = [
+  {
+    text: 'Sản phẩm rất tốt, đóng gói cẩn thận, giao hàng nhanh!',
+    rating: 5,
+    date: new Date('2024-10-15'),
+    userName: 'Nguyễn Văn A'
+  },
+  {
+    text: 'Chất lượng ổn, giá hợp lý. Sẽ ủng hộ shop tiếp.',
+    rating: 4,
+    date: new Date('2024-10-10'),
+    userName: 'Trần Thị B'
+  },
+  {
+    text: 'Đúng như mô tả, mình rất hài lòng với sản phẩm này.',
+    rating: 5,
+    date: new Date('2024-10-05'),
+    userName: 'Lê Văn C'
+  }
+];
+const CURRENT_USER_ID = 1;
+// ==================== MAIN COMPONENT ====================
 const ProductDetail = () => {
   const { id } = useParams();
+
+  // State cho dữ liệu sản phẩm
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  // State for user comments
-  const [comments, setComments] = useState([
-    {
-      text: 'Sản phẩm rất chất lượng, đóng gói cẩn thận. Sẽ ủng hộ shop lần sau!',
-      rating: 5,
-      date: new Date('2024-01-15'),
-      userName: 'Nguyễn Văn A'
-    },
-    {
-      text: 'Giao hàng nhanh, sản phẩm đúng mô tả. Rất hài lòng với lần mua này.',
-      rating: 4,
-      date: new Date('2024-01-10'),
-      userName: 'Trần Thị B'
-    },
-    {
-      text: 'Chất lượng tốt, giá cả hợp lý. Đáng tiền!',
-      rating: 5,
-      date: new Date('2024-01-08'),
-      userName: 'Lê Văn C'
-    },
-    {
-      text: 'Sản phẩm ok, nhưng giao hàng hơi lâu. Nhìn chung vẫn ổn.',
-      rating: 3,
-      date: new Date('2024-01-05'),
-      userName: 'Phạm Thị D'
-    }
-  ]);
+  // State cho biến thể
+  const [options, setOptions] = useState({});
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [currentItem, setCurrentItem] = useState(null);
+
+  const [comments, setComments] = useState([]); 
+  const [ratingStats, setRatingStats] = useState({ averageRating: 0.0, reviewCount: 0 });
   const [newComment, setNewComment] = useState('');
   const [userRating, setUserRating] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
 
-  // Fetch product details on component mount or ID change
+  // ==================== EFFECT 1: Load Product ====================
   useEffect(() => {
-    let isMounted = true;
-    async function fetchProduct() {
+    async function fetchData() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await productService.getProductById(id);
-        if (!isMounted) return;
-        const data = response?.data || response;
-        setProduct({
-          ...data,
-          // Mock additional data
-          purchaseCount: Math.floor(Math.random() * 500) + 100,
-          averageRating: (Math.random() * 2 + 3).toFixed(1),
-          specs: data.specs || [
-            { label: 'Chất liệu', value: 'Cotton cao cấp' },
-            { label: 'Xuất xứ', value: 'Việt Nam' },
-            { label: 'Kích thước', value: 'S, M, L, XL' },
-            { label: 'Màu sắc', value: 'Đa dạng' },
-            { label: 'Trọng lượng', value: '200g' }
-          ],
-          ...data,
-        });
+        const [productData, reviewsData, statsData] = await Promise.all([
+          productService.getProductById(id),
+          reviewService.getReviews(id),
+          reviewService.getRatingStats(id)
+        ]);
+        console.log(">>> DỮ LIỆU REVIEW THỰC TẾ TỪ API:", reviewsData);
+        setProduct(productData);
+        setComments(reviewsData);
+        setRatingStats(statsData);
       } catch (err) {
-        if (!isMounted) return;
-        const mock = getMockProductById(id);
-        if (mock) {
-          setProduct({
-            ...mock,
-            purchaseCount: Math.floor(Math.random() * 500) + 100,
-            averageRating: (Math.random() * 2 + 3).toFixed(1),
-            specs: [
-              { label: 'Chất liệu', value: 'Cotton cao cấp' },
-              { label: 'Xuất xứ', value: 'Việt Nam' },
-              { label: 'Kích thước', value: 'S, M, L, XL' },
-              { label: 'Màu sắc', value: 'Đa dạng' },
-              { label: 'Trọng lượng', value: '200g' }
-            ]
-          });
-          setError(null);
-        } else {
-          setError(err?.message || 'Không thể tải sản phẩm');
-        }
+        console.error(">>> Lỗi thực sự trong useEffect:", err);
+        setError(err?.message || 'Không thể tải dữ liệu sản phẩm'); // Sửa thông báo lỗi
       } finally {
-        if (isMounted) setIsLoading(false);
+        setIsLoading(false);
       }
     }
-    fetchProduct();
-    return () => { isMounted = false; };
+    fetchData();
   }, [id]);
 
-  // Set default selections when product loads
+  // ==================== EFFECT 2: Parse Options ====================
   useEffect(() => {
-    if (product) {
-      if (product.colors && product.colors.length > 0) {
-        setSelectedColor(product.colors[0]);
-      }
-      if (product.sizes && product.sizes.length > 0) {
-        setSelectedSize(product.sizes[0]);
-      }
+    if (product && product.items && product.items.length > 0) {
+      const newOptions = {};
+      const initialSelection = {};
+
+      // Thu thập tất cả các variation
+      product.items.forEach(item => {
+        if (item.configurations && Array.isArray(item.configurations)) {
+          item.configurations.forEach(config => {
+            if (!newOptions[config.variationName]) {
+              newOptions[config.variationName] = new Set();
+            }
+            newOptions[config.variationName].add(config.value);
+          });
+        }
+      });
+
+      // Chuyển Set thành Array và chọn giá trị đầu tiên
+      const finalOptions = {};
+      Object.keys(newOptions).forEach(key => {
+        finalOptions[key] = Array.from(newOptions[key]);
+        initialSelection[key] = finalOptions[key][0];
+      });
+
+      setOptions(finalOptions);
+      setSelectedOptions(initialSelection);
     }
   }, [product]);
 
-  // Handle image double click
+  // ==================== EFFECT 3: Find Current Item ====================
+  useEffect(() => {
+    if (product && product.items && Object.keys(selectedOptions).length > 0) {
+      const foundItem = product.items.find(item => {
+        // Kiểm tra item có configurations không
+        if (!item.configurations || !Array.isArray(item.configurations)) {
+          return false;
+        }
+
+        // Kiểm tra số lượng configurations có khớp với số lượng options không
+        if (item.configurations.length !== Object.keys(selectedOptions).length) {
+          return false;
+        }
+
+        // Kiểm tra mọi configuration có khớp với selectedOptions không
+        return item.configurations.every(config => {
+          return config.value === selectedOptions[config.variationName];
+        });
+      });
+
+      setCurrentItem(foundItem || null);
+    }
+  }, [product, selectedOptions]);
+
+  // ==================== HANDLERS ====================
+  const handleOptionClick = (optionName, value) => {
+    setSelectedOptions(prev => ({
+      ...prev,
+      [optionName]: value,
+    }));
+  };
+
   const handleImageDoubleClick = () => {
     setIsImageModalOpen(true);
   };
 
-  // Handle comment submission
-  const handleCommentSubmit = (e) => {
+  const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (newComment.trim() && userRating > 0) {
-      const newCommentObj = {
-        text: newComment,
-        rating: userRating,
-        date: new Date(),
-        userName: 'Khách hàng'
-      };
-      setComments([newCommentObj, ...comments]);
-      setNewComment('');
-      setUserRating(0);
+    if (!currentItem) {
+      alert('Vui lòng chọn một biến thể sản phẩm để đánh giá.');
+      return;
+    }
 
-      // Show success message (you can implement a toast notification)
-      alert('Cảm ơn bạn đã đánh giá sản phẩm!');
+    if (newComment.trim() && userRating > 0) {
+      try {
+        const reviewData = {
+          // SỬA: Dùng productItemId thay vì id (nếu API trả về productItemId)
+          productItemId: currentItem.productItemId,
+          userId: CURRENT_USER_ID,
+          ratingValue: userRating,
+          comment: newComment
+        };
+
+        const newReview = await reviewService.postReview(reviewData);
+
+        // Cập nhật state với review mới NHẤT lên đầu
+        setComments(prevComments => [newReview, ...prevComments]);
+
+        // Gọi lại API để cập nhật stats
+        const statsData = await reviewService.getRatingStats(id);
+        setRatingStats(statsData);
+
+        // Reset form
+        setNewComment('');
+        setUserRating(0);
+        alert('Cảm ơn bạn đã đánh giá sản phẩm!');
+
+      } catch (err) {
+        alert('Gửi đánh giá thất bại: ' + err.message);
+      }
+      // Di chuyển else ra ngoài try-catch
     } else {
-      alert('Vui lòng nhập bình luận và chọn số sao đánh giá!');
+      alert('Vui lòng nhập bình luận và chọn đánh giá sao.');
     }
   };
 
-  // Render loading state with skeleton
+  // ==================== RENDER LOADING ====================
   if (isLoading) {
     return (
       <div className={styles.productDetail}>
@@ -363,7 +346,7 @@ const ProductDetail = () => {
     );
   }
 
-  // Render error state
+  // ==================== RENDER ERROR ====================
   if (error) {
     return (
       <div className={styles.productDetail}>
@@ -380,182 +363,152 @@ const ProductDetail = () => {
     );
   }
 
-  // Render null if no product data
   if (!product) {
     return null;
   }
 
-  // Calculate discount price if available
-  const originalPrice = product.originalPrice || product.price * 1.2;
-  const discountPercentage = Math.round(((originalPrice - product.price) / originalPrice) * 100);
-
+  // ==================== RENDER MAIN ====================
   return (
     <div className={styles.productDetail}>
       <div className={styles.container}>
-        {/* Breadcrumb navigation */}
+        {/* Breadcrumb */}
         <nav className={styles.breadcrumbs}>
           <Link to="/">🏠 Trang chủ</Link>
           <span>/</span>
           <Link to="/products">📦 Sản phẩm</Link>
+          {product.category && (
+            <>
+              <span>/</span>
+              <Link to="/products">{product.category.categoryName}</Link>
+            </>
+          )}
           <span>/</span>
-          <span>{product.name || product.title || `#${id}`}</span>
+          <span>{product.productName}</span>
         </nav>
 
-        {/* Main product content */}
+        {/* Main Content */}
         <div className={styles.content}>
+          {/* Image Section */}
           <div className={styles.imageWrapper}>
-            {product.image ? (
-              <img
-                src={product.image}
-                alt={product.name || product.title}
-                className={styles.image}
-                onDoubleClick={handleImageDoubleClick}
-                title="Double-click để phóng to"
-              />
-            ) : (
-              <div className={styles.imagePlaceholder}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📷</div>
-                <div>Không có hình ảnh</div>
-              </div>
-            )}
+            <img
+              src={`/Product/${product.productMainImage}`}
+              alt={product.productName}
+              className={styles.image}
+              onDoubleClick={handleImageDoubleClick}
+              title="Double-click để phóng to"
+            />
           </div>
 
+          {/* Info Section */}
           <div className={styles.info}>
-            <h1 className={styles.title}>{product.name || product.title}</h1>
+            <h1 className={styles.title}>{product.productName}</h1>
 
-            {/* Display average rating and purchase count */}
+            {/* Rating Info */}
             <div className={styles.ratingInfo}>
-              <span className={styles.averageRating}>
-                ⭐ {product.averageRating} ({Math.floor(Math.random() * 50) + 10} đánh giá)
-              </span>
-              <span className={styles.purchaseCount}>
-                🛒 {product.purchaseCount} lượt mua
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ color: '#f59e0b', fontSize: '16px' }}>
+                  ⭐ {ratingStats.averageRating?.toFixed(1)}
+                </span>
+                <span style={{ color: '#64748b' }}>
+                  {Math.round(ratingStats.averageRating)}/5
+                </span>
+                <span style={{ color: '#94a3b8' }}>|</span>
+                <span style={{ color: '#64748b' }}>
+                  {ratingStats.reviewCount} đánh giá
+                </span>
+                {/* (Tạm ẩn lượt mua vì API không có) */}
+              </div>
             </div>
 
-            {/* Price section */}
-            {product.price != null && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                <div className={styles.price}>
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
-                </div>
-                {discountPercentage > 0 && (
-                  <>
-                    <div style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '16px' }}>
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)}
-                    </div>
-                    <span style={{
-                      background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                      color: 'white',
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>
-                      -{discountPercentage}%
-                    </span>
-                  </>
+            {/* Price */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div className={styles.price}>
+                {currentItem ? (
+                  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentItem.price)
+                ) : (
+                  'Vui lòng chọn biến thể'
                 )}
               </div>
-            )}
+            </div>
 
-            {/* Meta information */}
+            {/* Meta Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {product.sku && (
-                <div className={styles.metaRow}>
-                  <span>📦 Mã sản phẩm:</span>
-                  <span className={styles.metaValue}>{product.sku}</span>
-                </div>
-              )}
-              {typeof product.stock === 'number' && (
-                <div className={styles.metaRow}>
-                  <span>📊 Tồn kho:</span>
-                  <span className={styles.metaValue}>
-                    {product.stock > 0 ? `${product.stock} sản phẩm` : 'Hết hàng'}
-                    {product.stock > 0 && (
-                      <span style={{
-                        marginLeft: '8px',
-                        color: product.stock > 10 ? '#10b981' : '#f59e0b',
-                        fontSize: '12px'
-                      }}>
-                        {product.stock > 10 ? '✅ Còn hàng' : '⚠️ Sắp hết'}
-                      </span>
-                    )}
-                  </span>
-                </div>
+              {currentItem && (
+                <>
+                  <div className={styles.metaRow}>
+                    <span>📦 Mã SKU:</span>
+                    <span className={styles.metaValue}>{currentItem.sku}</span>
+                  </div>
+                  <div className={styles.metaRow}>
+                    <span>📊 Tồn kho:</span>
+                    <span className={styles.metaValue}>
+                      {currentItem.qtyInStock > 0 ? `${currentItem.qtyInStock} sản phẩm` : 'Hết hàng'}
+                      {currentItem.qtyInStock > 0 && (
+                        <span style={{
+                          marginLeft: '8px',
+                          color: currentItem.qtyInStock > 10 ? '#10b981' : '#f59e0b',
+                          fontSize: '12px'
+                        }}>
+                          {currentItem.qtyInStock > 10 ? '✅ Còn hàng' : '⚠️ Sắp hết'}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
 
-            {product.description && (
+            {/* Description */}
+            {product.productDescription && (
               <div>
                 <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#1e293b' }}>📝 Mô tả sản phẩm</h3>
-                <p className={styles.description}>{product.description}</p>
+                <p className={styles.description}>{product.productDescription}</p>
               </div>
             )}
 
-            {/* Color selection */}
-            {Array.isArray(product.colors) && product.colors.length > 0 && (
-              <div className={styles.optionGroup}>
-                <div className={styles.optionLabel}>🎨 Màu sắc</div>
+            {/* Options (Color, Size, etc.) */}
+            {Object.entries(options).map(([optionName, values]) => (
+              <div className={styles.optionGroup} key={optionName}>
+                <div className={styles.optionLabel}>🎨 {optionName}</div>
                 <div className={styles.chips}>
-                  {product.colors.map((color) => (
+                  {values.map((value) => (
                     <span
-                      key={color.code}
-                      className={`${styles.chip} ${selectedColor?.code === color.code ? styles.chipSelected : ''}`}
-                      onClick={() => setSelectedColor(color)}
+                      key={value}
+                      className={`${styles.chip} ${selectedOptions[optionName] === value ? styles.chipSelected : ''}`}
+                      onClick={() => handleOptionClick(optionName, value)}
                       style={{
-                        borderColor: selectedColor?.code === color.code ? '#3b82f6' : '#e2e8f0',
-                        backgroundColor: selectedColor?.code === color.code ? '#dbeafe' : '#f8fafc',
-                        color: selectedColor?.code === color.code ? '#2563eb' : '#64748b'
+                        borderColor: selectedOptions[optionName] === value ? '#3b82f6' : '#e2e8f0',
+                        backgroundColor: selectedOptions[optionName] === value ? '#dbeafe' : '#f8fafc',
+                        color: selectedOptions[optionName] === value ? '#2563eb' : '#64748b',
+                        cursor: 'pointer'
                       }}
                     >
-                      {color.name}
+                      {value}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
+            ))}
 
-            {/* Size selection */}
-            {Array.isArray(product.sizes) && product.sizes.length > 0 && (
-              <div className={styles.optionGroup}>
-                <div className={styles.optionLabel}>📏 Kích thước</div>
-                <div className={styles.chips}>
-                  {product.sizes.map((size) => (
-                    <span
-                      key={size}
-                      className={`${styles.chip} ${selectedSize === size ? styles.chipSelected : ''}`}
-                      onClick={() => setSelectedSize(size)}
-                      style={{
-                        borderColor: selectedSize === size ? '#3b82f6' : '#e2e8f0',
-                        backgroundColor: selectedSize === size ? '#dbeafe' : '#f8fafc',
-                        color: selectedSize === size ? '#2563eb' : '#64748b'
-                      }}
-                    >
-                      {size}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Action buttons */}
+            {/* Action Buttons */}
             <div className={styles.actions}>
               <button
                 className={styles.primaryBtn}
-                onClick={() => alert('Đã thêm vào giỏ hàng!')}
+                onClick={() => alert(`Đã thêm item SKU: ${currentItem?.sku}`)}
+                disabled={!currentItem || currentItem.qtyInStock === 0}
               >
-                🛒 Thêm vào giỏ
+                {currentItem?.qtyInStock === 0 ? 'Hết hàng' : '🛒 Thêm vào giỏ'}
               </button>
               <button
                 className={styles.secondaryBtn}
                 onClick={() => alert('Chuyển đến trang thanh toán')}
+                disabled={!currentItem || currentItem.qtyInStock === 0}
               >
                 💳 Mua ngay
               </button>
             </div>
 
-            {/* Quick info */}
+            {/* Benefits */}
             <div style={{
               background: 'linear-gradient(135deg, #f0f9ff, #e0f2fe)',
               padding: '16px',
@@ -581,7 +534,7 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Specs Section - Carousel */}
+        {/* Specs Section */}
         {Array.isArray(product.specs) && product.specs.length > 0 && (
           <section className={styles.specs}>
             <h2 className={styles.sectionTitle}>📊 Thông số kỹ thuật</h2>
@@ -596,7 +549,7 @@ const ProductDetail = () => {
           </section>
         )}
 
-        {/* FAQs Section - Carousel */}
+        {/* FAQs Section */}
         <section className={styles.faqs}>
           <h2 className={styles.sectionTitle}>❓ Câu hỏi thường gặp</h2>
           <Carousel itemsPerView={2} className={styles.faqsCarousel}>
@@ -609,7 +562,7 @@ const ProductDetail = () => {
           </Carousel>
         </section>
 
-        {/* Comments Section - Carousel */}
+        {/* Comments Section */}
         <section className={styles.comments}>
           <h2 className={styles.sectionTitle}>💬 Đánh giá & Bình luận</h2>
 
@@ -625,6 +578,7 @@ const ProductDetail = () => {
                     key={star}
                     className={`${styles.star} ${userRating >= star ? styles.starActive : ''}`}
                     onClick={() => setUserRating(star)}
+                    style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
                     onMouseEnter={(e) => e.target.style.transform = 'scale(1.2)'}
                     onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                   >
@@ -658,128 +612,77 @@ const ProductDetail = () => {
             </button>
           </form>
 
-          {/* Comments Carousel */}
+          {/* Comments List */}
           <div className={styles.commentList}>
             <h3 style={{ marginBottom: '20px', color: '#1e293b' }}>
-              📋 Tất cả đánh giá ({comments.length})
+              📋 Tất cả đánh giá ({ratingStats.reviewCount})
             </h3>
+            {/* Hiển thị nếu không có review */}
+            {comments.length === 0 && !isLoading && (
+              <p>Chưa có đánh giá nào cho sản phẩm này.</p>
+            )}
 
-            <Carousel itemsPerView={2} className={styles.commentsCarousel}>
-              {comments.map((comment, index) => (
-                <div key={index} className={styles.commentCard}>
+            <div className={styles.commentsListContainer}>
+              {comments.map((comment) => (
+                <div key={comment.id} className={styles.commentCard}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                    <div>
-                      <div className={styles.commentRating}>
-                        {'⭐'.repeat(comment.rating)} ({comment.rating}/5)
-                      </div>
-                      <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
-                        {comment.userName || 'Khách hàng'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <img
+                        // SỬA: Đường dẫn avatar mặc định
+                        src={comment.userAvatar || '/default-avatar.png'}
+                        alt={comment.userName}
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <div>
+                        <div className={styles.commentRating}>
+                          {'⭐'.repeat(comment.ratingValue)} ({comment.ratingValue}/5)
+                        </div>
+                        <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '14px' }}>
+                          {comment.userName || 'Anonymous'}
+                        </div>
                       </div>
                     </div>
                     <span className={styles.commentDate}>
-                      {new Intl.DateTimeFormat('vi-VN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      }).format(comment.date)}
+                      {comment.createdAt ? ( // Kiểm tra xem createdAt có tồn tại không
+                        new Intl.DateTimeFormat('vi-VN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',   // Thêm giờ
+                          minute: '2-digit'  // Thêm phút
+                        }).format(new Date(comment.createdAt)) // Chuyển đổi sang Date object
+                      ) : (
+                        'Unknown date' // Hoặc hiển thị gì đó nếu không có ngày
+                      )}
                     </span>
                   </div>
-                  <p style={{ margin: '0', lineHeight: '1.6', color: '#475569' }}>{comment.text}</p>
+                  <p style={{ margin: '0 0 0 50px', lineHeight: '1.6', color: '#475569' }}>
+                    {comment.comment}
+                  </p>
                 </div>
               ))}
-            </Carousel>
+            </div>
+
           </div>
         </section>
 
-        {/* Suggested Products Section */}
+        {/* Suggestions Section */}
         <section className={styles.suggestions}>
           <h2 className={styles.sectionTitle}>🔥 Sản phẩm gợi ý</h2>
-          <Carousel itemsPerView={3} className={styles.suggestionsCarousel}>
-            {mockSuggestedProducts.map((suggestion) => (
-              <Link
-                key={suggestion.id}
-                to={`/products/${suggestion.id}`}
-                className={styles.suggestionCard}
-              >
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src={suggestion.image}
-                    alt={suggestion.name}
-                    className={styles.suggestionImage}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div style={{
-                    display: 'none',
-                    height: '180px',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#f1f5f9',
-                    borderRadius: '8px',
-                    color: '#64748b',
-                    fontSize: '48px'
-                  }}>
-                    🖼️
-                  </div>
-                  {suggestion.discount && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                      color: 'white',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>
-                      -{suggestion.discount}%
-                    </div>
-                  )}
-                </div>
-                <h3>{suggestion.name}</h3>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <span style={{ color: '#f59e0b', fontSize: '14px' }}>
-                    ⭐ {suggestion.rating}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  <p style={{ margin: '0', fontWeight: '700', fontSize: '18px', color: '#dc2626' }}>
-                    {new Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND'
-                    }).format(suggestion.price)}
-                  </p>
-                  {suggestion.discount && (
-                    <span style={{
-                      textDecoration: 'line-through',
-                      color: '#94a3b8',
-                      fontSize: '14px'
-                    }}>
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND'
-                      }).format(suggestion.price / (1 - suggestion.discount / 100))}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </Carousel>
+
         </section>
       </div>
 
       {/* Image Modal */}
       <ImageModal
-        src={product.image}
-        alt={product.name || product.title}
+        src={currentItem?.itemImage || product.productMainImage}
+        alt={product.productName}
         isOpen={isImageModalOpen}
         onClose={() => setIsImageModalOpen(false)}
       />
     </div>
   );
 };
+
 
 export default ProductDetail;

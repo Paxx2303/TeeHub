@@ -73,7 +73,9 @@ public class MyUserDetails implements UserDetails {
         // Lấy email từ DTO
         return userDetailsDTO.getEmailAddress();
     }
-
+    public Integer getUserId() {
+        return userDetailsDTO.getUserId();
+    }
     // Các phương thức còn lại của UserDetails thường trả về true
     // nếu bạn không cần kiểm tra tài khoản hết hạn, bị khóa, v.v.
 
@@ -96,4 +98,6 @@ public class MyUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true; // Tài khoản luôn được kích hoạt
     }
+
+
 }

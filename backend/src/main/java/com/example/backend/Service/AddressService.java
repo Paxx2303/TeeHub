@@ -6,6 +6,7 @@ import com.example.backend.Entity.Address;
 import com.example.backend.Entity.SiteUser;
 import com.example.backend.Repos.AddressRepo;
 import com.example.backend.Repos.SiteUserRepo;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AddressService {
 
     private final AddressRepo addressRepo;

@@ -8,7 +8,9 @@ import org.hibernate.annotations.ColumnDefault;
 @Getter
 @Setter
 @Entity
-@Table(name = "site_user", schema = "ecommerce")
+@Table(name = "site_user", schema = "ecommerce", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email_address")
+})
 public class SiteUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +23,7 @@ public class SiteUser {
     @Column(name = "user_avatar")
     private String userAvatar;
 
-    @Column(name = "email_address", nullable = false)
+    @Column(name = "email_address", nullable = false, unique = true)
     private String emailAddress;
 
     @Column(name = "phone_number", length = 20)

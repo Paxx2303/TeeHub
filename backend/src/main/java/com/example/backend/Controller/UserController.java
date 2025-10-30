@@ -5,9 +5,11 @@ import com.example.backend.DTO.Request.SiteUserRequest;
 import com.example.backend.DTO.Request.AddressRequest;
 import com.example.backend.DTO.Response.SiteUserResponse;
 import com.example.backend.DTO.Response.AddressResponse;
+import com.example.backend.Sercurity.MyUserDetails;
 import com.example.backend.Service.SiteUserService;
 import com.example.backend.Service.AddressService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.*;
 import org.springframework.validation.annotation.Validated;
@@ -80,7 +82,7 @@ public class UserController {
     public ResponseEntity<List<AddressResponse>> getAddresses(@PathVariable Integer userId) {
         return ResponseEntity.ok(addressService.getAddressesOfUser(userId)); // trả [] khi rỗng
     }
-
+// ... (code còn lại giữ nguyên) ...
     // NEW: get one address theo user (tiện cho màn hình chi tiết)
     @GetMapping("/{userId}/addresses/{addressId}")
     public ResponseEntity<AddressResponse> getAddress(
@@ -111,5 +113,109 @@ public class UserController {
             @PathVariable Integer addressId) {
         addressService.deleteAddressForUser(userId, addressId);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/me")
+    public ResponseEntity<SiteUserResponse> getMyProfile(@AuthenticationPrincipal MyUserDetails userDetails) {
+
+        // KIỂM TRA NULL (ĐỂ TRÁNH LỖI 500 NẾU TOKEN HẾT HẠN)
+        if (userDetails == null) {
+            // Sẽ không bao giờ chạy đến đây nếu SecurityConfig của bạn yêu cầu .authenticated()
+            // Nhưng đây là một cách phòng vệ tốt
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy thông tin xác thực");
+        }
+
+        // Dùng email (hoặc ID) từ principal để lấy thông tin
+        // Giả sử MyUserDetails của bạn có hàm getUserId() hoặc getUsername()
+        Integer currentUserId = userDetails.getUserId(); // HOẶC dùng getUsername()
+
+        // Gọi service của bạn để lấy thông tin
+        return ResponseEntity.ok(siteUserService.getUserById(currentUserId));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<SiteUserResponse> updateMyProfile(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @Validated(SiteUserRequest.Update.class) @RequestBody SiteUserRequest req) {
+
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+        }
+        Integer currentUserId = userDetails.getUserId();
+        return ResponseEntity.ok(siteUserService.updateUser(currentUserId, req));
+    }
+
+    @GetMapping("/me/addresses")
+    public ResponseEntity<List<AddressResponse>> getMyAddresses(@AuthenticationPrincipal MyUserDetails userDetails) {
+
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ hoặc đã hết hạn");
+        }
+
+        // Dùng hàm getUserId() từ MyUserDetails
+        Integer currentUserId = userDetails.getUserId();
+
+        // Gọi service address của bạn
+        return ResponseEntity.ok(addressService.getAddressesOfUser(currentUserId));
+    }
+    @PostMapping("/me/addresses")
+    public ResponseEntity<AddressResponse> createMyAddress(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @Validated(AddressRequest.Create.class) @RequestBody AddressRequest req) {
+
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+        }
+        Integer currentUserId = userDetails.getUserId();
+
+        // Gọi service của bạn, dùng ID từ token
+        var created = addressService.createAddressForUser(currentUserId, req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    // THÊM ENDPOINT NÀY ĐỂ SỬA ĐỊA CHỈ
+    @PutMapping("/me/addresses/{addressId}")
+    public ResponseEntity<AddressResponse> updateMyAddress(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @PathVariable Integer addressId,
+            @Validated @RequestBody AddressRequest req) { // <-- Dữ liệu đổ vào đây
+
+        System.out.println(">>> Updating address. Received Request: " + req);
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+        }
+        Integer currentUserId = userDetails.getUserId();
+
+        // Gọi service của bạn, nhưng dùng ID từ token (currentUserId)
+        return ResponseEntity.ok(addressService.updateAddressForUser(currentUserId, addressId, req));
+    }
+
+    // THÊM ENDPOINT NÀY ĐỂ XÓA ĐỊA CHỈ
+    @DeleteMapping("/me/addresses/{addressId}")
+    public ResponseEntity<Void> deleteMyAddress(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @PathVariable Integer addressId) {
+
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+        }
+        Integer currentUserId = userDetails.getUserId();
+
+        addressService.deleteAddressForUser(currentUserId, addressId);
+        return ResponseEntity.noContent().build();
+    }
+    @PutMapping("/me/password")
+    public ResponseEntity<String> changeMyPassword(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @RequestBody SiteUserRequest req) { // Vẫn dùng SiteUserRequest nếu nó có password & new_password
+
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+        }
+        if (req.getPassword() == null || req.getNew_password() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần cung cấp mật khẩu cũ và mới");
+        }
+        Integer currentUserId = userDetails.getUserId();
+        siteUserService.changePassword(currentUserId, req.getPassword(), req.getNew_password());
+        return ResponseEntity.ok("Đổi mật khẩu thành công");
     }
 }

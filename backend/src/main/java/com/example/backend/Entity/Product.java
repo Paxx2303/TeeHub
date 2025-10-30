@@ -3,6 +3,8 @@ package com.example.backend.Entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Getter
 @Setter
@@ -22,5 +24,8 @@ public class Product {
 
     @Column(name = "product_image")
     private String productImage;
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "category_id")
+    private ProductCategory category;
 }
