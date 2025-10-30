@@ -33,4 +33,7 @@ public class OrderLine {
     @JoinColumn(name = "custom_product_id")
     private CustomProduct customProduct;
 
+    @Column(name = "product_item_id")
+    private Integer productItemId;
+
 }

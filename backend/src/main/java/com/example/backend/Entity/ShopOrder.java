@@ -9,6 +9,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,8 +21,7 @@ public class ShopOrder {
     @Column(name = "order_id", nullable = false)
     private Integer id;
 
-
-    @Column(name ="user_id")
+    @Column(name = "user_id")
     private Integer userId;
 
     @Column(name = "payment_type_name", length = 50)
@@ -60,4 +60,7 @@ public class ShopOrder {
     @Column(name = "order_total", precision = 10, scale = 2)
     private BigDecimal orderTotal;
 
+    // ✅ Thêm danh sách order lines (mỗi đơn hàng có nhiều dòng sản phẩm)
+    @OneToMany(mappedBy = "shopOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderLine> items;
 }

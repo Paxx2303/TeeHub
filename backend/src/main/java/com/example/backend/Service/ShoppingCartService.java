@@ -27,6 +27,7 @@ public class ShoppingCartService {
     @Autowired
     private EntityManager entityManager;
 
+
     // ====================== ADD TO CART ======================
     @Transactional
     public CartResponse addToCart(Integer userId, AddToCart request) {

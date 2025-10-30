@@ -15,12 +15,12 @@ public class ShoppingCartController {
     @Autowired
     private ShoppingCartService shoppingCartService;
 
-    @PostMapping("/{userId}/add")
+    @PostMapping("/user/{userId}/add")
     public ResponseEntity<CartResponse> addToCart(@PathVariable Integer userId, @RequestBody AddToCart request) {
         return ResponseEntity.ok(shoppingCartService.addToCart(userId, request));
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<CartResponse> getCart(@PathVariable Integer userId) {
         return ResponseEntity.ok(shoppingCartService.getCartByUserId(userId));
     }

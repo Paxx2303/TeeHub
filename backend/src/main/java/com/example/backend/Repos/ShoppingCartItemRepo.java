@@ -53,4 +53,9 @@ public interface ShoppingCartItemRepo extends JpaRepository<ShoppingCartItem, In
     """)
     Boolean isCustomProduct(Integer cartItemId);
 
+
+    List<ShoppingCartItem> findByCartId(Integer id);
+
+    // Ownership validation: ensure a cart item belongs to a user's cart
+    boolean existsByIdAndCart_UserId(Integer id, Integer userId);
 }
