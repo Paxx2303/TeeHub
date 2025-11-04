@@ -1,26 +1,21 @@
 spring:
   application:
     name: store
-
   datasource:
     url: jdbc:postgresql://localhost:5432/mydb
     username: admin
     password: 123456
     driver-class-name: org.postgresql.Driver
-    hikari:
-      schema: ecommerce
-
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: update
-    open-in-view: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        default_schema: ecommerce   # 👈 thiết lập schema mặc định
 
+        default_schema: ecommerce
 server:
   port: 8080
 
