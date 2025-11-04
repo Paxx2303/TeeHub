@@ -319,4 +319,9 @@ public class OrderService {
             }
         }
     }
+
+    public Object getAllOrders() {
+        List<ShopOrder> orders = orderRepo.findAll();
+        return orders.stream().map(this::mapToOrderResponse).collect(Collectors.toList());
+    }
 }

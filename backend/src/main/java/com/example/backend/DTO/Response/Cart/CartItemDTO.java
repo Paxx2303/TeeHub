@@ -20,7 +20,7 @@ public class CartItemDTO {
     private String productImage;
     private Double price;
     private Integer quantity;
-    private List<VariationDTO> variations;
+    private List<VariationOptionDTO> variations;
 
     public <E> CartItemDTO(Integer productId, String productName, Double price, Integer quantity, ArrayList<E> es) {
     }

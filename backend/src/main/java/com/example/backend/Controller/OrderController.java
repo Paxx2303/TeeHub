@@ -23,4 +23,9 @@ public class OrderController {
     public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
         return ResponseEntity.ok(orderService.createOrderFromRequest(request));
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
 }
