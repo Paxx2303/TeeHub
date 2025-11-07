@@ -30,7 +30,7 @@ export const productService = {
   getAllProducts: async (page = 0, size = 10, categoryId = null, searchTerm = null, sort = 'newest') => { // Tham số searchTerm ở đây là đúng
     try {
       // Chuyển đổi sort ID ('newest', 'price-asc') sang format backend ('productId,desc', 'price,asc')
-      let sortParam = 'productId,desc'; // Mặc định
+      let sortParam = 'createdAt,desc'; // Mặc định
       if (sort === 'hot') {
         sortParam = 'hot'; // Gửi 'hot' cho backend
       }
