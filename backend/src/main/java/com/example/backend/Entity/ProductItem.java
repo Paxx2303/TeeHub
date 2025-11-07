@@ -35,6 +35,6 @@ public class ProductItem {
     private String productImage;
 
     @Column(name = "price", precision = 10, scale = 2)
-    private Integer price;
+    private BigDecimal price;
 
 }

@@ -14,6 +14,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Class" />
+        <option value="Exception" />
       </list>
     </option>
   </component>
@@ -108,7 +109,12 @@
       <workItem from="1762193095160" duration="250000" />
       <workItem from="1762193671637" duration="307000" />
       <workItem from="1762193998582" duration="397000" />
-      <workItem from="1762266721055" duration="2002000" />
+      <workItem from="1762266721055" duration="6951000" />
+      <workItem from="1762352011898" duration="3153000" />
+      <workItem from="1762356864803" duration="172000" />
+      <workItem from="1762357126085" duration="2256000" />
+      <workItem from="1762446515665" duration="5606000" />
+      <workItem from="1762524591603" duration="8483000" />
     </task>
     <servers />
   </component>

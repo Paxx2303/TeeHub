@@ -11,8 +11,11 @@ import com.example.backend.Repos.ProductItemRepo;
 import com.example.backend.Repos.SiteUserRepo;
 import com.example.backend.Repos.UserReviewRepo;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,14 +32,12 @@ public class UserReviewService {
     @Autowired
     private SiteUserRepo userRepo;
 
-
     public List<UserReviewResponse> getReviewsForProduct(Integer productId) {
         return reviewRepo.findByOrderedProduct_Product_IdOrderByCreatedAtDesc(productId)
                 .stream()
                 .map(UserReviewResponse::new) // Chuyển Entity -> DTO
                 .collect(Collectors.toList());
     }
-
 
     public ReviewStatsResponse getRatingStatsForProduct(Integer productId) {
         // Kiểm tra xem query có trả về kết quả không
@@ -52,8 +53,6 @@ public class UserReviewService {
 
         return new ReviewStatsResponse(average, count);
     }
-
-
 
     @Transactional
     public UserReviewResponse createReview(UserReviewCreateRequest request) {

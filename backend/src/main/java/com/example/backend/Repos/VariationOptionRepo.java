@@ -74,5 +74,4 @@ public interface VariationOptionRepo extends JpaRepository<VariationOption, Inte
         where lower(vo.value) like lower(concat('%', :keyword, '%'))
         """)
     List<VariationOptionResponse> searchByValueAsDto(@Param("keyword") String keyword);
-
 }

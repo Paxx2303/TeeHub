@@ -26,7 +26,6 @@ public class VariationOption {
 
     @Column(name = "value", nullable = false, length = 100)
     private String value;
-
     // ✅ Quan hệ ngược (inverse side)
     @ManyToMany(mappedBy = "selectedOptions", fetch = FetchType.LAZY)
     private List<ShoppingCartItem> cartItems;

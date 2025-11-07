@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { productService } from '../../../services/productService';
 import styles from './ProductDetail.module.css';
 import { reviewService } from '../../../services/userReviewService';
-
+// ==================== CAROUSEL COMPONENT ====================
 const Carousel = ({ children, itemsPerView = 3, className = '' }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const items = React.Children.toArray(children);
@@ -45,6 +45,7 @@ const Carousel = ({ children, itemsPerView = 3, className = '' }) => {
   );
 };
 
+// ==================== IMAGE MODAL COMPONENT ====================
 const ImageModal = ({ src, alt, isOpen, onClose }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -72,6 +73,7 @@ const ImageModal = ({ src, alt, isOpen, onClose }) => {
   );
 };
 
+// ==================== MOCK DATA ====================
 const mockFAQs = [
   {
     question: 'Sản phẩm này có bảo hành không?',
@@ -186,10 +188,20 @@ const ProductDetail = () => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [currentItem, setCurrentItem] = useState(null);
 
-  const [comments, setComments] = useState([]); 
+  // State cho commentsconst [comments, setComments] = useState([]); // <- Bắt đầu rỗng
+  const [comments, setComments] = useState([]); // <-- KIỂM TRA DÒNG NÀY
   const [ratingStats, setRatingStats] = useState({ averageRating: 0.0, reviewCount: 0 });
   const [newComment, setNewComment] = useState('');
   const [userRating, setUserRating] = useState(0);
+
+  // hàm helper cho giá và giảm giá
+  const formatCurrency = (amount) => {
+    if (amount == null) return '';
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
 
   // ==================== EFFECT 1: Load Product ====================
   useEffect(() => {
@@ -202,7 +214,6 @@ const ProductDetail = () => {
           reviewService.getReviews(id),
           reviewService.getRatingStats(id)
         ]);
-        console.log(">>> DỮ LIỆU REVIEW THỰC TẾ TỪ API:", reviewsData);
         setProduct(productData);
         setComments(reviewsData);
         setRatingStats(statsData);
@@ -321,7 +332,7 @@ const ProductDetail = () => {
       alert('Vui lòng nhập bình luận và chọn đánh giá sao.');
     }
   };
-
+  const hasSale = currentItem && currentItem.discountRate > 0;
   // ==================== RENDER LOADING ====================
   if (isLoading) {
     return (
@@ -390,8 +401,9 @@ const ProductDetail = () => {
         <div className={styles.content}>
           {/* Image Section */}
           <div className={styles.imageWrapper}>
+
             <img
-              src={`/Product/${product.productMainImage}`}
+              src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // <-- Sửa: Lấy ảnh item trước
               alt={product.productName}
               className={styles.image}
               onDoubleClick={handleImageDoubleClick}
@@ -407,7 +419,7 @@ const ProductDetail = () => {
             <div className={styles.ratingInfo}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ color: '#f59e0b', fontSize: '16px' }}>
-                  ⭐ {ratingStats.averageRating?.toFixed(1)}
+                  ⭐ {ratingStats?.averageRating?.toFixed(1) ?? '0.0'}
                 </span>
                 <span style={{ color: '#64748b' }}>
                   {Math.round(ratingStats.averageRating)}/5
@@ -416,19 +428,41 @@ const ProductDetail = () => {
                 <span style={{ color: '#64748b' }}>
                   {ratingStats.reviewCount} đánh giá
                 </span>
+                <span>
+                  {product.totalSold >= 0 && (
+                    <div className={styles.soldCount}>
+                      Đã bán {product.totalSold}
+                    </div>
+                  )}
+                </span>
                 {/* (Tạm ẩn lượt mua vì API không có) */}
               </div>
             </div>
 
             {/* Price */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <div className={styles.price}>
-                {currentItem ? (
-                  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(currentItem.price)
-                ) : (
-                  'Vui lòng chọn biến thể'
-                )}
-              </div>
+            <div className={styles.priceContainer}>
+              {!currentItem ? (
+                // Chưa chọn biến thể
+                <span className={styles.price} style={{ color: '#6b7280' }}>Vui lòng chọn biến thể</span>
+              ) : hasSale ? (
+                // CÓ SALE: Hiển thị 3 thành phần
+                <>
+                  <span className={styles.newPrice}>
+                    {formatCurrency(currentItem.price)}
+                  </span>
+                  <span className={styles.originalPrice}>
+                    {formatCurrency(currentItem.originalPrice)}
+                  </span>
+                  <span className={styles.saleBadgeDetail}>
+                    -{Math.round(currentItem.discountRate)}%
+                  </span>
+                </>
+              ) : (
+                // KHÔNG SALE: Hiển thị 1 giá
+                <span className={styles.price} style={{ color: '#1e293b' }}>
+                  {formatCurrency(currentItem.originalPrice)}
+                </span>
+              )}
             </div>
 
             {/* Meta Info */}
@@ -623,7 +657,7 @@ const ProductDetail = () => {
             )}
 
             <div className={styles.commentsListContainer}>
-              {comments.map((comment) => (
+              {(Array.isArray(comments) ? comments : []).map((comment) => (
                 <div key={comment.id} className={styles.commentCard}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -675,7 +709,7 @@ const ProductDetail = () => {
 
       {/* Image Modal */}
       <ImageModal
-        src={currentItem?.itemImage || product.productMainImage}
+        src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // Sửa: Lấy ảnh item trước
         alt={product.productName}
         isOpen={isImageModalOpen}
         onClose={() => setIsImageModalOpen(false)}
@@ -683,5 +717,6 @@ const ProductDetail = () => {
     </div>
   );
 };
+
 
 export default ProductDetail;

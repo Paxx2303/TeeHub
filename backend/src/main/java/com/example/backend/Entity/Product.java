@@ -27,10 +27,8 @@ public class Product {
     @Column(name = "product_image")
     private String productImage;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "category_id")
     private ProductCategory category;
-
 }

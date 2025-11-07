@@ -16,6 +16,7 @@ public class ProductResponse {
     private String productMainImage;
     private CategoryInfo category;
     private List<ProductItemInfo> items;
+    private Long totalSold;
 
     @Getter
     @Setter
@@ -36,7 +37,9 @@ public class ProductResponse {
         private String sku;
         private Integer qtyInStock;
         private String itemImage;
-        private BigDecimal price;
+        private BigDecimal price; // Đây sẽ là GIÁ ĐÃ GIẢM
+        private BigDecimal originalPrice; // Đây là giá gốc
+        private BigDecimal discountRate; // % giảm giá (ví dụ: 20.00)
         private List<ConfigurationInfo> configurations;
     }
 

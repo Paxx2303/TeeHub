@@ -3,58 +3,59 @@ package com.example.backend.Controller;
 import com.example.backend.DTO.Request.PromotionRequest;
 import com.example.backend.DTO.Response.PromotionResponse;
 import com.example.backend.Service.PromotionService;
-//import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/promotions")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class PromotionController {
+    private final PromotionService promotionService;
 
-    private final PromotionService service;
-
+    // API: GET /api/promotions (Lấy tất cả)
     @GetMapping
-    public ResponseEntity<List<PromotionResponse>> getAll() {
-        var list = service.getAll();
-        return list.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(list);
+    public ResponseEntity<List<PromotionResponse>> getAllPromotions() {
+        return ResponseEntity.ok(promotionService.getAllPromotions());
     }
 
+    // API: GET /api/promotions/1 (Lấy 1 cái)
     @GetMapping("/{id}")
-    public ResponseEntity<PromotionResponse> getOne(@PathVariable Integer id) {
-        return ResponseEntity.ok(service.getOne(id));
+    public ResponseEntity<PromotionResponse> getPromotionById(@PathVariable Integer id) {
+        return ResponseEntity.ok(promotionService.getPromotionById(id));
     }
 
-    @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<PromotionResponse>> byCategory(@PathVariable Integer categoryId) {
-        var list = service.getByCategory(categoryId);
-        return list.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(list);
-    }
-
-    @GetMapping("/active")
-    public ResponseEntity<List<PromotionResponse>> active() {
-        var list = service.getActive();
-        return list.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(list);
-    }
-
+    // API: POST /api/promotions (Tạo mới)
     @PostMapping
-    public ResponseEntity<PromotionResponse> create(@RequestBody PromotionRequest req) {
-        var created = service.create(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<PromotionResponse> createPromotion(@RequestBody PromotionRequest request) {
+        PromotionResponse newPromotion = promotionService.createPromotion(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newPromotion);
     }
 
+    // API: PUT /api/promotions/1 (Cập nhật)
     @PutMapping("/{id}")
-    public ResponseEntity<PromotionResponse> update(@PathVariable Integer id,
-                                                    @RequestBody PromotionRequest req) {
-        return ResponseEntity.ok(service.update(id, req));
+    public ResponseEntity<PromotionResponse> updatePromotion(@PathVariable Integer id, @RequestBody PromotionRequest request) {
+        PromotionResponse updatedPromotion = promotionService.updatePromotion(id, request);
+        return ResponseEntity.ok(updatedPromotion);
     }
 
+    // API: DELETE /api/promotions/1 (Xóa)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Map<String, String>> deletePromotion(@PathVariable Integer id) {
+        promotionService.deletePromotion(id);
+        return ResponseEntity.ok(Map.of("message", "Promotion deleted successfully with id: " + id));
+    }
+    /**
+     * API: GET /api/promotions/category/1 (Lấy KM theo categoryId)
+     */
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<PromotionResponse> getPromotionByCategoryId(@PathVariable Integer categoryId) {
+        // Service sẽ ném 404 nếu không tìm thấy
+        return ResponseEntity.ok(promotionService.getPromotionByCategoryId(categoryId));
     }
 }
