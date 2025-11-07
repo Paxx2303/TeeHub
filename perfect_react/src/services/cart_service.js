@@ -3,10 +3,10 @@ import api from "./httpClient.js";
 import { getUserId } from "../utils/auth.js";
 
 /**
- * CartService (default export) — đảm bảo các function tồn tại
+ * CartService — xử lý mọi thao tác giỏ hàng (frontend ↔ backend)
  */
 const CartService = {
-    // Lấy giỏ hàng của user hiện tại
+    // 🔹 Lấy giỏ hàng hiện tại của user
     async getCart() {
         const userId = getUserId();
         if (!userId) throw new Error("User chưa đăng nhập!");
@@ -14,37 +14,46 @@ const CartService = {
         return res.data;
     },
 
-    // Thêm sản phẩm vào giỏ
-    async addToCart(productItemId, quantity = 1) {
+    // 🔹 Thêm sản phẩm vào giỏ hàng
+    async addToCart({
+        productItemId,
+        price,
+        qty = 1,
+        isCustomed = false,
+        productImage = null,
+        selectedOptions = [],
+        customProductId = null
+    }) {
         const userId = getUserId();
         if (!userId) throw new Error("User chưa đăng nhập!");
-        const payload = { userId, productItemId, quantity };
-        const res = await api.post("/api/cart/add", payload);
+
+        // payload phải khớp với AddToCart.java (có @JsonProperty)
+        const payload = {
+            productItemId: productItemId,
+            qty,
+            price: Number(price),
+            is_customed: isCustomed,
+            productImage,
+            selectedOptions,
+            custom_product_id: customProductId
+        };
+
+        console.log("📦 Payload gửi lên:", payload);
+
+        const res = await api.post(`/api/cart/users/${userId}/add`, payload);
         return res.data;
     },
 
-    // Cập nhật một item (theo backend của bạn có thể khác)
-    async updateCart(cartItemId, quantity) {
-        const userId = getUserId();
-        if (!userId) throw new Error("User chưa đăng nhập!");
-        const payload = { userId, cartItemId, quantity };
-        const res = await api.put("/api/cart/update", payload);
+    // 🔹 Cập nhật số lượng của 1 item trong giỏ
+    async updateCartItem(cartItemId, qty) {
+        const payload = { qty };
+        const res = await api.put(`/api/cart/item/${cartItemId}`, payload);
         return res.data;
     },
 
-    // Xóa 1 item khỏi giỏ
-    async removeFromCart(cartItemId) {
-        const userId = getUserId();
-        if (!userId) throw new Error("User chưa đăng nhập!");
-        const res = await api.delete(`/api/cart/remove/${cartItemId}?userId=${userId}`);
-        return res.data;
-    },
-
-    // Xóa toàn bộ giỏ
-    async clearCart() {
-        const userId = getUserId();
-        if (!userId) throw new Error("User chưa đăng nhập!");
-        const res = await api.delete(`/api/cart/clear/${userId}`);
+    // 🔹 Xóa 1 item khỏi giỏ
+    async removeCartItem(cartItemId) {
+        const res = await api.delete(`/api/cart/item/${cartItemId}`);
         return res.data;
     },
 };

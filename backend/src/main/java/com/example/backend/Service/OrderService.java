@@ -9,10 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -284,30 +281,51 @@ public class OrderService {
         dto.setOrderDate(order.getOrderDate());
         dto.setOrderTotal(order.getOrderTotal());
 
+        // Lấy tất cả OrderLine của đơn hàng
         List<OrderLine> lines = orderLineRepo.findByShopOrderId(order.getId());
-        dto.setItems(lines.stream().map(line -> {
-            var itemDTO = new com.example.backend.DTO.Response.Order.OrderItemDTO();
-            itemDTO.setId(line.getId());
-            itemDTO.setQty(line.getQty());
-            itemDTO.setPrice(line.getPrice());
-            itemDTO.setProductItemId(line.getProductItemId());
 
-            if (line.getCustomProduct() != null) {
-                itemDTO.setIs_customed(true);
-                itemDTO.setCustom_id(line.getCustomProduct().getId());
-                itemDTO.setProductImage(line.getCustomProduct().getCustomImageUrl());
-            } else {
-                var pi = productItemRepo.findById(line.getProductItemId());
-                itemDTO.setIs_customed(false);
-                itemDTO.setProductImage(pi.map(com.example.backend.Entity.ProductItem::getProductImage).orElse(null));
-            }
+        // === BATCH FETCH ảnh sản phẩm để tránh N+1 ===
+        List<Integer> nonCustomProductItemIds = lines.stream()
+                .filter(line -> line.getCustomProduct() == null && line.getProductItemId() != null)
+                .map(OrderLine::getProductItemId)
+                .distinct()
+                .toList();
 
-            // Đảm bảo selectedOptions luôn là array (rỗng nếu không có) để giống cart
-            itemDTO.setSelectedOptions(new ArrayList<>());
+        Map<Integer, String> productImageMap = nonCustomProductItemIds.isEmpty()
+                ? Map.of()
+                : productItemRepo.findAllById(nonCustomProductItemIds).stream()
+                .collect(Collectors.toMap(ProductItem::getId, ProductItem::getProductImage, (v1, v2) -> v1));
 
-            return itemDTO;
-        }).toList());
+        // === Map từng OrderLine → OrderItemDTO ===
+        List<com.example.backend.DTO.Response.Order.OrderItemDTO> itemDTOs = lines.stream()
+                .map(line -> {
+                    var itemDTO = new com.example.backend.DTO.Response.Order.OrderItemDTO();
+                    itemDTO.setId(line.getId());
+                    itemDTO.setQty(line.getQty());
+                    itemDTO.setPrice(line.getPrice());
+                    itemDTO.setProductItemId(line.getProductItemId());
 
+                    // Xử lý ảnh
+                    if (line.getCustomProduct() != null) {
+                        itemDTO.setIs_customed(true);
+                        itemDTO.setCustom_id(line.getCustomProduct().getId());
+                        itemDTO.setProductImage(line.getCustomProduct().getCustomImageUrl());
+                    } else {
+                        itemDTO.setIs_customed(false);
+                        Integer pid = line.getProductItemId();
+                        itemDTO.setProductImage(pid != null ? productImageMap.get(pid) : null);
+                    }
+
+                    // Lấy selectedOptions từ ShoppingCartItem (nếu còn tồn tại)
+                    // CẢNH BÁO: CartItem đã bị xóa khi tạo order → không thể lấy!
+                    // Giải pháp: lưu selectedOptions vào OrderLine khi tạo order
+                    itemDTO.setSelectedOptions(new ArrayList<>());
+
+                    return itemDTO;
+                })
+                .toList();
+
+        dto.setItems(itemDTOs);
         return dto;
     }
 
@@ -320,7 +338,7 @@ public class OrderService {
         }
     }
 
-    public Object getAllOrders() {
+    public List<OrderResponse> getAllOrders() {
         List<ShopOrder> orders = orderRepo.findAll();
         return orders.stream().map(this::mapToOrderResponse).collect(Collectors.toList());
     }

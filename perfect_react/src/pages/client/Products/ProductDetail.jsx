@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { productService } from '../../../services/productService';
 import styles from './ProductDetail.module.css';
 import { reviewService } from '../../../services/userReviewService';
+import CartService from '../../../services/cart_service';
+import { getUserId } from '../../../utils/auth';
 // ==================== CAROUSEL COMPONENT ====================
 const Carousel = ({ children, itemsPerView = 3, className = '' }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -175,6 +177,7 @@ const mockComments = [
 const CURRENT_USER_ID = 1;
 // ==================== MAIN COMPONENT ====================
 const ProductDetail = () => {
+
   const { id } = useParams();
 
   // State cho dữ liệu sản phẩm
@@ -202,6 +205,9 @@ const ProductDetail = () => {
       currency: 'VND'
     }).format(amount);
   };
+
+
+
 
   // ==================== EFFECT 1: Load Product ====================
   useEffect(() => {
@@ -280,6 +286,89 @@ const ProductDetail = () => {
       setCurrentItem(foundItem || null);
     }
   }, [product, selectedOptions]);
+
+  const handleAddToCart = async () => {
+    console.log("handleAddToCart CLICKED");
+
+    // 1. Kiểm tra đăng nhập
+    const userId = getUserId();
+    if (!userId) {
+      alert("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng!");
+      return;
+    }
+
+    // 2. Kiểm tra currentItem
+    if (!currentItem) {
+      alert("Vui lòng chọn đầy đủ các tùy chọn (màu sắc, kích thước...) trước khi thêm vào giỏ!");
+      return;
+    }
+
+    // 3. Kiểm tra tồn kho
+    if (!currentItem.qtyInStock || currentItem.qtyInStock <= 0) {
+      alert("Sản phẩm hiện đã hết hàng. V103 vui lòng chọn biến thể khác hoặc quay lại sau!");
+      return;
+    }
+
+    // 4. Kiểm tra configurations
+    if (!currentItem.configurations || !Array.isArray(currentItem.configurations)) {
+      alert("Lỗi cấu hình sản phẩm. Vui lòng tải lại trang!");
+      return;
+    }
+
+    const selectedOptionIds = currentItem.configurations.map(config => {
+      if (!config.variationOptionId) {
+        console.warn("Missing variationOptionId:", config);
+      }
+      return config.variationOptionId;
+    }).filter(id => id != null);
+
+    if (selectedOptionIds.length === 0) {
+      alert("Không thể xác định tùy chọn sản phẩm. Vui lòng chọn lại!");
+      return;
+    }
+
+    // 5. Dữ liệu gửi đi
+    const payload = {
+      productItemId: currentItem.productItemId,
+      qty: 1,
+      is_customed: false,
+      selectedOptions: selectedOptionIds,
+    };
+
+    console.log("Payload gửi đi:", payload);
+
+    try {
+      const response = await CartService.addToCart(payload);
+      console.log("Thêm giỏ hàng thành công:", response);
+      alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+    } catch (err) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", err);
+      console.error("Response data:", err.response?.data);
+      console.error("Status:", err.response?.status);
+
+      // Xử lý lỗi theo mã trạng thái
+      if (err.response?.status === 401) {
+        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+      }
+      else if (err.response?.status === 400) {
+        const msg = err.response.data?.message || "Dữ liệu không hợp lệ";
+        alert(`Không thể thêm vào giỏ: ${msg}`);
+      }
+      else if (err.response?.status === 404) {
+        alert("Sản phẩm không tồn tại. Vui lòng tải lại trang!");
+      }
+      else if (err.response?.status === 500) {
+        alert("Lỗi máy chủ. Vui lòng thử lại sau vài phút.");
+      }
+      else if (!err.response) {
+        // Lỗi mạng
+        alert("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại!");
+      }
+      else {
+        alert("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
+      }
+    }
+  };
 
   // ==================== HANDLERS ====================
   const handleOptionClick = (optionName, value) => {
@@ -528,8 +617,8 @@ const ProductDetail = () => {
             <div className={styles.actions}>
               <button
                 className={styles.primaryBtn}
-                onClick={() => alert(`Đã thêm item SKU: ${currentItem?.sku}`)}
-                disabled={!currentItem || currentItem.qtyInStock === 0}
+                onClick={handleAddToCart}
+
               >
                 {currentItem?.qtyInStock === 0 ? 'Hết hàng' : '🛒 Thêm vào giỏ'}
               </button>

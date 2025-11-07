@@ -99,7 +99,7 @@ const CartCheckout = () => {
     }
 
     try {
-      await CartService.updateCart(item.id, newQty);
+      await CartService.updateCartItem(item.id, newQty);
       toast.success("Đã cập nhật số lượng");
     } catch (err) {
       console.error("Lỗi cập nhật số lượng:", err);

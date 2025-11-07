@@ -12,7 +12,6 @@ public class AddToCart {
     private String productImage;
     private List<Integer> selectedOptions; // ID của VariationOption
 
-    @JsonProperty("product_item_id")
     private Integer productItemId;
 
     private Integer qty;
