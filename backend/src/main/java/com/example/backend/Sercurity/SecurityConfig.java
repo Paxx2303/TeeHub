@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/orders/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/reviews/**").permitAll()
-
+                        .requestMatchers("/api/**").permitAll()
                         // === PHẦN USER (authenticated) ===
                         // SỬA Ở ĐÂY: Thêm quy tắc CỤ THỂ cho user
                         // Cho phép USER (hoặc ADMIN) đã đăng nhập được GET/PUT thông tin của CHÍNH HỌ

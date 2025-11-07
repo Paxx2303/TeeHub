@@ -33,8 +33,6 @@ public class UserReviewResponse {
             this.userName = "Anonymous";
             this.userAvatar = null;
         }
-
         this.createdAt = entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null;
     }
-
 }

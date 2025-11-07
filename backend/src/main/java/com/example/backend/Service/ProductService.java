@@ -104,4 +104,47 @@ public class ProductService {
         productRepo.deleteById(productId);
         return "Deleted product successful with id: " + productId;
     }
+
+    //lọc sản phẩm theo giá
+    public ProductPageResponse<ProductResponse> getHottestProducts(Pageable pageable) {
+        try {
+            // 1. Lấy tham số phân trang (giống hệt hàm cũ)
+            int pageNumber = pageable.getPageNumber();
+            int pageSize = pageable.getPageSize();
+            int offset = pageNumber * pageSize;
+
+            // (Không cần xử lý sort, vì query đã hardcode ORDER BY total_sold DESC)
+
+            // 2. Gọi query đếm (COUNT) - (Gọi hàm repo MỚI)
+            long totalElements = productRepo.countHottestProducts();
+
+            // 3. Gọi query lấy dữ liệu (DATA) - (Gọi hàm repo MỚI)
+            String jsonData = productRepo.getHottestProductsAsJsonPaged(pageSize, offset);
+
+            // 4. Deserialize JSON (giống hệt hàm cũ)
+            List<ProductResponse> content;
+            if (jsonData == null || jsonData.equals("[]")) {
+                content = Collections.emptyList();
+            } else {
+                content = objectMapper.readValue(jsonData, new TypeReference<List<ProductResponse>>() {});
+            }
+
+            // 5. Tính toán thông tin phân trang (giống hệt hàm cũ)
+            int totalPages = (int) Math.ceil((double) totalElements / (double) pageSize);
+
+            // 6. Xây dựng PagedResponse (giống hệt hàm cũ)
+            ProductPageResponse<ProductResponse> response = new ProductPageResponse<>();
+            response.setContent(content);
+            response.setPageNumber(pageNumber);
+            response.setPageSize(pageSize);
+            response.setTotalElements(totalElements);
+            response.setTotalPages(totalPages);
+            response.setLast(pageNumber >= (totalPages - 1));
+
+            return response;
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error parsing hot product data", e);
+        }
+    }
 }

@@ -810,3 +810,57 @@
     display: none;
   }
 }
+
+/* css giảm giá */
+/* --- THÊM VÀO CUỐI FILE ProductDetail.module.css --- */
+
+/* Khung bọc cho giá (trong .info section) */
+.priceContainer {
+  display: flex;
+  align-items: baseline;
+  /* Căn theo baseline */
+  gap: 12px;
+  /* Khoảng cách giữa các phần */
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  /* Cho phép xuống dòng nếu chật */
+}
+
+/* Giá mới (đã giảm) - dùng lại .price cũ */
+.price {
+  font-size: 2rem;
+  /* Làm cho giá chính to hơn */
+  font-weight: 700;
+  color: #ef4444;
+  /* Màu đỏ sale */
+}
+
+/* Giá gốc (bị gạch) */
+.originalPrice {
+  font-size: 1.25rem;
+  color: #6b7280;
+  /* Xám */
+  text-decoration: line-through;
+  /* Gạch ngang */
+}
+
+/* Giá bình thường (khi không sale) - dùng lại .price */
+/* (Nếu bạn muốn giá không sale có màu khác, hãy tạo class .normalPrice) */
+/*
+.normalPrice {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b; 
+}
+*/
+
+/* Tag giảm giá (ví dụ: -20%) */
+.saleBadgeDetail {
+  background-color: #ef4444;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+}

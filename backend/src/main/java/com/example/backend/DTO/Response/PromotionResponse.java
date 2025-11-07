@@ -1,54 +1,35 @@
-// backend/src/main/java/com/example/backend/DTO/Response/PromotionResponse.java
 package com.example.backend.DTO.Response;
+
+import com.example.backend.Entity.Promotion;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Getter
+@Setter
 public class PromotionResponse {
-
-    private Integer id;
-
-    private Integer categoryId;
-    private String categoryName;
-
+    private Integer promotionId;
     private String name;
     private String description;
     private BigDecimal discountRate;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Integer categoryId;
+    private String categoryName;
 
-    private Boolean active; // tiện cho FE
-
-    public PromotionResponse(
-            Integer id,
-            Integer categoryId,
-            String categoryName,
-            String name,
-            String description,
-            BigDecimal discountRate,
-            LocalDate startDate,
-            LocalDate endDate,
-            Boolean active
-    ) {
-        this.id = id;
-        this.categoryId = categoryId;
-        this.categoryName = categoryName;
-        this.name = name;
-        this.description = description;
-        this.discountRate = discountRate;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.active = active;
+    // Constructor để tự động chuyển đổi từ Entity sang DTO
+    public PromotionResponse(Promotion entity) {
+        this.promotionId = entity.getId();
+        this.name = entity.getName();
+        this.description = entity.getDescription();
+        this.discountRate = entity.getDiscountRate();
+        this.startDate = entity.getStartDate();
+        this.endDate = entity.getEndDate();
+        if (entity.getCategory() != null) {
+            this.categoryId = entity.getCategory().getId(); // Lấy ID từ Entity ProductCategory
+            this.categoryName = entity.getCategory().getCategoryName(); // Lấy tên từ Entity
+        }
     }
-
-    // getters
-    public Integer getId() { return id; }
-    public Integer getCategoryId() { return categoryId; }
-    public String getCategoryName() { return categoryName; }
-    public String getName() { return name; }
-    public String getDescription() { return description; }
-    public BigDecimal getDiscountRate() { return discountRate; }
-    public LocalDate getStartDate() { return startDate; }
-    public LocalDate getEndDate() { return endDate; }
-    public Boolean getActive() { return active; }
 }

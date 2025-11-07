@@ -25,6 +25,11 @@ const AdminSidebar = () => {
       badge: '5'
     },
     {
+      path: '/admin/category',
+      label: 'Danh mục',
+      icon: '📁'
+    },
+    {
       path: '/admin/users',
       label: 'Người dùng',
       icon: '👥',

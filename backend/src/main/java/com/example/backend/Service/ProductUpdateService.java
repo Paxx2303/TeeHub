@@ -8,7 +8,13 @@ import com.example.backend.Repos.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 @Service
@@ -31,45 +37,21 @@ public class ProductUpdateService {
     // Tiêm service Đọc (GET) để gọi lại sau khi cập nhật xong
     @Autowired
     private ProductService productService;
-
+    private final Path rootImageLocation = Paths.get("E:/nam4//Project1/TeeHub/perfect_react/public/Product");
     /**
      * Cập nhật một sản phẩm (PUT)
      */
-    @Transactional // Rất quan trọng!
-    public ProductResponse updateProduct(Integer productId, UpdateProductRequest request) {
-
-        // --- 1. Cập nhật Product chính ---
-        Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
-
-        product.setName(request.getProductName());
-        product.setDescription(request.getProductDescription());
-        product.setProductImage(request.getProductMainImage());
-
-        // --- 2. Cập nhật Category ---
-        if (request.getCategoryId() != null) {
-            ProductCategory category = categoryRepo.findById(request.getCategoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
-            product.setCategory(category);
-        } else {
-            product.setCategory(null);
-        }
-
-        // --- 3. Hòa giải ProductItems (Tạo, Cập nhật, Xoá) ---
-        reconcileProductItems(product, request.getItems());
-
-        // --- 4. Trả về DTO đã cập nhật ---
-        // Gọi lại hàm GET từ service cũ để lấy dữ liệu mới nhất
-        return productService.getProductById(productId);
-    }
 
     /**
      * Hàm helper để xử lý logic Create, Update, Delete cho ProductItems
      */
-    private void reconcileProductItems(Product product, List<UpdateProductRequest.ItemSaveRequest> requestItems) {
+    private void reconcileProductItems(
+            Product product,
+            List<UpdateProductRequest.ItemSaveRequest> requestItems,
+            List<MultipartFile> itemImageFiles
+    ) throws IOException {
 
         List<ProductItem> existingItems = itemRepo.findByProductId(product.getId());
-
         Map<Integer, ProductItem> existingItemMap = existingItems.stream()
                 .collect(Collectors.toMap(ProductItem::getId, item -> item));
 
@@ -78,14 +60,16 @@ public class ProductUpdateService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // --- 3a. XOÁ (Delete) ---
+        // --- 4a. XOÁ (Delete) ---
         List<ProductItem> itemsToDelete = existingItemMap.values().stream()
                 .filter(item -> !requestItemIds.contains(item.getId()))
                 .collect(Collectors.toList());
 
+        // TODO: (Tùy chọn) Xóa file ảnh của các itemsToDelete
         itemRepo.deleteAll(itemsToDelete);
 
-        // --- 3b. TẠO MỚI (Create) hoặc CẬP NHẬT (Update) ---
+        // --- 4b. TẠO MỚI (Create) hoặc CẬP NHẬT (Update) ---
+        int imageFileIndex = 0; // Biến đếm cho list ảnh item
         for (UpdateProductRequest.ItemSaveRequest reqItem : requestItems) {
             ProductItem itemToSave;
 
@@ -97,17 +81,30 @@ public class ProductUpdateService {
                 // CẬP NHẬT
                 itemToSave = existingItemMap.get(reqItem.getProductItemId());
                 if (itemToSave == null) {
-                    throw new ResourceNotFoundException("ProductItem not found with id: " + reqItem.getProductItemId());
+                    throw new ResourceNotFoundException("ProductItem not found: " + reqItem.getProductItemId());
                 }
             }
 
+            // Cập nhật text fields
             itemToSave.setSku(reqItem.getSku());
             itemToSave.setQtyInStock(reqItem.getQtyInStock());
-            itemToSave.setProductImage(reqItem.getItemImage());
-            itemToSave.setPrice(Integer.valueOf(String.valueOf(reqItem.getPrice())));
+            itemToSave.setPrice(reqItem.getPrice());
+
+            // 4c. Cập nhật ảnh item (NẾU CÓ)
+            if (itemImageFiles != null && imageFileIndex < itemImageFiles.size()) {
+                MultipartFile itemImageFile = itemImageFiles.get(imageFileIndex);
+                if (itemImageFile != null && !itemImageFile.isEmpty()) {
+                    String itemImageFilename = saveFile(itemImageFile);
+                    // TODO: (Tùy chọn) Xóa file ảnh item cũ (itemToSave.getProductImage())
+                    itemToSave.setProductImage(itemImageFilename);
+                }
+                imageFileIndex++; // Dịch chuyển đến file ảnh tiếp theo
+            }
+            // (Nếu không có file ảnh mới, nó sẽ giữ nguyên ảnh cũ)
+
             ProductItem savedItem = itemRepo.save(itemToSave);
 
-            // --- 4. Hòa giải ProductConfiguration ---
+            // --- 5. Hòa giải Configurations (Giữ nguyên) ---
             reconcileConfigurations(savedItem, reqItem.getVariationOptionIds());
         }
     }
@@ -150,5 +147,55 @@ public class ProductUpdateService {
                 configRepo.save(newConfig);
             }
         }
+    }
+
+    private String saveFile(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+        String originalFilename = file.getOriginalFilename();
+        String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
+        Path destinationFile = this.rootImageLocation.resolve(uniqueFilename).normalize().toAbsolutePath();
+        if (!Files.exists(this.rootImageLocation)) {
+            Files.createDirectories(this.rootImageLocation);
+        }
+        Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
+        return uniqueFilename; // Trả về TÊN FILE MỚI
+    }
+    @Transactional
+    public ProductResponse updateProductWithImages(
+            Integer productId,
+            UpdateProductRequest request,
+            MultipartFile mainImageFile,
+            List<MultipartFile> itemImageFiles
+    ) throws IOException {
+
+        // --- 1. Cập nhật Product chính ---
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        product.setName(request.getProductName());
+        product.setDescription(request.getProductDescription());
+
+        // 2. Cập nhật ảnh chính (NẾU CÓ ẢNH MỚI)
+        String mainImageFilename = saveFile(mainImageFile);
+        if (mainImageFilename != null) {
+            // TODO: (Tùy chọn) Xóa file ảnh cũ (product.getProductImage())
+            product.setProductImage(mainImageFilename); // Đặt tên file mới
+        }
+        // Nếu mainImageFile là null, nó sẽ giữ nguyên ảnh cũ
+
+        // --- 3. Cập nhật Category (Giữ nguyên) ---
+        if (request.getCategoryId() != null) {
+            ProductCategory category = categoryRepo.findById(request.getCategoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+            product.setCategory(category);
+        }
+
+        // --- 4. Hòa giải ProductItems (Phiên bản mới) ---
+        reconcileProductItems(product, request.getItems(), itemImageFiles);
+
+        // --- 5. Trả về DTO đã cập nhật ---
+        return productService.getProductById(productId);
     }
 }

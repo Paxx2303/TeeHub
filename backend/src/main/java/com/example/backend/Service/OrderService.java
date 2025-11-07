@@ -324,4 +324,12 @@ public class OrderService {
         List<ShopOrder> orders = orderRepo.findAll();
         return orders.stream().map(this::mapToOrderResponse).collect(Collectors.toList());
     }
+
+    public OrderResponse updateOrderStatus(Integer orderId, String status) {
+        ShopOrder order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new com.example.backend.Exception.ResourceNotFoundException("Order not found"));
+        order.setOrderStatus(status);
+        ShopOrder updatedOrder = orderRepo.save(order);
+        return mapToOrderResponse(updatedOrder);
+    }
 }
