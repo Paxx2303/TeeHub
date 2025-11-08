@@ -3,17 +3,20 @@ package com.example.backend.Controller;
 
 import com.example.backend.DTO.Request.SiteUserRequest;
 import com.example.backend.DTO.Request.AddressRequest;
+import com.example.backend.DTO.Request.ChangeRoleRequest;
 import com.example.backend.DTO.Response.SiteUserResponse;
 import com.example.backend.DTO.Response.AddressResponse;
 import com.example.backend.Sercurity.MyUserDetails;
 import com.example.backend.Service.SiteUserService;
 import com.example.backend.Service.AddressService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.*;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -24,6 +27,9 @@ public class UserController {
 
     private final SiteUserService siteUserService;
     private final AddressService addressService;
+
+    // Dùng để re-auth admin khi đổi role
+    private final AuthenticationManager authenticationManager;
 
     /* ===== Users ===== */
 
@@ -55,7 +61,6 @@ public class UserController {
         return ResponseEntity.ok("Đổi mật khẩu thành công");
     }
 
-
     @PostMapping
     public ResponseEntity<SiteUserResponse> createUser(
             @Validated(SiteUserRequest.Create.class) @RequestBody SiteUserRequest req) {
@@ -76,13 +81,39 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    /* ===== NEW: ADMIN đổi vai trò (có re-auth mật khẩu admin đang thao tác) ===== */
+    @PutMapping("/{userId}/role")
+    public ResponseEntity<SiteUserResponse> changeUserRole(
+            @PathVariable Integer userId,
+            @RequestBody ChangeRoleRequest req,
+            @AuthenticationPrincipal MyUserDetails me
+    ) {
+        if (me == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+        }
+        if (req == null || req.getRole() == null || req.getRole().isBlank() || req.getAdmin_password() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thiếu role hoặc admin_password");
+        }
+
+        // Re-auth: xác thực lại admin đang thao tác bằng mật khẩu họ nhập
+        var token = new UsernamePasswordAuthenticationToken(me.getUsername(), req.getAdmin_password());
+        try {
+            authenticationManager.authenticate(token); // ném BadCredentials nếu sai
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Mật khẩu xác nhận không đúng");
+        }
+
+        var updated = siteUserService.changeUserRole(userId, req.getRole()); // "ADMIN"|"USER"|"MODERATOR"
+        return ResponseEntity.ok(updated);
+    }
+
     /* ===== Addresses (nested under user) ===== */
 
     @GetMapping("/{userId}/addresses")
     public ResponseEntity<List<AddressResponse>> getAddresses(@PathVariable Integer userId) {
         return ResponseEntity.ok(addressService.getAddressesOfUser(userId)); // trả [] khi rỗng
     }
-// ... (code còn lại giữ nguyên) ...
+
     // NEW: get one address theo user (tiện cho màn hình chi tiết)
     @GetMapping("/{userId}/addresses/{addressId}")
     public ResponseEntity<AddressResponse> getAddress(
@@ -114,21 +145,15 @@ public class UserController {
         addressService.deleteAddressForUser(userId, addressId);
         return ResponseEntity.noContent().build();
     }
+
+    /* ===== Me (current user) ===== */
+
     @GetMapping("/me")
     public ResponseEntity<SiteUserResponse> getMyProfile(@AuthenticationPrincipal MyUserDetails userDetails) {
-
-        // KIỂM TRA NULL (ĐỂ TRÁNH LỖI 500 NẾU TOKEN HẾT HẠN)
         if (userDetails == null) {
-            // Sẽ không bao giờ chạy đến đây nếu SecurityConfig của bạn yêu cầu .authenticated()
-            // Nhưng đây là một cách phòng vệ tốt
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không tìm thấy thông tin xác thực");
         }
-
-        // Dùng email (hoặc ID) từ principal để lấy thông tin
-        // Giả sử MyUserDetails của bạn có hàm getUserId() hoặc getUsername()
-        Integer currentUserId = userDetails.getUserId(); // HOẶC dùng getUsername()
-
-        // Gọi service của bạn để lấy thông tin
+        Integer currentUserId = userDetails.getUserId();
         return ResponseEntity.ok(siteUserService.getUserById(currentUserId));
     }
 
@@ -146,17 +171,13 @@ public class UserController {
 
     @GetMapping("/me/addresses")
     public ResponseEntity<List<AddressResponse>> getMyAddresses(@AuthenticationPrincipal MyUserDetails userDetails) {
-
         if (userDetails == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ hoặc đã hết hạn");
         }
-
-        // Dùng hàm getUserId() từ MyUserDetails
         Integer currentUserId = userDetails.getUserId();
-
-        // Gọi service address của bạn
         return ResponseEntity.ok(addressService.getAddressesOfUser(currentUserId));
     }
+
     @PostMapping("/me/addresses")
     public ResponseEntity<AddressResponse> createMyAddress(
             @AuthenticationPrincipal MyUserDetails userDetails,
@@ -166,30 +187,23 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
         }
         Integer currentUserId = userDetails.getUserId();
-
-        // Gọi service của bạn, dùng ID từ token
         var created = addressService.createAddressForUser(currentUserId, req);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // THÊM ENDPOINT NÀY ĐỂ SỬA ĐỊA CHỈ
     @PutMapping("/me/addresses/{addressId}")
     public ResponseEntity<AddressResponse> updateMyAddress(
             @AuthenticationPrincipal MyUserDetails userDetails,
             @PathVariable Integer addressId,
-            @Validated @RequestBody AddressRequest req) { // <-- Dữ liệu đổ vào đây
+            @Validated @RequestBody AddressRequest req) {
 
-        System.out.println(">>> Updating address. Received Request: " + req);
         if (userDetails == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
         }
         Integer currentUserId = userDetails.getUserId();
-
-        // Gọi service của bạn, nhưng dùng ID từ token (currentUserId)
         return ResponseEntity.ok(addressService.updateAddressForUser(currentUserId, addressId, req));
     }
 
-    // THÊM ENDPOINT NÀY ĐỂ XÓA ĐỊA CHỈ
     @DeleteMapping("/me/addresses/{addressId}")
     public ResponseEntity<Void> deleteMyAddress(
             @AuthenticationPrincipal MyUserDetails userDetails,
@@ -199,14 +213,14 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
         }
         Integer currentUserId = userDetails.getUserId();
-
         addressService.deleteAddressForUser(currentUserId, addressId);
         return ResponseEntity.noContent().build();
     }
+
     @PutMapping("/me/password")
     public ResponseEntity<String> changeMyPassword(
             @AuthenticationPrincipal MyUserDetails userDetails,
-            @RequestBody SiteUserRequest req) { // Vẫn dùng SiteUserRequest nếu nó có password & new_password
+            @RequestBody SiteUserRequest req) {
 
         if (userDetails == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
