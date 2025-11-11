@@ -1,28 +1,6 @@
-import api from './httpClient.js';
-import axiosRetry from 'axios-retry';
-import axios from 'axios';
-const BASE_URL = 'http://localhost:8080/api';
-axiosRetry(api, {
-  retries: 3,
-  retryDelay: (retryCount) => retryCount * 1000,
-  retryCondition: (error) => {
-    return (
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      error.response?.status === 429
-    );
-  },
-});
-
-const handleApiError = (error, defaultMsg) => {
-  if (error.response) {
-    throw new Error(error.response.data?.message || defaultMsg);
-  } else if (error.request) {
-    throw new Error('Không thể kết nối đến server.');
-  } else {
-    throw new Error(error.message || defaultMsg);
-  }
-};
-
+// import { apiRequest } from './httpClient';
+// import { API_ENDPOINTS } from '../utils/constants';
+import api from './api';
 export const productService = {
   /**
        * Hàm lấy TẤT CẢ sản phẩm
@@ -41,7 +19,7 @@ export const productService = {
         // sortParam = 'price,desc'; // Tạm thời backend chưa hỗ trợ
         console.warn("Backend currently doesn't support sorting by price.");
       } else if (sort === 'oldest') { // Ví dụ nếu có 'oldest'
-        sortParam = 'productId,asc';
+        sortParam = 'createdAt,asc';
       }
       // Các trường hợp sort khác giữ nguyên mặc định productId,desc
 
@@ -83,16 +61,6 @@ export const productService = {
       throw error;
     }
   },
-  deleteProduct: async (productId) => {
-    try {
-      // Gọi API DELETE, không cần body, chỉ cần ID trong URL
-      const response = await api.delete(`api/products/${productId}`);
-      return response.data; // Thường trả về message {"message": "..."}
-    } catch (error) {
-      console.error(`Error deleting product with id ${productId}:`, error);
-      throw error;
-    }
-  },
   /**
    * Hàm lấy 1 SẢN PHẨM theo ID
    */
@@ -108,7 +76,7 @@ export const productService = {
   /**
    * Hàm tạo sản phẩm mới
    */
-  createProduct: async (productData) => {
+createProduct: async (productData) => {
     try {
       // Kiểm tra nếu là FormData (đang upload ảnh)
       if (typeof FormData !== 'undefined' && productData instanceof FormData) {

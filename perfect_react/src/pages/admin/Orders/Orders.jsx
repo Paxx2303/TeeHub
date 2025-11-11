@@ -35,16 +35,15 @@ const Orders = () => {
 
     // Lọc theo trạng thái
     if (selectedStatus !== 'all') {
-      result = result.filter(order => order.status === selectedStatus);
+      result = result.filter(order => order.orderStatus === selectedStatus);
     }
 
-    // Tìm kiếm theo mã đơn, khách hàng, email
+    // Tìm kiếm theo mã đơn, user ID
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       result = result.filter(order =>
-        order.id.toLowerCase().includes(term) ||
-        (order.customer && order.customer.toLowerCase().includes(term)) ||
-        (order.email && order.email.toLowerCase().includes(term))
+        order.id.toString().includes(term) ||
+        order.userId.toString().includes(term)
       );
     }
 
@@ -54,12 +53,12 @@ const Orders = () => {
   // Cập nhật trạng thái đơn hàng
   const handleStatusChange = async (orderId, newStatus) => {
     const currentOrder = orders.find(o => o.id === orderId);
-    if (!currentOrder || currentOrder.status === newStatus) return;
+    if (!currentOrder || currentOrder.orderStatus === newStatus) return;
 
     try {
       await OrderService.updateOrderStatus(orderId, newStatus);
       setOrders(prev =>
-        prev.map(o => (o.id === orderId ? { ...o, status: newStatus } : o))
+        prev.map(o => (o.id === orderId ? { ...o, orderStatus: newStatus } : o))
       );
       alert(`Cập nhật trạng thái đơn hàng ${orderId} thành công!`);
     } catch (err) {
@@ -79,34 +78,22 @@ const Orders = () => {
   // Màu trạng thái
   const getStatusColor = (status) => {
     const colors = {
-      pending: '#f59e0b',
-      processing: '#8b5cf6',
-      shipped: '#3b82f6',
-      completed: '#10b981',
-      cancelled: '#ef4444'
+      'Chờ xử lý': '#f59e0b',
+      'Đang xử lý': '#8b5cf6',
+      'Đã giao': '#3b82f6',
+      'Hoàn thành': '#10b981',
+      'Đã hủy': '#ef4444'
     };
     return colors[status] || '#6b7280';
   };
 
-  // Text trạng thái
-  const getStatusText = (status) => {
-    const texts = {
-      pending: 'Chờ xử lý',
-      processing: 'Đang xử lý',
-      shipped: 'Đã giao',
-      completed: 'Hoàn thành',
-      cancelled: 'Đã hủy'
-    };
-    return texts[status] || status;
-  };
-
   const statusOptions = [
     { value: 'all', label: 'Tất cả' },
-    { value: 'pending', label: 'Chờ xử lý' },
-    { value: 'processing', label: 'Đang xử lý' },
-    { value: 'shipped', label: 'Đã giao' },
-    { value: 'completed', label: 'Hoàn thành' },
-    { value: 'cancelled', label: 'Đã hủy' }
+    { value: 'Chờ xử lý', label: 'Chờ xử lý' },
+    { value: 'Đang xử lý', label: 'Đang xử lý' },
+    { value: 'Đã giao', label: 'Đã giao' },
+    { value: 'Hoàn thành', label: 'Hoàn thành' },
+    { value: 'Đã hủy', label: 'Đã hủy' }
   ];
 
   // Loading & Error
@@ -126,12 +113,12 @@ const Orders = () => {
         <div className={styles.searchBox}>
           <input
             type="text"
-            placeholder="Tìm kiếm mã đơn, khách hàng, email..."
+            placeholder="Tìm kiếm mã đơn, User ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className={styles.searchInput}
           />
-          <span className={styles.searchIcon}>Search</span>
+          <span className={styles.searchIcon}>🔍</span>
         </div>
 
         <div className={styles.statusFilter}>
@@ -164,8 +151,12 @@ const Orders = () => {
       <div className={styles.ordersTable}>
         <div className={styles.tableHeader}>
           <div className={styles.tableCell}>Mã đơn</div>
-          <div className={styles.tableCell}>Khách hàng</div>
+          <div className={styles.tableCell}>User ID</div>
           <div className={styles.tableCell}>Sản phẩm</div>
+          <div className={styles.tableCell}>Thanh toán</div>
+          <div className={styles.tableCell}>TT Thanh toán</div>
+          <div className={styles.tableCell}>Vận chuyển</div>
+          <div className={styles.tableCell}>Phí ship</div>
           <div className={styles.tableCell}>Tổng tiền</div>
           <div className={styles.tableCell}>Trạng thái</div>
           <div className={styles.tableCell}>Ngày đặt</div>
@@ -177,26 +168,29 @@ const Orders = () => {
         ) : (
           filteredOrders.map((order) => (
             <div key={order.id} className={styles.tableRow}>
+              {/* Mã đơn */}
               <div className={styles.tableCell}>
-                <span className={styles.orderId}>{order.id}</span>
+                <span className={styles.orderId}>#{order.id}</span>
               </div>
 
+              {/* User ID */}
               <div className={styles.tableCell}>
-                <div className={styles.customerInfo}>
-                  <div className={styles.customerName}>{order.customer || 'Khách lẻ'}</div>
-                  <div className={styles.customerContact}>
-                    {order.email || '—'} • {order.phone || '—'}
-                  </div>
-                </div>
+                <span>User #{order.userId}</span>
               </div>
 
+              {/* Sản phẩm */}
               <div className={styles.tableCell}>
                 <div className={styles.productsList}>
-                  {order.products && order.products.length > 0 ? (
-                    order.products.map((p, idx) => (
+                  {order.items && order.items.length > 0 ? (
+                    order.items.map((item, idx) => (
                       <div key={idx} className={styles.productItem}>
-                        <span className={styles.productName}>{p.name}</span>
-                        <span className={styles.productQuantity}>x{p.quantity}</span>
+                        <span className={styles.productName}>
+                          Item #{item.productItemId}
+                        </span>
+                        <span className={styles.productQuantity}>x{item.qty}</span>
+                        <span className={styles.productPrice}>
+                          {formatCurrency(item.price)}
+                        </span>
                       </div>
                     ))
                   ) : (
@@ -205,19 +199,62 @@ const Orders = () => {
                 </div>
               </div>
 
+              {/* Phương thức thanh toán */}
               <div className={styles.tableCell}>
-                <span className={styles.totalAmount}>
-                  {formatCurrency(order.total || 0)}
+                <div>
+                  <div className={styles.paymentInfo}>
+                    <strong>{order.paymentTypeName}</strong>
+                  </div>
+                  <div className={styles.paymentProvider}>
+                    {order.paymentProvider}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trạng thái thanh toán */}
+              <div className={styles.tableCell}>
+                <span
+                  className={styles.paymentStatus}
+                  style={{
+                    backgroundColor: order.paymentStatus === 'Đã thanh toán' ? '#10b981' : '#f59e0b',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem',
+                    display: 'inline-block'
+                  }}
+                >
+                  {order.paymentStatus}
                 </span>
               </div>
 
+              {/* Phương thức vận chuyển */}
+              <div className={styles.tableCell}>
+                <span>{order.shippingMethodName}</span>
+              </div>
+
+              {/* Phí ship */}
+              <div className={styles.tableCell}>
+                <span className={styles.shippingPrice}>
+                  {formatCurrency(order.shippingPrice || 0)}
+                </span>
+              </div>
+
+              {/* Tổng tiền */}
+              <div className={styles.tableCell}>
+                <span className={styles.totalAmount}>
+                  {formatCurrency(order.orderTotal || 0)}
+                </span>
+              </div>
+
+              {/* Trạng thái đơn hàng */}
               <div className={styles.tableCell}>
                 <select
-                  value={order.status}
+                  value={order.orderStatus}
                   onChange={(e) => handleStatusChange(order.id, e.target.value)}
                   className={styles.statusSelect}
                   style={{
-                    backgroundColor: getStatusColor(order.status),
+                    backgroundColor: getStatusColor(order.orderStatus),
                     color: 'white',
                     border: 'none',
                     padding: '6px 10px',
@@ -233,24 +270,32 @@ const Orders = () => {
                 </select>
               </div>
 
+              {/* Ngày đặt */}
               <div className={styles.tableCell}>
                 <span className={styles.orderDate}>
                   {order.orderDate
-                    ? new Date(order.orderDate).toLocaleDateString('vi-VN')
+                    ? new Date(order.orderDate).toLocaleString('vi-VN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })
                     : '—'}
                 </span>
               </div>
 
+              {/* Thao tác */}
               <div className={styles.tableCell}>
                 <div className={styles.actionButtons}>
                   <button className={styles.viewBtn} title="Xem chi tiết">
-                    View
+                    👁️
                   </button>
                   <button className={styles.editBtn} title="Chỉnh sửa">
-                    Edit
+                    ✏️
                   </button>
                   <button className={styles.deleteBtn} title="Xóa">
-                    Delete
+                    🗑️
                   </button>
                 </div>
               </div>

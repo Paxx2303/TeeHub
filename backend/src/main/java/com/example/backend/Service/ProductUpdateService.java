@@ -37,7 +37,7 @@ public class ProductUpdateService {
     // Tiêm service Đọc (GET) để gọi lại sau khi cập nhật xong
     @Autowired
     private ProductService productService;
-    private final Path rootImageLocation = Paths.get("E:/nam4//Project1/TeeHub/perfect_react/public/Product");
+    private final Path rootImageLocation = Paths.get("C:\\Users\\wangt\\Downloads\\THUDO\\TeeHub-main\\perfect_react\\public\\Product");
     /**
      * Cập nhật một sản phẩm (PUT)
      */

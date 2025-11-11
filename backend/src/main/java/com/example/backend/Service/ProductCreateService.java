@@ -106,7 +106,7 @@
             // Gọi lại hàm GET để lấy dữ liệu mới nhất
             return productService.getProductById(savedProduct.getId());
         }
-        private final Path rootImageLocation = Paths.get("C:/Using/TeeHub/perfect_react/public/Product");
+        private final Path rootImageLocation = Paths.get("C:\\Users\\wangt\\Downloads\\THUDO\\TeeHub-main\\perfect_react\\public\\Product");
         private String saveFile(MultipartFile file) throws IOException {
             if (file == null || file.isEmpty()) {
                 return null;

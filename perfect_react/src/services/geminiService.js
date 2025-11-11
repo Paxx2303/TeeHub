@@ -4,8 +4,8 @@ const MAX_RETRIES = 3;
 
 // API keys để luân chuyển (chỉ giữ lại những keys hoạt động)
 const API_KEYS = [
-    "AIzaSyB21y8-OLItYY-QpEv_BhYykdcsNsidXtA",
-    "AIzaSyB0ncBHPFdZae_APtpVwIeOVXTrOW7RzNM"
+    "AIzaSyB21y8-OLItYY-QpEv_BhYykdcsNsidXtA"
+  
 ];
 
 // ⚠️ QUAN TRỌNG: Nếu các API keys trên không hoạt động:
