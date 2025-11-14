@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,5 +39,12 @@ public class GlobalExceptionHandler {
 
         // Trả về HTTP 409 (CONFLICT)
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<String> handleResponseStatusException(ResponseStatusException ex) {
+        // Lấy status (403, 409) và message ("Bạn đã đánh giá...") từ exception
+        return ResponseEntity
+                .status(ex.getStatusCode()) // Trả về 403 hoặc 409
+                .body(ex.getReason()); // Trả về "Bạn đã đánh giá sản phẩm này rồi."
     }
 }

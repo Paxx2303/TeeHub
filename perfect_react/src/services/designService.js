@@ -1,132 +1,80 @@
+// src/services/designService.js
 import api from './httpClient.js';
+import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
+// retry network errors
 axiosRetry(api, {
   retries: 3,
-  retryDelay: (retryCount) => retryCount * 1000,
-  retryCondition: (error) => {
-    return (
-      axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-      error.response?.status === 429
-    );
-  },
+  retryDelay: retryCount => retryCount * 1000,
+  retryCondition: err =>
+    axiosRetry.isNetworkOrIdempotentRequestError(err) || err.response?.status === 429,
 });
 
-const handleApiError = (error, defaultMsg) => {
+const handleApiError = (error, defaultMsg = 'Đã có lỗi xảy ra') => {
   if (error.response) {
+    console.error("API ERROR:", error.response.status, error.response.data);
     throw new Error(error.response.data?.message || defaultMsg);
   } else if (error.request) {
-    throw new Error('Không thể kết nối đến server.');
+    throw new Error('Không thể kết nối tới server.');
   } else {
     throw new Error(error.message || defaultMsg);
   }
 };
-import { API_ENDPOINTS } from '../utils/constants';
 
-export const designService = {
-  // Save design
-  saveDesign: async (designData) => {
-    const response = await apiRequest.post(`${API_ENDPOINTS.DESIGN}/save`, designData);
-    return response;
-  },
+// ✅ Tạo 1 instance Axios KHÔNG có Content-Type mặc định
+const apiMultipart = axios.create({
+  baseURL: api.defaults.baseURL,
+  withCredentials: true,
+  timeout: 15000,
+});
 
-  // Get user designs
-  getUserDesigns: async (params = {}) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/user`, { params });
-    return response;
-  },
+// Copy Authorization header thủ công từ httpClient
+apiMultipart.interceptors.request.use((config) => {
+  const token = api.defaults.headers.common['Authorization'];
+  if (token) config.headers.Authorization = token;
+  return config;
+});
 
-  // Get design by ID
-  getDesignById: async (id) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/${id}`);
-    return response;
-  },
+// ----------- HÀM TẠO CUSTOM PRODUCT (multipart) -----------
+export const createCustomProductWithImage = async (payloadObject, imageFile = null, opts = {}) => {
+  try {
+    const form = new FormData();
+    const payloadBlob = new Blob([JSON.stringify(payloadObject)], { type: 'application/json' });
+    form.append('payload', payloadBlob);
 
-  // Update design
-  updateDesign: async (id, designData) => {
-    const response = await apiRequest.put(`${API_ENDPOINTS.DESIGN}/${id}`, designData);
-    return response;
-  },
+    if (imageFile) {
+      form.append('image', imageFile, opts.filename || 'design.png');
+    }
 
-  // Delete design
-  deleteDesign: async (id) => {
-    const response = await apiRequest.delete(`${API_ENDPOINTS.DESIGN}/${id}`);
-    return response;
-  },
+    console.debug("📤 Uploading multipart form to /api/custom-products ...");
 
-  // Get design templates
-  getTemplates: async (params = {}) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/templates`, { params });
-    return response;
-  },
-
-  // Get template by ID
-  getTemplateById: async (id) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/templates/${id}`);
-    return response;
-  },
-
-  // Create design from template
-  createFromTemplate: async (templateId, customizations = {}) => {
-    const response = await apiRequest.post(`${API_ENDPOINTS.DESIGN}/from-template`, {
-      templateId,
-      customizations,
+    const resp = await apiMultipart.post('/api/custom-products', form, {
+      onUploadProgress: opts.onUploadProgress,
     });
-    return response;
-  },
 
-  // Export design
-  exportDesign: async (id, format = 'png', options = {}) => {
-    const response = await apiRequest.post(`${API_ENDPOINTS.DESIGN}/${id}/export`, {
-      format,
-      options,
+    return resp.data;
+  } catch (err) {
+    handleApiError(err, 'Tạo sản phẩm tùy chỉnh thất bại');
+  }
+};
+
+// ----------- Upload riêng (nếu có endpoint /api/upload/custom) -----------
+export const uploadDesignImage = async (file, opts = {}) => {
+  try {
+    const form = new FormData();
+    form.append('file', file, opts.filename || 'design.png');
+
+    const resp = await apiMultipart.post('/api/upload/custom', form, {
+      onUploadProgress: opts.onUploadProgress,
     });
-    return response;
-  },
+    return resp.data;
+  } catch (err) {
+    handleApiError(err, 'Upload file thất bại');
+  }
+};
 
-  // Share design
-  shareDesign: async (id, shareOptions = {}) => {
-    const response = await apiRequest.post(`${API_ENDPOINTS.DESIGN}/${id}/share`, shareOptions);
-    return response;
-  },
-
-  // Get shared design
-  getSharedDesign: async (shareId) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/shared/${shareId}`);
-    return response;
-  },
-
-  // Get design categories
-  getDesignCategories: async () => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/categories`);
-    return response;
-  },
-
-  // Get popular designs
-  getPopularDesigns: async (limit = 12) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/popular`, {
-      params: { limit },
-    });
-    return response;
-  },
-
-  // Get recent designs
-  getRecentDesigns: async (limit = 12) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/recent`, {
-      params: { limit },
-    });
-    return response;
-  },
-
-  // Duplicate design
-  duplicateDesign: async (id) => {
-    const response = await apiRequest.post(`${API_ENDPOINTS.DESIGN}/${id}/duplicate`);
-    return response;
-  },
-
-  // Get design analytics
-  getDesignAnalytics: async (id) => {
-    const response = await apiRequest.get(`${API_ENDPOINTS.DESIGN}/${id}/analytics`);
-    return response;
-  },
+export default {
+  createCustomProductWithImage,
+  uploadDesignImage,
 };

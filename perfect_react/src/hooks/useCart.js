@@ -1,363 +1,134 @@
+// src/hooks/useCart.js
 import { useSelector, useDispatch } from 'react-redux';
-import { useCallback, useEffect, useState } from 'react';
-import { 
-  addToCart, 
-  removeFromCart, 
-  updateQuantity, 
-  clearCart,
-  loadCartFromStorage 
-} from '../store/slices/cartSlice';
-import { formatPrice, generateId } from '../utils/helpers';
+import { useCallback, useMemo, useEffect, useRef } from 'react';
+import {
+  fetchCartFromServer,
+  addItemToServer,
+  removeItemFromServer,
+  updateItemOnServer,
+  clearCart as clearCartAction,
+  setCart
+} from '@/store/slices/cartSlice';
+import { isAuthenticated } from '@/utils/auth';
 
 export const useCart = () => {
   const dispatch = useDispatch();
-  const { items, total, itemCount } = useSelector((state) => state.cart);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { items = [], total = 0, itemCount = 0, isLoading = false, error = null } = useSelector((s) => s.cart || {});
 
-  // Auto-load cart from storage on mount
+  const mountedRef = useRef(true);
   useEffect(() => {
-    dispatch(loadCartFromStorage());
-  }, [dispatch]);
-
-  // Tracking function for analytics
-  const trackCartAction = useCallback((action, data) => {
-    // Console log for development
-    console.log(`Cart Action: ${action}`, data);
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
 
-  const addItem = useCallback((product, options = {}) => {
+  const totalQty = useMemo(() => {
+    if (!Array.isArray(items) || items.length === 0) return 0;
+    return items.reduce((sum, it) => sum + (Number(it.quantity ?? 0) || 0), 0);
+  }, [items]);
+
+  // refresh cart (server)
+  const refreshCart = useCallback(async () => {
     try {
-      setError(null);
-      setIsLoading(true);
-      
-      const { quantity = 1, size, color, design, customizations = {} } = options;
-      
-      // Validation
-      if (!product || !product.id) {
-        throw new Error('Sản phẩm không hợp lệ');
-      }
-      
-      if (quantity < 1 || quantity > 99) {
-        throw new Error('Số lượng phải từ 1 đến 99');
-      }
-      
-      if (product.stock && quantity > product.stock) {
-        throw new Error(`Chỉ còn ${product.stock} sản phẩm trong kho`);
-      }
-
-      dispatch(addToCart({ 
-        product, 
-        quantity, 
-        size, 
-        color, 
-        design,
-        customizations,
-        addedAt: new Date().toISOString()
-      }));
-      
-      // Track cart action
-      trackCartAction('add_item', { 
-        productId: product.id, 
-        quantity, 
-        size, 
-        color 
-      });
-      
+      await dispatch(fetchCartFromServer()).unwrap();
     } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setIsLoading(false);
+      // nếu fetch lỗi, không ném tiếp để tránh crash components; log giữ thông tin
+      console.error('refreshCart failed', err);
     }
-  }, [dispatch, trackCartAction]);
-
-  const removeItem = useCallback((itemId) => {
-    try {
-      setError(null);
-      const item = items.find(item => item.id === itemId);
-      
-      if (item) {
-        trackCartAction('remove_item', { 
-          productId: item.productId, 
-          quantity: item.quantity 
-        });
-      }
-      
-      dispatch(removeFromCart(itemId));
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  }, [dispatch, items, trackCartAction]);
-
-  const updateItemQuantity = useCallback((itemId, quantity) => {
-    try {
-      setError(null);
-      
-      if (quantity < 1 || quantity > 99) {
-        throw new Error('Số lượng phải từ 1 đến 99');
-      }
-      
-      const item = items.find(item => item.id === itemId);
-      if (item && item.product?.stock && quantity > item.product.stock) {
-        throw new Error(`Chỉ còn ${item.product.stock} sản phẩm trong kho`);
-      }
-      
-      const oldQuantity = item?.quantity || 0;
-      dispatch(updateQuantity({ itemId, quantity }));
-      
-      trackCartAction('update_quantity', { 
-        productId: item?.productId, 
-        oldQuantity, 
-        newQuantity: quantity 
-      });
-      
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  }, [dispatch, items, trackCartAction]);
-
-  const clearAllItems = useCallback(() => {
-    try {
-      setError(null);
-      
-      trackCartAction('clear_cart', { 
-        itemCount, 
-        totalValue: total 
-      });
-      
-      dispatch(clearCart());
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    }
-  }, [dispatch, itemCount, total, trackCartAction]);
-
-  const loadCart = useCallback(() => {
-    dispatch(loadCartFromStorage());
   }, [dispatch]);
 
-  const getItemById = useCallback((itemId) => {
-    return items.find(item => item.id === itemId);
-  }, [items]);
-
-  const getItemByProduct = useCallback((productId, size, color, design) => {
-    return items.find(item => 
-      item.productId === productId && 
-      item.size === size && 
-      item.color === color &&
-      JSON.stringify(item.design) === JSON.stringify(design)
-    );
-  }, [items]);
-
-  const getTotalPrice = useCallback(() => {
-    return formatPrice(total);
-  }, [total]);
-
-  const getTotalItems = useCallback(() => {
-    return itemCount;
-  }, [itemCount]);
-
-  const isEmpty = useCallback(() => {
-    return items.length === 0;
-  }, [items.length]);
-
-  const hasItem = useCallback((productId, size, color, design) => {
-    return getItemByProduct(productId, size, color, design) !== undefined;
-  }, [getItemByProduct]);
-
-  // Enhanced utility functions
-  const getCartSummary = useCallback(() => {
-    const uniqueProducts = new Set(items.map(item => item.productId)).size;
-    const totalWeight = items.reduce((weight, item) => {
-      return weight + ((item.product?.weight || 0.2) * item.quantity);
-    }, 0);
-    
-    return {
-      itemCount,
-      uniqueProducts,
-      totalValue: total,
-      totalWeight: Math.round(totalWeight * 100) / 100,
-      formattedTotal: formatPrice(total),
-      isEmpty: items.length === 0
-    };
-  }, [items, itemCount, total]);
-
-  const getShippingEstimate = useCallback(() => {
-    const baseShipping = 30000;
-    const freeShippingThreshold = 500000;
-    
-    if (total >= freeShippingThreshold) {
-      return {
-        cost: 0,
-        formattedCost: 'Miễn phí',
-        isFree: true,
-        message: 'Đơn hàng được miễn phí vận chuyển'
-      };
-    }
-    
-    return {
-      cost: baseShipping,
-      formattedCost: formatPrice(baseShipping),
-      isFree: false,
-      message: `Mua thêm ${formatPrice(freeShippingThreshold - total)} để được miễn phí vận chuyển`
-    };
-  }, [total]);
-
-  const validateCart = useCallback(() => {
-    const errors = [];
-    
-    items.forEach((item, index) => {
-      if (!item.productId) {
-        errors.push(`Sản phẩm ${index + 1}: Thiếu ID sản phẩm`);
-      }
-      
-      if (!item.quantity || item.quantity < 1) {
-        errors.push(`Sản phẩm ${index + 1}: Số lượng không hợp lệ`);
-      }
-      
-      if (!item.price || item.price <= 0) {
-        errors.push(`Sản phẩm ${index + 1}: Giá không hợp lệ`);
-      }
-    });
-    
-    return {
-      isValid: errors.length === 0,
-      errors
-    };
-  }, [items]);
-
-  const getCartForCheckout = useCallback(() => {
-    const validation = validateCart();
-    
-    if (!validation.isValid) {
-      throw new Error(`Giỏ hàng không hợp lệ: ${validation.errors.join(', ')}`);
-    }
-    
-    const shipping = getShippingEstimate();
-    
-    return {
-      items: items.map(item => ({
-        id: item.id,
-        productId: item.productId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-        design: item.design,
-        customizations: item.customizations || {}
-      })),
-      summary: getCartSummary(),
-      shipping,
-      totals: {
-        subtotal: total,
-        shipping: shipping.cost,
-        total: total + shipping.cost,
-        formattedSubtotal: formatPrice(total),
-        formattedShipping: shipping.formattedCost,
-        formattedTotal: formatPrice(total + shipping.cost)
-      }
-    };
-  }, [items, total, validateCart, getShippingEstimate, getCartSummary]);
-
-  const saveCartToWishlist = useCallback((itemId) => {
-    const item = items.find(item => item.id === itemId);
-    if (item) {
-      // Save to localStorage wishlist
-      const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      const existingIndex = wishlist.findIndex(w => w.productId === item.productId);
-      
-      if (existingIndex === -1) {
-        wishlist.push({
-          id: generateId(),
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          image: item.image,
-          addedAt: new Date().toISOString()
-        });
-        
-        localStorage.setItem('wishlist', JSON.stringify(wishlist));
-        trackCartAction('save_to_wishlist', { productId: item.productId });
-        
-        return true;
-      }
-    }
-    return false;
-  }, [items, trackCartAction]);
-
-  const duplicateItem = useCallback((itemId) => {
-    const item = items.find(item => item.id === itemId);
-    if (item) {
-      const newItem = {
-        ...item,
-        id: generateId(),
-        addedAt: new Date().toISOString()
-      };
-      
-      dispatch(addToCart(newItem));
-      trackCartAction('duplicate_item', { productId: item.productId });
-      
-      return true;
-    }
-    return false;
-  }, [items, dispatch, trackCartAction]);
-
-  const clearError = useCallback(() => {
-    setError(null);
+  // helper to emit global event
+  const emitCartUpdated = useCallback(() => {
+    try { window.dispatchEvent(new Event('cartUpdated')); } catch (e) { /* ignore */ }
   }, []);
 
-  const refreshCart = useCallback(() => {
+  const addItem = useCallback(async (serverPayload) => {
+    if (!isAuthenticated()) throw new Error('User not authenticated');
     try {
-      setIsLoading(true);
-      setError(null);
-      dispatch(loadCartFromStorage());
+      await dispatch(addItemToServer(serverPayload)).unwrap();
+      // đảm bảo trạng thái mới từ server
+      await refreshCart();
+      emitCartUpdated();
     } catch (err) {
-      setError('Không thể tải giỏ hàng');
-    } finally {
-      setIsLoading(false);
+      console.error('addItem failed', err);
+      throw err;
     }
-  }, [dispatch]);
+  }, [dispatch, refreshCart, emitCartUpdated]);
+
+  const removeItem = useCallback(async (itemId) => {
+    if (!isAuthenticated()) throw new Error('User not authenticated');
+    try {
+      await dispatch(removeItemFromServer(itemId)).unwrap();
+      await refreshCart();
+      emitCartUpdated();
+    } catch (err) {
+      console.error('removeItem failed', err);
+      throw err;
+    }
+  }, [dispatch, refreshCart, emitCartUpdated]);
+
+  const updateItemQuantity = useCallback(async (itemId, qty) => {
+    if (!isAuthenticated()) throw new Error('User not authenticated');
+    try {
+      await dispatch(updateItemOnServer({ itemId, qty })).unwrap();
+      await refreshCart();
+      emitCartUpdated();
+    } catch (err) {
+      console.error('updateItemQuantity failed', err);
+      throw err;
+    }
+  }, [dispatch, refreshCart, emitCartUpdated]);
+
+  const clearAllItems = useCallback(() => dispatch(clearCartAction()), [dispatch]);
+  const setCartFromServer = useCallback((items) => dispatch(setCart(items)), [dispatch]);
+
+  // Listen to global events so other code or other tabs can trigger refresh
+  useEffect(() => {
+    let debounceTimer = null;
+    const onCartUpdated = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        // only refresh if component is still mounted
+        if (mountedRef.current) refreshCart().catch(() => {});
+      }, 80);
+    };
+
+    const onStorage = (ev) => {
+      if (!ev) return;
+      if (ev.key === 'cart' || ev.key === 'shopping_cart') {
+        onCartUpdated();
+      }
+    };
+
+    window.addEventListener('cartUpdated', onCartUpdated);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      window.removeEventListener('cartUpdated', onCartUpdated);
+      window.removeEventListener('storage', onStorage);
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [refreshCart]);
+
+  // initial load when hook mounts (only if authenticated)
+  useEffect(() => {
+    if (isAuthenticated()) {
+      refreshCart().catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
 
   return {
-    // Core cart data
     items,
     total,
     itemCount,
-    
-    // Core cart actions
+    totalQty,
+    isLoading,
+    error,
+    refreshCart,
     addItem,
     removeItem,
     updateItemQuantity,
     clearAllItems,
-    loadCart,
-    
-    // Item utilities
-    getItemById,
-    getItemByProduct,
-    getTotalPrice,
-    getTotalItems,
-    isEmpty,
-    hasItem,
-    
-    // Enhanced utilities
-    getCartSummary,
-    getShippingEstimate,
-    validateCart,
-    getCartForCheckout,
-    saveCartToWishlist,
-    duplicateItem,
-    
-    // State management
-    isLoading,
-    error,
-    clearError,
-    refreshCart,
-    
-    // Analytics
-    trackCartAction,
+    setCartFromServer
   };
 };

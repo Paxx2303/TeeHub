@@ -9,20 +9,18 @@ const AdminSidebar = () => {
     {
       path: '/admin/dashboard',
       label: 'Dashboard',
-      icon: '📊',
+      icon: '📈',
       exact: true
     },
     {
       path: '/admin/orders',
       label: 'Đơn hàng',
-      icon: '📦',
-      badge: '12'
+      icon: '🛒'
     },
     {
       path: '/admin/products',
       label: 'Sản phẩm',
-      icon: '👕',
-      badge: '5'
+      icon: '🛍️'
     },
     {
       path: '/admin/category',
@@ -32,19 +30,14 @@ const AdminSidebar = () => {
     {
       path: '/admin/users',
       label: 'Người dùng',
-      icon: '👥',
-      badge: '3'
+      icon: '👥'
     },
     {
-      path: '/admin/analytics',
-      label: 'Phân tích',
-      icon: '📈'
-    },
-    {
-      path: '/admin/settings',
-      label: 'Cài đặt',
-      icon: '⚙️'
+      path: '/admin/contacts',
+      label: 'Liên hệ',
+      icon: '✉️'
     }
+
   ];
 
   const isActive = (path, exact = false) => {
@@ -80,23 +73,10 @@ const AdminSidebar = () => {
           </ul>
         </nav>
 
-        {/* Quick actions */}
-        <div className={styles.quickActions}>
-          <h4 className={styles.quickActionsTitle}>Thao tác nhanh</h4>
-          <div className={styles.quickActionButtons}>
-            <button className={styles.quickActionBtn}>
-              <span className={styles.quickActionIcon}>➕</span>
-              <span>Thêm sản phẩm</span>
-            </button>
-            <button className={styles.quickActionBtn}>
-              <span className={styles.quickActionIcon}>📊</span>
-              <span>Báo cáo</span>
-            </button>
-          </div>
-        </div>
+
 
         {/* System info */}
-        <div className={styles.systemInfo}>
+        {/* <div className={styles.systemInfo}>
           <div className={styles.systemStatus}>
             <div className={styles.statusIndicator}></div>
             <span className={styles.statusText}>Hệ thống hoạt động bình thường</span>
@@ -111,7 +91,7 @@ const AdminSidebar = () => {
               <span className={styles.statValue}>62%</span>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </aside>
   );

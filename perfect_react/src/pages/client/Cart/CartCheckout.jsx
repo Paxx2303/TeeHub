@@ -1,10 +1,24 @@
 // src/pages/Cart/CartCheckout.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import CartService from "../../../services/cart_service.js";
 import OrderService from "../../../services/orderService.js";
 import PaymentQR from "../../../components/ui/cart/PaymentQR.jsx";
 import { getUserId } from "../../../utils/auth";
-import { getMyAddresses } from "../../../services/user_profile_service.js";
+import { getMyAddresses } from "../../../services/user_profile_service.js"; // <-- dùng service của bạn
+
+
+// emit sự kiện để các hook / component khác (ví dụ useCart) bắt được và refresh
+function broadcastCartChange() {
+  try {
+    // Event cho single-tab (useCart đang lắng nghe 'cartUpdated')
+    window.dispatchEvent(new Event('cartUpdated'));
+  } catch (e) { /* ignore */ }
+
+  try {
+    // Trigger storage event trên tab khác (key có thể tuỳ chỉnh)
+    localStorage.setItem('cart', String(Date.now()));
+  } catch (e) { /* ignore */ }
+}
 
 // ===== Toast đơn giản =====
 const toast = {
@@ -13,22 +27,90 @@ const toast = {
   warning: (m) => { try { console.warn(m); alert(m); } catch (_) { console.warn(m); } },
 };
 
+const safeNumber = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+/* ------------------------------------------------------------------
+   Compatibility helper for removing cart item
+   Tránh lỗi khi service đặt tên hàm khác nhau.
+   Thử các tên hàm thông dụng (đã ưu tiên tên trong service bạn gửi).
+   ------------------------------------------------------------------ */
+async function removeCartItemFromService(cartItemId) {
+  const candidates = [
+    'removeCartItem',
+    'removeFromCart',
+    'deleteCartItem',
+    'removeItem',
+    'deleteItem',
+    'remove',
+    'delete',
+    'removeCart',
+  ];
+
+  for (const name of candidates) {
+    const fn = CartService?.[name];
+    if (typeof fn === 'function') {
+      return await fn.call(CartService, cartItemId);
+    }
+  }
+
+  if (typeof CartService === 'object' && typeof CartService.api === 'object' && typeof CartService.api.delete === 'function') {
+    try { return await CartService.api.delete(`/cart/item/${cartItemId}`); } catch (_) {}
+    try { return await CartService.api.delete(`/api/cart/item/${cartItemId}`); } catch (_) {}
+    try { return await CartService.api.delete(`/cart/${cartItemId}`); } catch (_) {}
+  }
+
+  throw new Error('Cart service không cung cấp hàm xóa item. Kiểm tra src/services/cart_service.js');
+}
+
+/* ------------------------------------------------------------------
+   Compatibility helper to update a single cart item qty
+   Thử nhiều tên hàm/endpoint tương thích.
+   ------------------------------------------------------------------ */
+async function updateSingleSourceQuantity(sourceId, qty) {
+  const attempts = [
+    async () => { if (typeof CartService.updateCartItem === 'function') return await CartService.updateCartItem(sourceId, qty); },
+    async () => { if (typeof CartService.updateCart === 'function') return await CartService.updateCart(sourceId, qty); },
+    async () => { if (typeof CartService.setQuantity === 'function') return await CartService.setQuantity(sourceId, qty); },
+    async () => { if (typeof CartService.api === 'object' && typeof CartService.api.patch === 'function') return await CartService.api.patch(`/cart/item/${sourceId}`, { qty }); },
+    async () => { if (typeof CartService.api === 'object' && typeof CartService.api.put === 'function') return await CartService.api.put(`/cart/item/${sourceId}`, { qty }); },
+  ];
+
+  let lastErr = null;
+  for (const fn of attempts) {
+    try {
+      const r = await fn();
+      // nếu không lỗi => success
+      return r;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  // none succeeded
+  const err = lastErr || new Error('Không thể cập nhật số lượng cho item');
+  throw err;
+}
+
 /* =========================================================================
-   AddressSelector (NỘI BỘ)
-   - Hiển thị danh sách địa chỉ thật từ GET /api/users/me/addresses
-   - Chỉ cho chọn 1 địa chỉ (không thêm/sửa/xoá)
-   - Tự chọn địa chỉ mặc định nếu có
+   AddressSelector (sử dụng getMyAddresses)
+   - Gọi getMyAddresses()
+   - Hiển thị danh sách, auto chọn default
    ========================================================================= */
 function AddressSelector({ selectedAddressId, onSelectAddress }) {
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [raw, setRaw] = useState(null);
+  const mountedRef = useRef(true);
 
-  // Helper hiển thị 1 dòng địa chỉ
   const AddressLine = ({ a }) => {
     const parts = [
       a?.unitNumber,
       a?.streetNumber,
       a?.addressLine,
+      a?.fullAddress,
+      a?.address,
       a?.wardName,
       a?.districtName,
       a?.provinceName,
@@ -36,78 +118,94 @@ function AddressSelector({ selectedAddressId, onSelectAddress }) {
     return <span>{parts.join(", ") || "(Chưa có mô tả chi tiết)"}</span>;
   };
 
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const list = await getMyAddresses(); // → trả về mảng AddressResponse
-        if (!mounted) return;
-        const safeList = Array.isArray(list) ? list : [];
-        setAddresses(safeList);
+  const load = async () => {
+    mountedRef.current = true;
+    setLoading(true);
+    try {
+      const list = await getMyAddresses();
+      if (!mountedRef.current) return;
+      setRaw(list);
+      const safeList = Array.isArray(list) ? list : [];
+      setAddresses(safeList);
 
-        // Auto-chọn nếu bên ngoài chưa chọn
-        if (!selectedAddressId && safeList.length > 0) {
-          const def = safeList.find(a => a?.isDefault);
-          const fallback = safeList[0];
-          const idToPick = def?.addressId ?? fallback?.addressId ?? null;
-          if (idToPick) onSelectAddress?.(idToPick);
-        }
-      } catch (e) {
-        toast.error(e?.message || "Không thể tải địa chỉ.");
-      } finally {
-        if (mounted) setLoading(false);
+      if (!selectedAddressId && safeList.length > 0) {
+        const def = safeList.find(a => a?.isDefault);
+        const fallback = safeList[0];
+        const idToPick = def?.addressId ?? fallback?.addressId ?? null;
+        if (idToPick) onSelectAddress?.(idToPick);
       }
-    })();
-    return () => { mounted = false; };
-  }, []); // chỉ load 1 lần
+    } catch (e) {
+      console.error("[AddressSelector] load error:", e);
+      toast.error(e?.message || "Không thể tải địa chỉ.");
+      setAddresses([]);
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    load();
+    return () => { mountedRef.current = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={addr_wrap}>
       <div style={addr_headerRow}>
         <div style={addr_title}>Địa chỉ giao hàng</div>
+        <div>
+          <button type="button" onClick={load} style={addr_reloadBtn}>Tải lại</button>
+        </div>
       </div>
 
       {loading ? (
         <div style={{ opacity: .7 }}>Đang tải địa chỉ…</div>
       ) : addresses.length === 0 ? (
-        <div style={{ opacity: .7 }}>
-          Bạn chưa có địa chỉ. Hãy thêm địa chỉ ở trang Hồ sơ.
+        <div style={{ opacity: .8 }}>
+          Bạn chưa có địa chỉ giao hàng.
+        
         </div>
       ) : (
         <div style={{ display:"flex", flexDirection:"column", gap: 8 }}>
-          {addresses.map((a) => (
-            <label
-              key={a.addressId}
-              style={{
-                ...addr_item,
-                background: selectedAddressId === a.addressId ? "rgba(59,130,246,0.06)" : "white"
-              }}
-            >
-              <input
-                type="radio"
-                name="shipping_address"
-                checked={selectedAddressId === a.addressId}
-                onChange={() => onSelectAddress?.(a.addressId)}
-                style={{ marginTop: 2 }}
-              />
-              <div style={{ flex:1 }}>
-                <div style={{ fontWeight: 700, display:"flex", gap:8, alignItems:"center", flexWrap: "wrap" }}>
-                  <AddressLine a={a} />
-                  {a.isDefault && <span style={addr_badge}>Mặc định</span>}
-                  {a.receiverName && <span style={addr_chip}>{a.receiverName}</span>}
-                  {a.phoneNumber && <span style={addr_chip}>{a.phoneNumber}</span>}
+          {addresses.map((a) => {
+            const id = a?.addressId ?? a?.id ?? String(a);
+            const receiver = a?.__raw?.receiverName ?? a?.__raw?.name ?? null;
+            const phone = a?.__raw?.phoneNumber ?? a?.__raw?.phone ?? null;
+
+            return (
+              <label
+                key={String(id)}
+                style={{
+                  ...addr_item,
+                  background: (selectedAddressId === id) ? "rgba(59,130,246,0.06)" : "white"
+                }}
+              >
+                <input
+                  type="radio"
+                  name="shipping_address"
+                  checked={selectedAddressId === id}
+                  onChange={() => onSelectAddress?.(id)}
+                  style={{ marginTop: 2 }}
+                />
+                <div style={{ flex:1 }}>
+                  <div style={{ fontWeight: 700, display:"flex", gap:8, alignItems:"center", flexWrap: "wrap" }}>
+                    <AddressLine a={a} />
+                    {a.isDefault && <span style={addr_badge}>Mặc định</span>}
+                    {receiver && <span style={addr_chip}>{receiver}</span>}
+                    {phone && <span style={addr_chip}>{phone}</span>}
+                  </div>
                 </div>
-              </div>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-// Styles nội bộ cho AddressSelector
+// Styles cho AddressSelector
 const addr_wrap = {
   background: "white",
   borderRadius: 12,
@@ -142,9 +240,12 @@ const addr_chip = {
   color: "#1d4ed8",
   border: "1px solid rgba(59,130,246,.2)",
 };
+const addr_reloadBtn = { padding: '4px 8px', cursor: 'pointer', borderRadius: 6, border: '1px solid #e5e7eb', background: 'white' };
 
 // ======================= CartCheckout =======================
 const CartCheckout = () => {
+  const mountedRef = useRef(true);
+  const isLoadingRef = useRef(false); // guard để tránh gọi load liên tục
   const [cart, setCart] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -156,35 +257,134 @@ const CartCheckout = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [isActing, setIsActing] = useState(false);
 
+  // NEW: set của item đang edit để disable nút +/- 
+  const [editingItems, setEditingItems] = useState(new Set());
+
   const userId = getUserId();
 
-  useEffect(() => { loadCart(); }, []);
+  useEffect(() => {
+    mountedRef.current = true;
+    loadCart();
+
+    // listen to broadcast events so cart auto-refreshes
+    const onCartUpdated = () => {
+      if (isLoadingRef.current) return;
+      loadCart();
+    };
+    const onStorage = (e) => {
+      if (e.key === 'cart') {
+        if (isLoadingRef.current) return;
+        loadCart();
+      }
+    };
+
+    window.addEventListener('cartUpdated', onCartUpdated);
+    window.addEventListener('storage', onStorage);
+
+    return () => {
+      mountedRef.current = false;
+      window.removeEventListener('cartUpdated', onCartUpdated);
+      window.removeEventListener('storage', onStorage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadCart = async () => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
     try {
-      setIsLoading(true);
+      if (mountedRef.current) {
+        setIsLoading(true);
+      }
+
       const data = await CartService.getCart();
+
+      // normalize items (giữ logic cũ) but preserve *sources*
+      const rawItems = Array.isArray(data?.items) ? data.items.map((i, idx) => ({
+        originalId: i?.id ?? i?.cartItemId ?? i?.cart_item_id ?? `ci-${idx}`,
+        qty: safeNumber(i?.qty) || 1,
+        price: safeNumber(i?.price) || 0,
+        productItemId: i?.productItemId ?? i?.product_item_id ?? i?.productItem ?? i?.itemId ?? i?.item_id ?? null,
+        sku: i?.sku ?? i?.SKU ?? null,
+        productCode: i?.productCode ?? i?.product_code ?? null,
+        productImage: i?.productImage ?? i?.image ?? null,
+        productName: i?.productName ?? i?.name ?? null,
+        raw: i,
+      })) : [];
+
+      // MERGE: for each logical product key keep sources array [{originalId, qty}]
+      const map = new Map();
+      for (const it of rawItems) {
+        const key = it.productItemId ?? it.sku ?? it.productCode ?? it.originalId;
+        if (!map.has(key)) {
+          map.set(key, {
+            // displayId: take the first originalId as representative id
+            id: it.originalId,
+            price: it.price,
+            productItemId: it.productItemId,
+            sku: it.sku,
+            productCode: it.productCode,
+            productImage: it.productImage,
+            productName: it.productName,
+            sources: [{ id: it.originalId, qty: it.qty }],
+            qty: it.qty,
+            raw: it.raw,
+          });
+        } else {
+          const exist = map.get(key);
+          exist.sources.push({ id: it.originalId, qty: it.qty });
+          exist.qty = safeNumber(exist.qty) + safeNumber(it.qty);
+          // keep price/productName if missing
+          exist.price = exist.price || it.price;
+          exist.productImage = exist.productImage || it.productImage;
+          exist.productName = exist.productName || it.productName;
+          map.set(key, exist);
+        }
+      }
+
+      const mergedItems = Array.from(map.values());
+
       const normalized = {
         ...data,
-        items: Array.isArray(data?.items)
-          ? data.items.map((i) => ({
-              ...i,
-              id: i?.id ?? i?.cartItemId ?? i?.cart_item_id,
-            }))
-          : [],
+        items: mergedItems,
       };
+
+      if (!mountedRef.current) return;
       setCart(normalized);
       setError(null);
     } catch (err) {
-      console.error("Lỗi tải giỏ hàng:", err);
-      setError("Không thể tải giỏ hàng.");
-      toast.error("Không thể tải giỏ hàng");
+      try {
+        const status = err?.response?.status ?? (err?.status || null);
+        const respData = err?.response?.data;
+        console.error("Lỗi tải giỏ hàng:", status, respData || err?.message || err);
+        if (status === 500) {
+          if (mountedRef.current) {
+            setCart({ items: [] });
+            setError(null);
+          }
+        } else {
+          if (mountedRef.current) {
+            setError("Không thể tải giỏ hàng.");
+            toast.error("Không thể tải giỏ hàng");
+          }
+        }
+      } catch (loggingErr) {
+        console.error("Error handling cart load error:", loggingErr);
+        if (mountedRef.current) {
+          setError("Không thể tải giỏ hàng.");
+          toast.error("Không thể tải giỏ hàng");
+        }
+      }
     } finally {
-      setIsLoading(false);
+      isLoadingRef.current = false;
+      if (mountedRef.current) setIsLoading(false);
     }
   };
 
-  const formatPrice = (price) => (price ? `${price.toLocaleString("vi-VN")}₫` : "0₫");
+  const formatPrice = (price) => {
+    const n = safeNumber(price);
+    return `${n.toLocaleString("vi-VN")}₫`;
+  };
 
   const toggleSelectItem = (itemId) => {
     setSelectedItems(prev => {
@@ -203,22 +403,60 @@ const CartCheckout = () => {
     }
   };
 
+  // NEW improved quantity update:
+  // we try to update the first source to newQty, and remove other sources
   const handleQuantityChange = async (item, newQty) => {
-    if (newQty < 1) return;
-    const prev = cart;
-    if (cart) {
-      setCart({
-        ...cart,
-        items: cart.items.map(i => i.id === item.id ? { ...i, qty: newQty } : i)
-      });
-    }
+    newQty = Math.max(1, Math.floor(safeNumber(newQty)));
+    if (!cart) return;
+    const itemId = item.id;
+    if ((item.qty || 0) === newQty) return;
+    if (editingItems.has(itemId)) return; // already editing
+
+    const prevCart = cart;
+    // optimistic UI
+    const nextCart = {
+      ...cart,
+      items: cart.items.map(i => (i.id === itemId ? { ...i, qty: newQty } : i))
+    };
+    setCart(nextCart);
+    setEditingItems(prev => new Set(prev).add(itemId));
+
     try {
-      await CartService.updateCartItem(item.id, newQty);
+      // if item.sources exists (we stored sources in loadCart)
+      const sources = Array.isArray(item.sources) && item.sources.length > 0 ? item.sources : [{ id: item.id, qty: item.qty || 1 }];
+      // Strategy:
+      // - update the first source to newQty
+      // - delete all other sources (so backend will have one entry with correct qty)
+      const primary = sources[0];
+      await updateSingleSourceQuantity(primary.id, newQty);
+
+      // remove other sources if exist
+      if (sources.length > 1) {
+        for (let k = 1; k < sources.length; k++) {
+          try {
+            await removeCartItemFromService(sources[k].id);
+          } catch (e) {
+            // nếu xóa 1 source fail, log và tiếp tục
+            console.warn("Không xóa được source", sources[k].id, e);
+          }
+        }
+      }
+
+      // sau khi cập nhật -> broadcast và reload nhẹ (để đồng bộ)
+      broadcastCartChange();
+      // cập nhật local item.sources thành 1 source (primary)
+      setCart((cur) => cur ? { ...cur, items: cur.items.map(it => it.id === itemId ? { ...it, qty: newQty, sources: [{ id: primary.id, qty: newQty }] } : it) } : cur);
       toast.success("Đã cập nhật số lượng");
     } catch (err) {
       console.error("Lỗi cập nhật số lượng:", err);
-      toast.error("Không thể cập nhật số lượng");
-      setCart(prev);
+      toast.error(err?.message || "Không thể cập nhật số lượng");
+      if (mountedRef.current) setCart(prevCart); // revert
+    } finally {
+      setEditingItems(prev => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
     }
   };
 
@@ -236,20 +474,24 @@ const CartCheckout = () => {
   }, [cart?.items]);
 
   const handleRemoveItem = async (cartItemId) => {
+    setIsActing(true);
     try {
-      await CartService.removeFromCart(cartItemId);
-      if (cart) {
+      await removeCartItemFromService(cartItemId);
+      if (mountedRef.current && cart) {
         setCart({ ...cart, items: cart.items.filter(i => i.id !== cartItemId) });
+        setSelectedItems(prev => {
+          const next = new Set(prev);
+          next.delete(cartItemId);
+          return next;
+        });
       }
-      setSelectedItems(prev => {
-        const next = new Set(prev);
-        next.delete(cartItemId);
-        return next;
-      });
       toast.success("Đã xóa sản phẩm khỏi giỏ hàng");
+      broadcastCartChange();
     } catch (err) {
       console.error("Lỗi xóa sản phẩm:", err);
-      toast.error("Không thể xóa sản phẩm");
+      toast.error(err?.message || "Không thể xóa sản phẩm");
+    } finally {
+      if (mountedRef.current) setIsActing(false);
     }
   };
 
@@ -263,39 +505,67 @@ const CartCheckout = () => {
     setIsActing(true);
     try {
       for (const id of Array.from(selectedItems)) {
-        await CartService.removeFromCart(id);
+        try { await removeCartItemFromService(id); } catch (e) { console.warn('skip remove error', id, e); }
       }
-      setCart((current) =>
-        current ? { ...current, items: current.items.filter((i) => !selectedItems.has(i.id)) } : current
-      );
-      setSelectedItems(new Set());
-      toast.success("Đã xóa các sản phẩm đã chọn");
+      if (mountedRef.current) {
+        setCart((current) => current ? { ...current, items: current.items.filter((i) => !selectedItems.has(i.id)) } : current);
+        setSelectedItems(new Set());
+        toast.success("Đã xóa các sản phẩm đã chọn");
+        broadcastCartChange();
+      }
     } catch (err) {
       console.error("Lỗi xóa đã chọn:", err);
       toast.error("Không thể xóa các sản phẩm đã chọn");
     } finally {
-      setIsActing(false);
+      if (mountedRef.current) setIsActing(false);
     }
   };
 
+  // ------------------------
+  // Tính lại totals: COUNT theo tổng số lượng (qty), TOTAL theo price * qty
+  // Nếu không có selection nào => coi là chọn tất cả
+  // ------------------------
   const { selectedTotal, selectedCount, shippingPrice } = useMemo(() => {
     if (!cart?.items) return { selectedTotal: 0, selectedCount: 0, shippingPrice: 0 };
-    let total = 0, count = 0;
+
+    // nếu user chưa chọn item nào => coi như chọn tất cả item trong giỏ
+    const idsToInclude = (selectedItems && selectedItems.size > 0)
+      ? new Set(selectedItems)
+      : new Set(cart.items.map(i => i.id));
+
+    let total = 0;
+    let countQty = 0; // tổng số lượng (qty)
     for (const item of cart.items) {
-      if (selectedItems.has(item.id)) {
-        total += (item.price || 0) * (item.qty || 0);
-        count += 1;
+      if (idsToInclude.has(item.id)) {
+        const qty = Math.max(1, safeNumber(item.qty));
+        total += (safeNumber(item.price) || 0) * qty;
+        countQty += qty;
       }
     }
+
     const shipping = shippingMethod === 'express' ? 35000 : 20000;
-    return { selectedTotal: total, selectedCount: count, shippingPrice: shipping };
+    return { selectedTotal: total, selectedCount: countQty, shippingPrice: shipping };
   }, [cart?.items, selectedItems, shippingMethod]);
 
+  // Nếu user chưa chọn item nào, khi bấm proceed thì chọn tất cả (và mở modal)
   const handleProceedToPayment = () => {
-    if (selectedItems.size === 0) {
-      toast.warning("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
+    if (!cart?.items || cart.items.length === 0) {
+      toast.warning("Giỏ hàng đang trống");
       return;
     }
+
+    // Nếu chưa chọn item nào -> coi như chọn tất cả (đồng bộ UI)
+    if (!selectedItems || selectedItems.size === 0) {
+      setSelectedItems(new Set(cart.items.map(i => i.id)));
+      setTimeout(() => {
+        if (!selectedAddressId) {
+          toast.warning("Vui lòng chọn địa chỉ giao hàng");
+        }
+        setShowPaymentModal(true);
+      }, 0);
+      return;
+    }
+
     if (!selectedAddressId) {
       toast.warning("Vui lòng chọn địa chỉ giao hàng");
       return;
@@ -303,9 +573,14 @@ const CartCheckout = () => {
     setShowPaymentModal(true);
   };
 
+  // Thay: gửi items kèm qty cho backend (không chỉ id)
   const handleConfirmOrder = async () => {
     if (!userId) {
       toast.error("Vui lòng đăng nhập để đặt hàng");
+      return;
+    }
+    if (!cart?.items || cart.items.length === 0) {
+      toast.error("Giỏ hàng rỗng");
       return;
     }
     setIsProcessingOrder(true);
@@ -313,36 +588,62 @@ const CartCheckout = () => {
       const paymentProviderMap = { qr: 'VietQR', card: 'VISA', cod: 'Tiền mặt' };
       const paymentTypeMap = { qr: 'Chuyển khoản ngân hàng', card: 'Thẻ tín dụng', cod: 'Thanh toán khi nhận hàng' };
 
+      // Nếu selectedItems rỗng -> dùng tất cả
+      const idsSet = (selectedItems && selectedItems.size > 0)
+        ? new Set(selectedItems)
+        : new Set(cart.items.map(i => i.id));
+
+      // Tạo danh sách items kèm qty để gửi lên backend
+      const itemsPayload = (cart.items || [])
+        .filter(i => idsSet.has(i.id))
+        .map(i => ({
+          itemId: i.id,
+          productItemId: i.productItemId ?? null,
+          qty: Math.max(1, safeNumber(i.qty)),
+          price: safeNumber(i.price) || 0,
+        }));
+
+      if (itemsPayload.length === 0) {
+        toast.error("Không có sản phẩm hợp lệ để thanh toán");
+        setIsProcessingOrder(false);
+        return;
+      }
+
       const orderRequest = {
         userId,
         paymentTypeName: paymentTypeMap[paymentMethod],
         paymentProvider: paymentProviderMap[paymentMethod],
         paymentAccountNumber: paymentMethod === 'qr' ? '4605016865' : '',
-        paymentStatus: paymentMethod === 'cod' ? 'Chưa thanh toán' : 'Đang chờ',
+        paymentStatus: paymentMethod === 'cod' ? 'Chưa thanh toán' : 'Đã thanh toán',
         shippingMethodName: shippingMethod === 'express' ? 'Giao nhanh' : 'Giao tiêu chuẩn',
         shippingPrice: shippingPrice,
         orderStatus: 'Đang xử lý',
-        selectedItemIds: Array.from(selectedItems),
-        shippingAddressId: selectedAddressId, // ✅ gửi kèm địa chỉ đã chọn
+        items: itemsPayload,              // <-- gửi items + qty
+        selectedItemIds: itemsPayload.map(x => x.itemId), // giữ trường cũ nếu backend dùng
+        shippingAddressId: selectedAddressId,
+        totalAmount: selectedTotal + shippingPrice
       };
 
       await OrderService.createOrder(orderRequest);
 
       toast.success("Đặt hàng thành công!");
-      if (cart) {
-        setCart({ ...cart, items: cart.items.filter(i => !selectedItems.has(i.id)) });
+      broadcastCartChange();
+
+      if (mountedRef.current && cart) {
+        const removedIds = new Set(itemsPayload.map(x => x.itemId));
+        setCart({ ...cart, items: cart.items.filter(i => !removedIds.has(i.id)) });
+        setSelectedItems(new Set());
+        setShowPaymentModal(false);
       }
-      setSelectedItems(new Set());
-      setShowPaymentModal(false);
     } catch (err) {
       console.error("Lỗi tạo đơn hàng:", err);
       toast.error("Không thể tạo đơn hàng. Vui lòng thử lại!");
     } finally {
-      setIsProcessingOrder(false);
+      if (mountedRef.current) setIsProcessingOrder(false);
     }
   };
 
-  // ===== Loading skeleton =====
+  // Loading skeleton
   if (isLoading && !cart) {
     return (
       <div className="loading-container">
@@ -371,9 +672,9 @@ const CartCheckout = () => {
     );
   }
 
+  // Render (full CSS and UI kept)
   return (
     <>
-      {/* ===== CSS chính của trang (đổi <style jsx> → <style>) ===== */}
       <style>{`
         .cart-page { min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); font-family: system-ui, -apple-system, sans-serif; }
         .container { max-width: 1280px; margin: 0 auto; padding: 1rem; }
@@ -484,22 +785,6 @@ const CartCheckout = () => {
 
       <div className="cart-page">
         <div className="container">
-          {/* Header */}
-          <div className="card">
-            <div className="card-content">
-              <div className="header-content">
-                <div className="header-left">
-                  <div className="header-icon">Cart</div>
-                  <div>
-                    <h1 className="header-title">Giỏ hàng của bạn</h1>
-                    <p className="header-subtitle">{cart?.items?.length || 0} sản phẩm</p>
-                  </div>
-                </div>
-                <button className="back-button" onClick={() => window.history.back()}>Quay lại</button>
-              </div>
-            </div>
-          </div>
-
           {/* Error */}
           {error && (
             <div className="error-card">
@@ -527,7 +812,7 @@ const CartCheckout = () => {
             </div>
           ) : (
             <div style={{ marginTop: '1.5rem' }}>
-              {/* ✅ Chọn địa chỉ giao hàng */}
+              {/* AddressSelector lấy từ DB */}
               <AddressSelector
                 selectedAddressId={selectedAddressId}
                 onSelectAddress={setSelectedAddressId}
@@ -561,6 +846,7 @@ const CartCheckout = () => {
                       {cart.items.map((item) => {
                         const isSelected = selectedItems.has(item.id);
                         const optionsDisplay = getOptionsDisplay(item.selectedOptions);
+                        const isEditing = editingItems.has(item.id);
                         return (
                           <div key={item.id} className={`cart-item ${isSelected ? 'selected' : ''}`}>
                             <div className="cart-item-content">
@@ -574,14 +860,21 @@ const CartCheckout = () => {
 
                               <div className="product-image">
                                 <img
-                                  src={`https://placehold.co/200x200/e2e8f0/64748b?text=${item.productImage || 'IMG'}`}
-                                  alt="Product"
+                                  src={`../public/Product/${encodeURIComponent(item.productImage || 'IMG')}`}
+                                  alt={item.productName || 'Product'}
                                 />
                               </div>
 
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <h3 className="product-name">Sản phẩm #{item.productItemId ?? item.id}</h3>
+                                <h3 className="product-name">
+                                  Mã: <span style={{ color: '#0f172a', fontWeight: 800 }}>{item.productCode ?? item.sku ?? item.productItemId ?? item.id}</span>
+                                </h3>
 
+                                {item.productName && (
+                                  <div className="product-subname" style={{ color: '#6b7280', fontSize: '0.9rem', marginTop: 4 }}>
+                                    {item.productName}
+                                  </div>
+                                )}
                                 {optionsDisplay && <span className="options-badge">{optionsDisplay}</span>}
                                 {item.is_customed && <span className="custom-badge">Tùy chỉnh</span>}
 
@@ -592,12 +885,13 @@ const CartCheckout = () => {
                                     <button
                                       className="quantity-button"
                                       onClick={() => handleQuantityChange(item, (item.qty || 1) - 1)}
-                                      disabled={(item.qty || 1) <= 1}
+                                      disabled={(item.qty || 1) <= 1 || isEditing || isActing}
                                     >−</button>
                                     <span className="quantity-display">{item.qty || 1}</span>
                                     <button
                                       className="quantity-button"
                                       onClick={() => handleQuantityChange(item, (item.qty || 1) + 1)}
+                                      disabled={isEditing || isActing}
                                     >+</button>
                                   </div>
 
@@ -668,13 +962,13 @@ const CartCheckout = () => {
                       <button
                         className="checkout-button"
                         onClick={handleProceedToPayment}
-                        disabled={selectedItems.size === 0 || !selectedAddressId}
+                        disabled={!cart?.items || cart.items.length === 0 || !selectedAddressId}
                       >
                         Thanh toán ngay
                       </button>
 
                       {selectedItems.size === 0 && (
-                        <p className="warning-box">Vui lòng chọn sản phẩm để thanh toán</p>
+                        <p className="warning-box">Bạn chưa chọn sản phẩm — khi thanh toán sẽ mặc định chọn tất cả.</p>
                       )}
                       {selectedItems.size > 0 && !selectedAddressId && (
                         <p className="warning-box">Vui lòng chọn địa chỉ giao hàng</p>
@@ -686,7 +980,7 @@ const CartCheckout = () => {
 
               {/* Payment Modal */}
               {showPaymentModal && (
-                <div className="modal-overlay">
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowPaymentModal(false)}>
                   <div className="modal-card">
                     <div className="modal-header">
                       <div className="modal-icon">✅</div>

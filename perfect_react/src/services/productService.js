@@ -1,48 +1,42 @@
-// import { apiRequest } from './httpClient';
-// import { API_ENDPOINTS } from '../utils/constants';
+// src/services/productService.js
 import api from './api';
-export const productService = {
-  /**
-       * Hàm lấy TẤT CẢ sản phẩm
-       */
-  getAllProducts: async (page = 0, size = 10, categoryId = null, searchTerm = null, sort = 'newest') => { // Tham số searchTerm ở đây là đúng
-    try {
-      // Chuyển đổi sort ID ('newest', 'price-asc') sang format backend ('productId,desc', 'price,asc')
-      let sortParam = 'createdAt,desc'; // Mặc định
-      if (sort === 'hot') {
-        sortParam = 'hot'; // Gửi 'hot' cho backend
-      }
-      if (sort === 'price-asc') {
-        // sortParam = 'price,asc'; // Tạm thời backend chưa hỗ trợ
-        console.warn("Backend currently doesn't support sorting by price.");
-      } else if (sort === 'price-desc') {
-        // sortParam = 'price,desc'; // Tạm thời backend chưa hỗ trợ
-        console.warn("Backend currently doesn't support sorting by price.");
-      } else if (sort === 'oldest') { // Ví dụ nếu có 'oldest'
-        sortParam = 'createdAt,asc';
-      }
-      // Các trường hợp sort khác giữ nguyên mặc định productId,desc
 
-      // --- SỬA LOGIC XÂY DỰNG PARAMS ---
+/**
+ * productService
+ * - getAllProducts(page, size, categoryId, searchTerm, sort, options)
+ * - getProductById(id)
+ * - createProduct(formData)
+ * - updateProduct(id, formData)
+ * - deleteProduct(id)
+ * - getSalesCounts(productIds)  <-- NEW
+ *
+ * LƯU Ý: API endpoint sales assumed: GET /api/products/sales?ids=1,2,3
+ * Nếu backend có khác, hãy chỉnh path/param trong getSalesCounts.
+ */
+
+export const productService = {
+  getAllProducts: async (page = 0, size = 10, categoryId = null, searchTerm = null, sort = 'newest', options = {}) => {
+    try {
+      // convert sort to backend-friendly sortParam
+      let sortParam = 'createdAt,desc';
+      if (sort === 'hot') sortParam = 'hot';
+      else if (sort === 'oldest') sortParam = 'createdAt,asc';
+      // price sorting disabled in your backend -> leave default or log
+
       const params = {
-        page: page,
-        size: size,
-        sort: sortParam // Luôn gửi sortParam đã chuyển đổi
+        page,
+        size,
+        sort: sortParam
       };
 
-      // Chỉ thêm categoryId nếu nó hợp lệ
-      if (categoryId && categoryId !== 'all') {
-        params.categoryId = categoryId;
-      }
+      if (categoryId && categoryId !== 'all') params.categoryId = categoryId;
+      if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim() !== '') params.searchTerm = searchTerm.trim();
 
-      // Chỉ thêm searchTerm nếu nó được truyền vào VÀ không rỗng
-      // (Kiểm tra biến searchTerm đầu vào của hàm, KHÔNG phải biến sort)
-      if (searchTerm && searchTerm.trim() !== '') {
-        params.searchTerm = searchTerm.trim();
+      // Optional: if backend supports includeSales param to return totalSold in same response
+      // you can set options.includeSales = true when calling getAllProducts
+      if (options.includeSales) {
+        params.includeSales = true;
       }
-      // --- HẾT PHẦN SỬA ---
-
-      // console.log("Sending API request with params:", params); // Log lại để kiểm tra
 
       const response = await api.get('/api/products', { params });
       return response.data;
@@ -51,20 +45,8 @@ export const productService = {
       throw error;
     }
   },
-  deleteProduct: async (productId) => {
-    try {
-      // Gọi API DELETE, không cần body, chỉ cần ID trong URL
-      const response = await api.delete(`/api/products/${productId}`);
-      return response.data; // Thường trả về message {"message": "..."}
-    } catch (error) {
-      console.error(`Error deleting product with id ${productId}:`, error);
-      throw error;
-    }
-  },
-  /**
-   * Hàm lấy 1 SẢN PHẨM theo ID
-   */
-  getProductById: async (productId) => { // <-- SỬA: Dùng dấu : (hai chấm)
+
+  getProductById: async (productId) => {
     try {
       const response = await api.get(`/api/products/${productId}`);
       return response.data;
@@ -73,56 +55,81 @@ export const productService = {
       throw error;
     }
   },
-  /**
-   * Hàm tạo sản phẩm mới
-   */
-createProduct: async (productData) => {
-    try {
-      // Kiểm tra nếu là FormData (đang upload ảnh)
-      if (typeof FormData !== 'undefined' && productData instanceof FormData) {
 
-        // === SỬA LẠI ĐOẠN NÀY ===
+  createProduct: async (productData) => {
+    try {
+      if (typeof FormData !== 'undefined' && productData instanceof FormData) {
         const response = await api.post('/api/products', productData, {
-          // Báo cho Axios: "Hủy Content-Type: application/json (chung) đi,
-          // hãy tự động đặt Content-Type: multipart/form-data cho tôi"
           headers: {
             'Content-Type': 'multipart/form-data'
-            // Hoặc 'Content-Type': undefined (để Axios tự điền boundary)
           }
         });
         return response.data;
       }
-      // === HẾT PHẦN SỬA ===
 
-      // Trường hợp khác (nếu có, không upload file)
       const response = await api.post('/api/products', productData, {
         headers: { 'Content-Type': 'application/json' }
       });
       return response.data;
-
     } catch (error) {
       console.error('Error creating product:', error);
       throw error;
     }
   },
-  // hàm sửa sản phẩm
+
   updateProduct: async (productId, productData) => {
     try {
-      // Kiểm tra xem có phải FormData không (để đảm bảo)
       if (typeof FormData !== 'undefined' && productData instanceof FormData) {
-        // Gửi request PUT, dùng `api.put` và URL có ID
         const response = await api.put(`/api/products/${productId}`, productData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         return response.data;
       }
-      // Nếu không phải FormData (ví dụ: chỉ cập nhật text, hiếm khi xảy ra)
-      // throw new Error("Update must use FormData"); 
-      // Hoặc xử lý JSON nếu cần
-
+      // If backend supports JSON updates, you can add handling here
+      throw new Error('updateProduct expects FormData for now');
     } catch (error) {
       console.error(`Error updating product ${productId}:`, error);
       throw error;
     }
+  },
+
+  deleteProduct: async (productId) => {
+    try {
+      const response = await api.delete(`/api/products/${productId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting product with id ${productId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * NEW: getSalesCounts
+   * - productIds: array of numeric productId
+   * - returns array [{ productId, totalSold }, ...] or throws on error
+   *
+   * Assumes backend provides endpoint:
+   *   GET /api/products/sales?ids=1,2,3
+   *
+   * If your backend uses a different path or request body, update here.
+   */
+  getSalesCounts: async (productIds = []) => {
+    try {
+      if (!Array.isArray(productIds) || productIds.length === 0) return [];
+
+      // build query string: ids=1,2,3
+      const idsParam = productIds.join(',');
+      const response = await api.get('/api/products/sales', { params: { ids: idsParam } });
+
+      // Expect response.data to be array of { productId, totalSold }
+      return response.data;
+    } catch (error) {
+      console.warn('getSalesCounts failed:', error);
+      // throw or return [] depending on how you want upstream to behave
+      // return [] so frontend can continue with fallback values
+      return [];
+    }
   }
 };
+
+export default productService;

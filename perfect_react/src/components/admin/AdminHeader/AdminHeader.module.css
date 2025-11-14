@@ -1,6 +1,18 @@
+/* === ĐÃ THÊM: Tải font "Nunito" (mềm mại) === */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
+
+/* === ĐÃ THÊM: Áp dụng font cho toàn bộ trang === */
+/* (Bạn có thể bỏ qua phần này nếu đã có nó ở file CSS chung) */
+body {
+  font-family: 'Nunito', sans-serif;
+}
+
+/* === CSS CỦA BẠN === */
+
 .adminHeader {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  /* === ĐÃ THAY ĐỔI: Chuyển sang tông màu xanh dương nhạt === */
+  background: linear-gradient(135deg, #f0f9ff 0%, #d6e9ff 25%, #e0f2ff 50%, #f0f4f8 75%, #f0f9ff 100%);
+  /* === ĐÃ XÓA: "color: white;" vì nền sáng, chữ trắng sẽ bị ẩn === */
   padding: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
@@ -31,11 +43,15 @@
 }
 
 .logoIcon {
-  font-size: 1.5rem;
+  width: 70px;
+
 }
 
 .logoText {
-  color: white;
+  /* === ĐÃ THAY ĐỔI: Dùng màu xám xanh hiện đại === */
+  color: #37474F;
+  /* === ĐÃ XÓA: Bỏ font 'Pacifico' để dùng font 'Nunito' chung === */
+  /* font-family: pacifico, cursive; */
 }
 
 /* Right side */
@@ -52,10 +68,12 @@
   padding: 0.5rem;
   border-radius: 8px;
   transition: background-color 0.3s ease;
+  /* === ĐÃ THÊM: Màu cho icon chuông === */
+  color: #37474F;
 }
 
 .notificationIcon:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.05); /* Nền mờ xám/đen */
 }
 
 .bellIcon {
@@ -89,15 +107,15 @@
   gap: 0.75rem;
   background: none;
   border: none;
-  color: white;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 8px;
   transition: background-color 0.3s ease;
+  /* === ĐÃ XÓA: "color: white;" (đã chuyển qua .userInfo) === */
 }
 
 .userButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.05); /* Nền mờ xám/đen */
 }
 
 .userAvatar {
@@ -105,7 +123,8 @@
   height: 40px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  /* === ĐÃ THAY ĐỔI: Border xám nhạt thay vì trắng === */
+  border: 2px solid rgba(0, 0, 0, 0.1);
 }
 
 .userAvatar img {
@@ -119,6 +138,8 @@
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  /* === ĐÃ THAY ĐỔI: Chuyển từ 'black' sang xám xanh dịu mắt === */
+  color: #37474F;
 }
 
 .userName {
@@ -134,8 +155,10 @@
 }
 
 .dropdownIcon {
-  font-size: 0.75rem;
+  font-size: 2rem;
   transition: transform 0.3s ease;
+  /* === ĐÃ THAY ĐỔI: Đồng bộ màu với userInfo === */
+  color: #37474F;
 }
 
 /* Dropdown menu */
@@ -158,7 +181,7 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   cursor: pointer;
-  color: #374151;
+  color: #374151; /* Màu này đã đẹp và hiện đại (Tailwind gray-700) */
   transition: background-color 0.3s ease;
 }
 
@@ -211,4 +234,3 @@
     padding: 0.25rem;
   }
 }
-

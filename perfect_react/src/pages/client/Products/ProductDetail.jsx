@@ -1,5 +1,6 @@
+// src/pages/client/ProductDetail/ProductDetail.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../../../services/productService';
 import styles from './ProductDetail.module.css';
 import { reviewService } from '../../../services/userReviewService';
@@ -104,81 +105,39 @@ const mockFAQs = [
 ];
 
 const mockSuggestedProducts = [
-  {
-    id: '1',
-    name: 'Áo sơ mi cao cấp',
-    price: 450000,
-    image: '/images/product1.jpg',
-    rating: 4.5,
-    discount: 20
-  },
-  {
-    id: '2',
-    name: 'Quần jean slim fit',
-    price: 680000,
-    image: '/images/product2.jpg',
-    rating: 4.8,
-    discount: 15
-  },
-  {
-    id: '3',
-    name: 'Giày thể thao nam',
-    price: 890000,
-    image: '/images/product3.jpg',
-    rating: 4.6,
-    discount: 25
-  },
-  {
-    id: '4',
-    name: 'Túi xách nữ thời trang',
-    price: 320000,
-    image: '/images/product4.jpg',
-    rating: 4.7,
-    discount: 10
-  },
-  {
-    id: '5',
-    name: 'Đồng hồ thông minh',
-    price: 1200000,
-    image: '/images/product5.jpg',
-    rating: 4.9,
-    discount: 30
-  },
-  {
-    id: '6',
-    name: 'Kính mát cao cấp',
-    price: 750000,
-    image: '/images/product6.jpg',
-    rating: 4.4,
-    discount: 18
-  }
+  { id: '1', name: 'Áo sơ mi cao cấp', price: 450000, image: '/images/product1.jpg', rating: 4.5, discount: 20 },
+  { id: '2', name: 'Quần jean slim fit', price: 680000, image: '/images/product2.jpg', rating: 4.8, discount: 15 },
+  { id: '3', name: 'Giày thể thao nam', price: 890000, image: '/images/product3.jpg', rating: 4.6, discount: 25 },
+  { id: '4', name: 'Túi xách nữ thời trang', price: 320000, image: '/images/product4.jpg', rating: 4.7, discount: 10 },
+  { id: '5', name: 'Đồng hồ thông minh', price: 1200000, image: '/images/product5.jpg', rating: 4.9, discount: 30 },
+  { id: '6', name: 'Kính mát cao cấp', price: 750000, image: '/images/product6.jpg', rating: 4.4, discount: 18 }
 ];
 
 const mockComments = [
-  {
-    text: 'Sản phẩm rất tốt, đóng gói cẩn thận, giao hàng nhanh!',
-    rating: 5,
-    date: new Date('2024-10-15'),
-    userName: 'Nguyễn Văn A'
-  },
-  {
-    text: 'Chất lượng ổn, giá hợp lý. Sẽ ủng hộ shop tiếp.',
-    rating: 4,
-    date: new Date('2024-10-10'),
-    userName: 'Trần Thị B'
-  },
-  {
-    text: 'Đúng như mô tả, mình rất hài lòng với sản phẩm này.',
-    rating: 5,
-    date: new Date('2024-10-05'),
-    userName: 'Lê Văn C'
-  }
+  { text: 'Sản phẩm rất tốt, đóng gói cẩn thận, giao hàng nhanh!', rating: 5, date: new Date('2024-10-15'), userName: 'Nguyễn Văn A' },
+  { text: 'Chất lượng ổn, giá hợp lý. Sẽ ủng hộ shop tiếp.', rating: 4, date: new Date('2024-10-10'), userName: 'Trần Thị B' },
+  { text: 'Đúng như mô tả, mình rất hài lòng với sản phẩm này.', rating: 5, date: new Date('2024-10-05'), userName: 'Lê Văn C' }
 ];
 const CURRENT_USER_ID = 1;
+
+// ------------------ BROADCAST UTILS ------------------
+// Emit sự kiện để các hook / component khác (ví dụ useCart) bắt được và refresh
+function broadcastCartChange() {
+  try {
+    window.dispatchEvent(new Event('cartUpdated'));
+  } catch (e) { /* ignore */ }
+
+  try {
+    localStorage.setItem('cart', String(Date.now()));
+  } catch (e) { /* ignore */ }
+}
+// -----------------------------------------------------
+
 // ==================== MAIN COMPONENT ====================
 const ProductDetail = () => {
 
   const { id } = useParams();
+  const navigate = useNavigate();
 
   // State cho dữ liệu sản phẩm
   const [product, setProduct] = useState(null);
@@ -191,11 +150,14 @@ const ProductDetail = () => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [currentItem, setCurrentItem] = useState(null);
 
-  // State cho commentsconst [comments, setComments] = useState([]); // <- Bắt đầu rỗng
+  // State cho comments
   const [comments, setComments] = useState([]); // <-- KIỂM TRA DÒNG NÀY
   const [ratingStats, setRatingStats] = useState({ averageRating: 0.0, reviewCount: 0 });
   const [newComment, setNewComment] = useState('');
   const [userRating, setUserRating] = useState(0);
+
+  // prevent multi-click
+  const [isAdding, setIsAdding] = useState(false);
 
   // hàm helper cho giá và giảm giá
   const formatCurrency = (amount) => {
@@ -205,9 +167,6 @@ const ProductDetail = () => {
       currency: 'VND'
     }).format(amount);
   };
-
-
-
 
   // ==================== EFFECT 1: Load Product ====================
   useEffect(() => {
@@ -287,88 +246,218 @@ const ProductDetail = () => {
     }
   }, [product, selectedOptions]);
 
-  const handleAddToCart = async () => {
-    console.log("handleAddToCart CLICKED");
+  // ---------- Helper: find matching cart entry by productItemId / sku / productCode ----------
+  const findMatchingCartEntry = (cartData, itemToMatch, selectedOptionIds = []) => {
+    if (!cartData || !Array.isArray(cartData.items)) return null;
+    for (const it of cartData.items) {
+      // check common fields
+      const pid1 = it?.productItemId ?? it?.product_item_id ?? it?.productItem ?? it?.itemId ?? it?.item_id ?? null;
+      const sku1 = it?.sku ?? it?.SKU ?? null;
+      const code1 = it?.productCode ?? it?.product_code ?? null;
 
-    // 1. Kiểm tra đăng nhập
-    const userId = getUserId();
-    if (!userId) {
-      alert("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng!");
-      return;
-    }
+      const pid2 = itemToMatch?.productItemId ?? itemToMatch?.product_item_id ?? null;
+      const sku2 = itemToMatch?.sku ?? itemToMatch?.SKU ?? null;
+      const code2 = itemToMatch?.productCode ?? itemToMatch?.product_code ?? null;
 
-    // 2. Kiểm tra currentItem
-    if (!currentItem) {
-      alert("Vui lòng chọn đầy đủ các tùy chọn (màu sắc, kích thước...) trước khi thêm vào giỏ!");
-      return;
-    }
-
-    // 3. Kiểm tra tồn kho
-    if (!currentItem.qtyInStock || currentItem.qtyInStock <= 0) {
-      alert("Sản phẩm hiện đã hết hàng. V103 vui lòng chọn biến thể khác hoặc quay lại sau!");
-      return;
-    }
-
-    // 4. Kiểm tra configurations
-    if (!currentItem.configurations || !Array.isArray(currentItem.configurations)) {
-      alert("Lỗi cấu hình sản phẩm. Vui lòng tải lại trang!");
-      return;
-    }
-
-    const selectedOptionIds = currentItem.configurations.map(config => {
-      if (!config.variationOptionId) {
-        console.warn("Missing variationOptionId:", config);
+      // If productItemId matches -> treat as same variant
+      if (pid1 != null && pid2 != null && String(pid1) === String(pid2)) {
+        return {
+          cartEntryId: it.id ?? it.cartItemId ?? it.cart_item_id ?? it?.itemId ?? it?.item_id,
+          qty: Number(it.qty || it.quantity || it.count || 1),
+          raw: it
+        };
       }
-      return config.variationOptionId;
-    }).filter(id => id != null);
 
-    if (selectedOptionIds.length === 0) {
-      alert("Không thể xác định tùy chọn sản phẩm. Vui lòng chọn lại!");
-      return;
+      // fallback: sku match
+      if (sku1 && sku2 && String(sku1) === String(sku2)) {
+        return {
+          cartEntryId: it.id ?? it.cartItemId ?? it.cart_item_id ?? it?.itemId ?? it?.item_id,
+          qty: Number(it.qty || it.quantity || it.count || 1),
+          raw: it
+        };
+      }
+
+      // fallback: productCode
+      if (code1 && code2 && String(code1) === String(code2)) {
+        return {
+          cartEntryId: it.id ?? it.cartItemId ?? it.cart_item_id ?? it?.itemId ?? it?.item_id,
+          qty: Number(it.qty || it.quantity || it.count || 1),
+          raw: it
+        };
+      }
+
+      // NOTE: if backend supports selectedOptions matching, extend logic here (compare option ids)
     }
+    return null;
+  };
 
-    // 5. Dữ liệu gửi đi
-    const payload = {
-      productItemId: currentItem.productItemId,
-      qty: 1,
-      is_customed: false,
-      selectedOptions: selectedOptionIds,
-    };
+  // ----------------- UPDATED: handleAddToCart (no navigate) -----------------
+  const handleAddToCart = async () => {
+    if (isAdding) return;
+    setIsAdding(true);
 
-    console.log("Payload gửi đi:", payload);
+    console.log("handleAddToCart CLICKED (no navigate)");
 
     try {
-      const response = await CartService.addToCart(payload);
-      console.log("Thêm giỏ hàng thành công:", response);
-      alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+      const userId = getUserId();
+      if (!userId) {
+        alert("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng!");
+        return;
+      }
+
+      if (!currentItem) {
+        alert("Vui lòng chọn đầy đủ các tùy chọn (màu sắc, kích thước...) trước khi thêm vào giỏ!");
+        return;
+      }
+
+      if (!currentItem.qtyInStock || currentItem.qtyInStock <= 0) {
+        alert("Sản phẩm hiện đã hết hàng. Vui lòng chọn biến thể khác hoặc quay lại sau!");
+        return;
+      }
+
+      // prepare option ids
+      const selectedOptionIds = (currentItem.configurations || []).map(c => c.variationOptionId).filter(Boolean);
+
+      // 1) Try to fetch cart to see if item exists -> if exists, update its qty
+      let cartData = null;
+      try {
+        cartData = await CartService.getCart();
+      } catch (e) {
+        // if cannot fetch cart (session expired or other), we'll fallback to addToCart
+        cartData = null;
+      }
+
+      const match = findMatchingCartEntry(cartData, currentItem, selectedOptionIds);
+
+      if (match && match.cartEntryId) {
+        // update existing cart entry (increase qty by 1)
+        const newQty = Math.max(1, (Number(match.qty) || 0) + 1);
+        if (typeof CartService.updateCartItem === 'function') {
+          await CartService.updateCartItem(match.cartEntryId, newQty);
+        } else if (typeof CartService.api === 'object' && typeof CartService.api.put === 'function') {
+          await CartService.api.put(`/api/cart/item/${match.cartEntryId}`, { qty: newQty });
+        } else {
+          // fallback: create a new cart entry if update not available
+          await CartService.addToCart({
+            productItemId: currentItem.productItemId,
+            qty: 1,
+            price: currentItem.price ?? currentItem.originalPrice ?? 0,
+            isCustomed: false,
+            selectedOptions: selectedOptionIds
+          });
+        }
+
+        alert("Đã thêm sản phẩm vào giỏ hàng (gộp với mục có sẵn).");
+      } else {
+        // Not found -> add as new cart item
+        await CartService.addToCart({
+          productItemId: currentItem.productItemId,
+          qty: 1,
+          price: currentItem.price ?? currentItem.originalPrice ?? 0,
+          isCustomed: false,
+          selectedOptions: selectedOptionIds
+        });
+        alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+      }
+
+      // broadcast để cập nhật số lượng giỏ hàng ở những component khác
+      try { broadcastCartChange(); } catch (e) { console.warn('broadcastCartChange failed', e); }
     } catch (err) {
       console.error("Lỗi khi thêm vào giỏ hàng:", err);
-      console.error("Response data:", err.response?.data);
-      console.error("Status:", err.response?.status);
-
-      // Xử lý lỗi theo mã trạng thái
-      if (err.response?.status === 401) {
-        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
-      }
-      else if (err.response?.status === 400) {
-        const msg = err.response.data?.message || "Dữ liệu không hợp lệ";
-        alert(`Không thể thêm vào giỏ: ${msg}`);
-      }
-      else if (err.response?.status === 404) {
-        alert("Sản phẩm không tồn tại. Vui lòng tải lại trang!");
-      }
-      else if (err.response?.status === 500) {
-        alert("Lỗi máy chủ. Vui lòng thử lại sau vài phút.");
-      }
-      else if (!err.response) {
-        // Lỗi mạng
-        alert("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại!");
-      }
-      else {
-        alert("Đã xảy ra lỗi không xác định. Vui lòng thử lại!");
-      }
+      // attempt to show helpful message
+      const msg = err?.response?.data?.message || err?.message || 'Không thể thêm vào giỏ hàng.';
+      alert(msg);
+    } finally {
+      setIsAdding(false);
     }
   };
+  // ---------------------------------------------------------------------
+
+  // ----------------- UPDATED: handleBuyNow (add then navigate, merge qty) -----------------
+  const handleBuyNow = async () => {
+    if (isAdding) return;
+    setIsAdding(true);
+
+    console.log("handleBuyNow CLICKED (add then navigate)");
+
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        alert("Bạn cần đăng nhập để thanh toán!");
+        return;
+      }
+
+      if (!currentItem) {
+        alert("Vui lòng chọn đầy đủ các tùy chọn trước khi mua!");
+        return;
+      }
+
+      if (!currentItem.qtyInStock || currentItem.qtyInStock <= 0) {
+        alert("Sản phẩm hiện đã hết hàng. Vui lòng chọn biến thể khác hoặc quay lại sau!");
+        return;
+      }
+
+      const selectedOptionIds = (currentItem.configurations || []).map(c => c.variationOptionId).filter(Boolean);
+
+      // check cart for existing
+      let cartData = null;
+      try {
+        cartData = await CartService.getCart();
+      } catch (e) {
+        cartData = null;
+      }
+
+      const match = findMatchingCartEntry(cartData, currentItem, selectedOptionIds);
+
+      if (match && match.cartEntryId) {
+        // update quantity (increase 1)
+        const newQty = Math.max(1, (Number(match.qty) || 0) + 1);
+        if (typeof CartService.updateCartItem === 'function') {
+          await CartService.updateCartItem(match.cartEntryId, newQty);
+        } else if (typeof CartService.api === 'object' && typeof CartService.api.put === 'function') {
+          await CartService.api.put(`/api/cart/item/${match.cartEntryId}`, { qty: newQty });
+        } else {
+          // fallback: add new
+          await CartService.addToCart({
+            productItemId: currentItem.productItemId,
+            qty: 1,
+            price: currentItem.price ?? currentItem.originalPrice ?? 0,
+            isCustomed: false,
+            selectedOptions: selectedOptionIds
+          });
+        }
+      } else {
+        // add new
+        await CartService.addToCart({
+          productItemId: currentItem.productItemId,
+          qty: 1,
+          price: currentItem.price ?? currentItem.originalPrice ?? 0,
+          isCustomed: false,
+          selectedOptions: selectedOptionIds
+        });
+      }
+
+      // broadcast and mark selected in cart page
+      try { broadcastCartChange(); } catch (_) {}
+      try {
+        // store selection by productItemId so Cart page can highlight/select the item
+        localStorage.setItem('cart_selected', JSON.stringify([String(currentItem.productItemId)]));
+      } catch (e) {
+        console.warn('Could not set cart_selected in localStorage', e);
+      }
+
+      // navigate to cart with query for selection (cart page should read localStorage or query)
+      const encoded = encodeURIComponent(String(currentItem.productItemId));
+      navigate(`/cart?select=${encoded}`);
+    } catch (err) {
+      console.error("Lỗi khi mua ngay (thêm vào giỏ):", err);
+      const msg = err?.response?.data?.message || err?.message || 'Không thể thực hiện mua ngay.';
+      alert(msg);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+  // ---------------------------------------------------------------------
 
   // ==================== HANDLERS ====================
   const handleOptionClick = (optionName, value) => {
@@ -392,7 +481,6 @@ const ProductDetail = () => {
     if (newComment.trim() && userRating > 0) {
       try {
         const reviewData = {
-          // SỬA: Dùng productItemId thay vì id (nếu API trả về productItemId)
           productItemId: currentItem.productItemId,
           userId: CURRENT_USER_ID,
           ratingValue: userRating,
@@ -416,7 +504,6 @@ const ProductDetail = () => {
       } catch (err) {
         alert('Gửi đánh giá thất bại: ' + err.message);
       }
-      // Di chuyển else ra ngoài try-catch
     } else {
       alert('Vui lòng nhập bình luận và chọn đánh giá sao.');
     }
@@ -492,7 +579,7 @@ const ProductDetail = () => {
           <div className={styles.imageWrapper}>
 
             <img
-              src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // <-- Sửa: Lấy ảnh item trước
+              src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // <-- Lấy ảnh item trước
               alt={product.productName}
               className={styles.image}
               onDoubleClick={handleImageDoubleClick}
@@ -524,7 +611,6 @@ const ProductDetail = () => {
                     </div>
                   )}
                 </span>
-                {/* (Tạm ẩn lượt mua vì API không có) */}
               </div>
             </div>
 
@@ -618,16 +704,16 @@ const ProductDetail = () => {
               <button
                 className={styles.primaryBtn}
                 onClick={handleAddToCart}
-
+                disabled={isAdding || currentItem?.qtyInStock === 0}
               >
-                {currentItem?.qtyInStock === 0 ? 'Hết hàng' : '🛒 Thêm vào giỏ'}
+                {isAdding ? 'Đang thêm...' : (currentItem?.qtyInStock === 0 ? 'Hết hàng' : '🛒 Thêm vào giỏ')}
               </button>
               <button
                 className={styles.secondaryBtn}
-                onClick={() => alert('Chuyển đến trang thanh toán')}
-                disabled={!currentItem || currentItem.qtyInStock === 0}
+                onClick={handleBuyNow}
+                disabled={isAdding || !currentItem || currentItem.qtyInStock === 0}
               >
-                💳 Mua ngay
+                {isAdding ? 'Đang xử lý...' : '💳 Mua ngay'}
               </button>
             </div>
 
@@ -798,7 +884,7 @@ const ProductDetail = () => {
 
       {/* Image Modal */}
       <ImageModal
-        src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // Sửa: Lấy ảnh item trước
+        src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // Lấy ảnh item trước
         alt={product.productName}
         isOpen={isImageModalOpen}
         onClose={() => setIsImageModalOpen(false)}
@@ -806,6 +892,5 @@ const ProductDetail = () => {
     </div>
   );
 };
-
 
 export default ProductDetail;

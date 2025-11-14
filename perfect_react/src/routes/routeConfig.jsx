@@ -22,6 +22,7 @@ const Contact = lazy(() => import("../pages/client/Contact"));
 const UserProfile = lazy(() => import("../pages/client/UserProfile"));
 const AItryOn = lazy(() => import("../pages/client/AItryOn"));
 const Order = lazy(() => import("../pages/client/Order"));
+const OrderHistory = lazy(() => import("../pages/client/OrderHistory"));
 /** Layout client: bọc Header/Footer + nơi render con */
 function ClientLayout() {
   const { pathname } = useLocation();
@@ -62,6 +63,7 @@ const routes = [
       { path: "contact", element: <Suspense fallback="..."><Contact /></Suspense> },
       { path: "ai-try-on", element: <Suspense fallback="..."><AItryOn /></Suspense> },
       { path: "order", element: <Suspense fallback="..."><Order /></Suspense> },
+      { path: "OrderHistory", element: <Suspense fallback="..."><OrderHistory /></Suspense> },
       // user area (cần đăng nhập)
       {
         path: "me",

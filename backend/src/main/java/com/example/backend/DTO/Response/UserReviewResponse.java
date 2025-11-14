@@ -15,6 +15,8 @@ public class UserReviewResponse {
     private String userAvatar; // Thêm avatar
     private String createdAt;
 
+    private UserReviewUserResponse user; // <-- Thay vì 'SiteUser'
+
     public UserReviewResponse(UserReview entity) {
         this.id = entity.getId();
         this.ratingValue = entity.getRatingValue();
@@ -34,5 +36,6 @@ public class UserReviewResponse {
             this.userAvatar = null;
         }
         this.createdAt = entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null;
+        this.user = new UserReviewUserResponse(entity.getUser()); // <-- THÊM DÒNG NÀY
     }
 }

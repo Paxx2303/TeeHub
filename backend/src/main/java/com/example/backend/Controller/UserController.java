@@ -16,8 +16,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -231,5 +233,44 @@ public class UserController {
         Integer currentUserId = userDetails.getUserId();
         siteUserService.changePassword(currentUserId, req.getPassword(), req.getNew_password());
         return ResponseEntity.ok("Đổi mật khẩu thành công");
+    }
+    // ===== Upload Avatar =====
+
+    @PostMapping("/avatar")
+    public ResponseEntity<?> uploadMyAvatar(
+            @AuthenticationPrincipal MyUserDetails userDetails,
+            @RequestParam("avatarFile") MultipartFile file) {
+        try {
+            if (userDetails == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
+            }
+
+            Integer userId = userDetails.getUserId();
+            String avatarUrl = siteUserService.uploadAvatar(userId, file);
+            return ResponseEntity.ok().body(
+                    java.util.Map.of("avatarUrl", avatarUrl)
+            );
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi lưu file", e);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Admin thay avatar cho user khác (ví dụ: cập nhật từ trang admin)
+     */
+    @PostMapping("/{userId}/avatar")
+    public ResponseEntity<?> uploadAvatarForUser(
+            @PathVariable Integer userId,
+            @RequestParam("avatarFile") MultipartFile file) {
+        try {
+            String avatarUrl = siteUserService.uploadAvatar(userId, file);
+            return ResponseEntity.ok(java.util.Map.of("avatarUrl", avatarUrl));
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi lưu file", e);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
     }
 }

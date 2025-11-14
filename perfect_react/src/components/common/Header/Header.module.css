@@ -1,5 +1,16 @@
+/* === ĐÃ THÊM: Tải font "Nunito" (mềm mại hơn) === */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;700&display=swap');
+
+/* === ĐÃ THÊM: Áp dụng font cho toàn bộ trang === */
+body {
+  font-family: 'Nunito', sans-serif;
+}
+
+/* === CÁC THAY ĐỔI ĐÃ ĐƯỢC CẬP NHẬT (GHI CHÚ "ĐÃ SỬA") === */
+
 .header {
-  background-color: var(--bg-primary);
+  /* ĐÃ THAY ĐỔI: Chuyển sang tông màu xanh dương nhạt */
+  background: linear-gradient(135deg, #f0f9ff 0%, #d6e9ff 25%, #e0f2ff 50%, #f0f4f8 75%, #f0f9ff 100%);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
@@ -13,9 +24,8 @@
   padding: 0 var(--spacing-md);
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: 64px;
-  gap: var(--spacing-lg);
+  justify-content: space-between;
 }
 
 /* Logo */
@@ -28,15 +38,35 @@
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
   flex-shrink: 0;
+  border-right: 1px solid #c0b7b7;
+  padding-right: 24px;
+  transition: opacity var(--transition-fast);
+}
+
+.logo:hover {
+  opacity: 0.8;
 }
 
 .logoImage {
   width: 32px;
   height: 32px;
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.1));
+  /* ĐÃ SỬA: Thêm transition cho hiệu ứng "pop" */
+  transition: transform var(--transition-fast);
+}
+
+/* ĐÃ SỬA: Thêm hiệu ứng "pop" cho logo khi hover */
+.logo:hover .logoImage {
+  transform: scale(1.1);
 }
 
 .logoText {
   display: none;
+  /* ĐÃ SỬA: Bỏ font 'Pacifico' để giống ảnh của bạn */
+  /* font-family: 'Pacifico', cursive; */
+  /* ĐÃ SỬA: Làm chữ to và đậm hơn */
+  font-weight: 700;
+  font-size: 1.7rem;
 }
 
 @media (min-width: 640px) {
@@ -49,7 +79,8 @@
 .nav {
   display: none;
   align-items: center;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
+  flex: 0 0 auto;
 }
 
 @media (min-width: 768px) {
@@ -60,120 +91,77 @@
 
 .navLink {
   color: var(--text-secondary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-md);
+  text-decoration: solid;
+  color: #37474F;
+  /* ĐÃ SỬA: Làm chữ đậm hơn 1 tí */
+  font-weight: 700;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  text-transform: uppercase;
 }
 
 .navLink:hover {
   color: var(--primary-color);
-  background-color: var(--bg-secondary);
+  transform: scale(1.05);
 }
 
-/* Search Form */
-.searchForm {
-  flex: 1;
-  max-width: 400px;
-  margin: 0 var(--spacing-lg);
-}
-
-.searchInputWrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.searchInput {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  padding-right: 48px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-full);
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  transition: all var(--transition-fast);
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background-color: var(--bg-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.searchInput::placeholder {
-  color: var(--text-muted);
-}
-
-.searchButton {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  border: none;
-  background-color: var(--primary-color);
-  color: var(--text-white);
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.searchButton:hover {
-  background-color: var(--primary-dark);
-}
-
-@media (max-width: 768px) {
-  .searchForm {
-    display: none;
-  }
-}
 
 /* User Actions */
 .userActions {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm); /* ĐÃ SỬA: Giảm gap để các icon gần nhau hơn */
   flex-shrink: 0;
 }
 
+/* ĐÃ SỬA: Cập nhật Cart link cho đẹp hơn */
 .cartLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
+  /* ĐÃ SỬA: Tăng padding và bo tròn */
+  padding: 10px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
   text-decoration: none;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
   transition: all var(--transition-fast);
 }
 
 .cartLink:hover {
   color: var(--primary-color);
-  background-color: var(--bg-secondary);
+  /* ĐÃ SỬA: Thêm nền mờ khi hover */
+  background-color: var(--bg-secondary, #f1f5f9);
+}
+
+.cartLink svg {
+  /* ĐÃ SỬA: Tăng kích thước icon */
+  width: 26px;
+  height: 26px;
 }
 
 .cartBadge {
   position: absolute;
   top: 0;
   right: 0;
-  background-color: var(--error-color);
-  color: var(--text-white);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  min-width: 18px;
-  height: 18px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(25%, -25%);
+  font-size: 12px;
+  font-weight: bold;
+  /* ĐÃ SỬA: Điều chỉnh vị trí badge cho nút tròn */
+  transform: translate(30%, -30%);
 }
 
 .userMenu {
@@ -188,30 +176,40 @@
   }
 }
 
+/* ĐÃ SỬA: Làm đẹp User Profile (admin) */
 .userLink {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 6px; /* ĐÃ SỬA: Giảm gap */
   color: var(--text-secondary);
   text-decoration: none;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
+  /* ĐÃ SỬA: Chuyển sang dạng "viên thuốc" */
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
   transition: all var(--transition-fast);
 }
 
 .userLink:hover {
   color: var(--primary-color);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-secondary, #f1f5f9);
+}
+
+/* ĐÃ SỬA: Thêm style cho icon user bên trong userLink */
+.userLink svg {
+  width: 24px;
+  height: 24px;
 }
 
 .userName {
-  font-weight: var(--font-weight-medium);
+  /* ĐÃ SỬA: Làm chữ đậm hơn */
+  font-weight: 500;
 }
 
 .authButtons {
   display: none;
   align-items: center;
   gap: var(--spacing-sm);
+  color: black;
 }
 
 @media (min-width: 640px) {
@@ -220,41 +218,71 @@
   }
 }
 
+/* ĐÃ SỬA: Làm đẹp nút Login (dạng text) */
 .authButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
   background: transparent;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   cursor: pointer;
+  /* ĐÃ SỬA: Làm chữ đậm hơn */
+  font-weight: 500;
+  font-size: 1rem;
+  /* ĐÃ SỬA: Bo tròn dạng viên thuốc */
+  border-radius: var(--radius-full);
   transition: all var(--transition-fast);
 }
 
 .authButton:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color);
+}
+
+.authButton svg {
+  width: 24px;
+  height: 24px;
+}
+
+.authButtonPrimary {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.authButtonPrimary:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
 
-.authButtonPrimary {
-  background: rgb(71, 129, 237) !important;
-  background: var(--primary-color);
-  color: var(--text-white);
-  border: 1px solid var(--primary-color);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+/* === PHẦN CSS MỚI CHO NÚT LOGOUT (DẠNG ICON) === */
+/* (Giống trong ảnh của bạn) */
+.logoutButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: 50%; /* Nút tròn */
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.authButtonPrimary:hover {
-  background: var(--primary-dark);
-  border-color: var(--primary-dark);
+.logoutButton svg {
+  width: 26px;
+  height: 26px;
 }
+
+.logoutButton:hover {
+  color: var(--primary-color);
+  background-color: var(--bg-secondary, #f1f5f9);
+}
+
+
+/* === Các phần còn lại của file CSS (Mobile, Animations...) === */
 
 .mobileAuthButton {
   background: transparent;
@@ -346,8 +374,7 @@
 }
 
 .mobileNavLink:hover {
-  color: var(--primary-color);
-  background-color: var(--bg-secondary);
+  color: blue;
 }
 
 .mobileAuthButtons {
@@ -371,26 +398,17 @@
   }
 }
 
-/* Dark theme adjustments */
-[data-theme="dark"] .header {
-  background-color: var(--bg-primary);
-  border-bottom-color: var(--border-color);
-}
-
-[data-theme="dark"] .searchInput {
-  background-color: var(--bg-secondary);
-  border-color: var(--border-color);
-}
-
-[data-theme="dark"] .searchInput:focus {
-  background-color: var(--bg-primary);
-}
-
 [data-theme="dark"] .mobileMenu {
   background-color: var(--bg-primary);
   border-bottom-color: var(--border-color);
 }
 
+/* ĐÃ SỬA: Ẩn placeholder đi vì ta đang dùng icon */
+.avatarPlaceholder {
+  display: none;
+}
+
+/*
 .avatarPlaceholder {
   display: inline-block;
   width: 20px;
@@ -400,6 +418,11 @@
   position: relative;
   margin-right: 8px;
   vertical-align: middle;
+  transition: box-shadow var(--transition-fast);
+}
+
+.userLink:hover .avatarPlaceholder {
+  box-shadow: 0 0 8px var(--primary-color);
 }
 
 .avatarPlaceholder::before {
@@ -425,44 +448,23 @@
   left: 50%;
   transform: translateX(-50%);
 }
+*/
 
-/* Header background */
-.header {
-  background-color: #d4e5f8;
-  /* Màu nền sáng, có thể đổi thành var(--bg-primary) */
-  border-bottom: 2px solid #ddd;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* === CÁC QUY TẮC MỚI BẠN ĐÃ THÊM (ĐÃ TÍCH HỢP) === */
+
+.logoIcon {
+  width: 60px;
+  height: auto;
 }
 
-/* Navigation container giữ các link trên 1 dòng */
-.nav {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  /* khoảng cách giữa các mục */
-  white-space: nowrap;
-  /* ngăn không cho text xuống dòng */
+img {
+  width: 100%;
+  border: none;
 }
 
-/* Navigation item style */
-.navLink {
-  color: var(--text-primary);
-  text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  /* viền xung quanh */
-  background-color: rgb(226, 234, 241);
-  /* nền trắng cho từng mục */
-  transition: all 0.2s ease;
-}
-
-/* Hover effect cho menu item */
-.navLink:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-  border-color: var(--primary-color);
+.cartIcon,
+.userIcon {
+  width: 24px;
+  height: 24px;
+  color: #333;
 }

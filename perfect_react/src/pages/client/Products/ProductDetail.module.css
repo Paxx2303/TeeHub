@@ -169,7 +169,10 @@
   border-radius: 12px;
   border: none;
   cursor: pointer;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 190px;
   font-size: 16px;
   transition: all 0.3s ease;
   position: relative;
@@ -399,16 +402,7 @@
   padding-bottom: 12px;
 }
 
-.sectionTitle::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border-radius: 2px;
-}
+
 
 /* Spec Card Styles */
 .specCard {
@@ -578,6 +572,7 @@
   padding: 16px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
+  width: 100%;
   min-height: 120px;
   resize: vertical;
   font-family: inherit;
@@ -667,53 +662,6 @@
 }
 
 /* Suggestions Styles */
-.suggestionCard {
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-  background: white;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.suggestionCard:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-  border-color: #3b82f6;
-}
-
-.suggestionImage {
-  max-width: 100%;
-  height: 180px;
-  object-fit: contain;
-  border-radius: 8px;
-  transition: transform 0.3s ease;
-}
-
-.suggestionCard:hover .suggestionImage {
-  transform: scale(1.05);
-}
-
-.suggestionCard h3 {
-  font-size: 16px;
-  margin: 0;
-  color: #1e293b;
-  font-weight: 600;
-  line-height: 1.4;
-}
-
-.suggestionCard p {
-  color: #dc2626;
-  font-weight: 700;
-  font-size: 18px;
-  margin: 0;
-}
 
 /* Loading Animation */
 @keyframes pulse {
@@ -845,15 +793,6 @@
   /* Gạch ngang */
 }
 
-/* Giá bình thường (khi không sale) - dùng lại .price */
-/* (Nếu bạn muốn giá không sale có màu khác, hãy tạo class .normalPrice) */
-/*
-.normalPrice {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1e293b; 
-}
-*/
 
 /* Tag giảm giá (ví dụ: -20%) */
 .saleBadgeDetail {
@@ -863,4 +802,154 @@
   border-radius: 6px;
   font-size: 1rem;
   font-weight: 600;
+}
+
+/* sản phẩm liên quan */
+/* (Trong file ProductDetail.module.css) */
+
+/* 1. Làm cho layout "bé chút" (a bit smaller) */
+.relatedSection {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+
+  /* Giới hạn chiều rộng và căn giữa */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.relatedTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+/* 2. Style cho Carousel Content (để hiện 4 cột) */
+/* Component Carousel của bạn dùng class .carouselContent */
+.carouselContent {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  /* <-- Hiển thị 4 cột */
+  gap: 16px;
+  /* Khoảng cách giữa các card */
+  width: 100%;
+}
+
+/* 3. CSS cho Card (Không cần margin nữa) */
+.relatedCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  /* 'gap' đã xử lý khoảng cách, không cần 'margin' */
+}
+
+.relatedCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.relatedLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  position: relative;
+}
+
+.relatedBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: #ef4444;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.relatedImage {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+  background-color: #f3f4f6;
+  /* Thêm màu nền cho ảnh */
+}
+
+.relatedInfo {
+  padding: 12px;
+}
+
+.relatedName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.relatedPriceContainer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.relatedPrice,
+.relatedNewPrice {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.relatedOldPrice {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+/* 4. Style cho các nút của Carousel (từ file .jsx của bạn) */
+.carousel {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.carouselBtn {
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.carouselBtn:hover:not(:disabled) {
+  background-color: #f9fafb;
+  color: #111827;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.carouselBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Nút trái */
+.carouselBtn:first-of-type {
+  margin-right: 16px;
+}
+
+/* Nút phải */
+.carouselBtn:last-of-type {
+  margin-left: 16px;
 }

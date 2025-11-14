@@ -1,7 +1,9 @@
+// src/pages/client/Design/Design.jsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import html2canvas from 'html2canvas';
+import designService from '../../../services/designService.js';
 
-// ====== IMPORT ẢNH ÁO (để trong src/data) ======
+// ====== IMPORT ẢNH ÁO (đặt trong src/data) ======
 import shirt1 from '../../../data/1a.png';
 import shirt2 from '../../../data/2a.png';
 import shirt3 from '../../../data/3a.png';
@@ -15,6 +17,11 @@ const TShirtDesigner = () => {
   const [dragData, setDragData] = useState(null);
   const canvasRef = useRef(null);
 
+  // user inputs for saving
+  const [name, setName] = useState('Áo của tôi');
+  const [description, setDescription] = useState('Tạo bằng TShirtDesigner');
+  const [price, setPrice] = useState(''); // string to send as BigDecimal
+
   // ===== DANH SÁCH ẢNH ÁO =====
   const baseImages = [
     { src: shirt1, label: 'Mẫu 1' },
@@ -25,20 +32,20 @@ const TShirtDesigner = () => {
   ];
   const [baseIndex, setBaseIndex] = useState(0);
 
-  // thanh cuộn thumbnails
+  // thumbs
   const thumbsRef = useRef(null);
   const scrollByAmount = 140;
   const scrollLeft = () => thumbsRef.current?.scrollBy({ left: -scrollByAmount, behavior: 'smooth' });
   const scrollRight = () => thumbsRef.current?.scrollBy({ left:  scrollByAmount, behavior: 'smooth' });
 
-  // ===== TRANG TRÍ =====
+  // decorations
   const decorationImages = [
     { id: 'star', name: 'Ngôi sao', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' },
     { id: 'heart', name: 'Trái tim', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' },
     { id: 'music', name: 'Nốt nhạc', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>' },
   ];
 
-  // ===== CRUD ELEMENT =====
+  // CRUD element functions
   const addTextElement = () => {
     const el = { id: nextId, type: 'text', content: 'Sample Text', x: 150, y: 200,
       fontSize: 24, fontFamily: 'Arial', color: '#000', fontWeight: 'normal', fontStyle: 'normal', rotation: 0 };
@@ -74,7 +81,7 @@ const TShirtDesigner = () => {
   const updateElement = (id, updates) => setElements(p => p.map(el => el.id === id ? { ...el, ...updates } : el));
   const deleteElement = (id) => { setElements(p => p.filter(el => el.id !== id)); if (selectedElement === id) setSelectedElement(null); };
 
-  // ===== DRAG =====
+  // Drag handlers
   const handleMouseDown = useCallback((e, elementId) => {
     e.preventDefault();
     setSelectedElement(elementId);
@@ -99,37 +106,28 @@ const TShirtDesigner = () => {
     return () => { document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); };
   }, [dragData, handleMouseMove, handleMouseUp]);
 
-  // ===== DOWNLOAD PNG =====
+  // Download PNG (existing)
   const downloadDesign = async () => {
     const node = canvasRef.current;
     if (!node) return;
 
-    // 1) Bỏ chọn để không vẽ khung dashed
     const prevSelected = selectedElement;
     setSelectedElement(null);
-
-    // 2) Thêm cờ exporting để chắc chắn root không bị transform khi clone
     node.classList.add('exporting');
-
-    // 3) Chờ DOM ổn định
     await new Promise(r => setTimeout(r, 0));
 
-    // Kích thước thực tế
     const rect = node.getBoundingClientRect();
     const fullW = Math.round(rect.width);
     const fullH = Math.round(rect.height);
-
-    // --- Thu hẹp ngang một chút bằng crop (không méo ảnh) ---
-    const slimFactor = 0.96; // chỉnh 0.95~0.98 theo mắt; 1 = không cắt
+    const slimFactor = 0.96;
     const shotW = Math.round(fullW * slimFactor);
     const shotH = fullH;
-    const offsetX = Math.round((fullW - shotW) / 2); // cắt đều 2 bên
+    const offsetX = Math.round((fullW - shotW) / 2);
     const offsetY = 0;
-
     const scale = Math.max(2, window.devicePixelRatio || 1);
 
     const canvas = await html2canvas(node, {
-      backgroundColor: null,     // đổi '#fff' nếu muốn nền trắng
+      backgroundColor: null,
       width: shotW,
       height: shotH,
       x: offsetX,
@@ -138,7 +136,6 @@ const TShirtDesigner = () => {
       useCORS: true,
       removeContainer: true,
       onclone: (doc) => {
-        // Ẩn control + bỏ border chọn + không transform root
         const style = doc.createElement('style');
         style.textContent = `
           .no-export { display: none !important; }
@@ -163,23 +160,119 @@ const TShirtDesigner = () => {
 
   const selectedElementData = elements.find(el => el.id === selectedElement);
 
+  // --- Export canvas to Blob helper (used for upload) ---
+  const exportCanvasBlob = async (node) => {
+    const canvas = await html2canvas(node, {
+      backgroundColor: null,
+      useCORS: true,
+      scale: Math.max(2, window.devicePixelRatio || 1),
+      onclone: (doc) => {
+        const style = doc.createElement('style');
+        style.textContent = `
+          .no-export { display: none !important; }
+          [data-selected="true"] { border: 2px solid transparent !important; }
+          .exporting { transform: none !important; }
+        `;
+        doc.head.appendChild(style);
+      }
+    });
+    return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+  };
+
+  // ===== Save to server =====
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState(0);
+
+  const saveDesignToServer = async () => {
+    if (!canvasRef.current) return;
+    setIsSaving(true);
+    setSaveProgress(0);
+    const node = canvasRef.current;
+    const prevSelected = selectedElement;
+    try {
+      // hide selection visuals
+      setSelectedElement(null);
+      node.classList.add('exporting');
+      await new Promise(r => setTimeout(r, 50));
+
+      // export to blob
+      const blob = await exportCanvasBlob(node);
+      if (!blob) throw new Error('Không tạo được ảnh từ canvas.');
+
+      // build payload - match CreateCustomProductRequest DTO
+      const payload = {
+        name: (name && name.trim()) ? name.trim() : `Thiết kế ${Date.now()}`,
+        description: description || '',
+        price: price ? String(price) : null,
+        baseImage: baseImages[baseIndex]?.label || null,
+        designJson: JSON.stringify(elements)
+      };
+
+      // call service
+      const result = await designService.createCustomProductWithImage(payload, blob, {
+        filename: `design_${Date.now()}.png`,
+        onUploadProgress: (ev) => {
+          if (ev && ev.loaded && ev.total) {
+            setSaveProgress(Math.round((ev.loaded * 100) / ev.total));
+          }
+        }
+      });
+
+      console.log('Saved custom product:', result);
+      alert('Lưu thiết kế thành công!');
+      node.classList.remove('exporting');
+      setSelectedElement(prevSelected);
+      setIsSaving(false);
+      setSaveProgress(100);
+      return result;
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || 'Lưu thất bại');
+      node.classList.remove('exporting');
+      setSelectedElement(prevSelected);
+      setIsSaving(false);
+      setSaveProgress(0);
+      throw err;
+    }
+  };
+
   return (
     <div style={{ display:'flex', height:'100vh', fontFamily:'Arial, sans-serif', background:'#f5f5f5' }}>
       {/* Sidebar */}
-      <div style={{ width:300, background:'#2c3e50', color:'#fff', padding:20, overflowY:'auto' }}>
-        <h2 style={{ margin:'0 0 20px', fontSize:24 }}>T-Shirt Designer</h2>
+      <div style={{ width:320, background:'#2c3e50', color:'#fff', padding:20, overflowY:'auto' }}>
+        <h2 style={{ margin:'0 0 12px', fontSize:22 }}>T-Shirt Designer</h2>
+
+        {/* Save metadata inputs */}
+        {/* <div style={{ marginBottom:18 }}>
+          <label style={{ display:'block', fontSize:13, marginBottom:6 }}>Tiêu đề</label>
+          <input value={name} onChange={(e)=>setName(e.target.value)} style={{ width:'100%', padding:8, borderRadius:6, border:'none', marginBottom:8 }} />
+
+          <label style={{ display:'block', fontSize:13, marginBottom:6 }}>Mô tả</label>
+          <input value={description} onChange={(e)=>setDescription(e.target.value)} style={{ width:'100%', padding:8, borderRadius:6, border:'none', marginBottom:8 }} />
+
+          <label style={{ display:'block', fontSize:13, marginBottom:6 }}>Giá (VNĐ)</label>
+          <input value={price} readOnly onChange={(e)=>setPrice(400000)} placeholder="400000" style={{ width:'100%', padding:8, borderRadius:6, border:'none' }} />
+        </div> */}
 
         {/* Tools */}
-        <div style={{ marginBottom:30 }}>
-          <h3 style={{ margin:'0 0 15px', fontSize:18 }}>Công cụ</h3>
+        <div style={{ marginBottom:20 }}>
+          <h3 style={{ margin:'0 0 12px', fontSize:16 }}>Công cụ</h3>
           <button onClick={addTextElement} style={btn('#3498db')}>+ Thêm Text</button>
           <button onClick={addImageElement} style={btn('#e74c3c')}>+ Thêm Hình ảnh</button>
-          <button onClick={downloadDesign} style={btn('#16a34a')}>💾 Tải ảnh về máy</button>
+          <button onClick={downloadDesign} style={btn('#16a34a')}>Tải ảnh về máy</button>
+
+          {/* <button
+            onClick={saveDesignToServer}
+            style={{ ...btn('#8b5cf6'), marginTop: 8 }}
+            disabled={isSaving}
+          >
+            {isSaving ? `Đang lưu... ${saveProgress}%` : 'Đặt hàng'}
+          </button> */}
         </div>
 
         {/* Decoration */}
         <div style={{ marginBottom:30 }}>
-          <h3 style={{ margin:'0 0 15px', fontSize:18 }}>Trang trí có sẵn</h3>
+          <h3 style={{ margin:'0 0 12px', fontSize:16 }}>Trang trí có sẵn</h3>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
             {decorationImages.map((d) => (
               <div key={d.id}
@@ -194,7 +287,7 @@ const TShirtDesigner = () => {
 
         {/* CHỌN ẢNH ÁO */}
         <div style={{ marginBottom:30 }}>
-          <h3 style={{ margin:'0 0 15px', fontSize:18 }}>Chọn ảnh áo</h3>
+          <h3 style={{ margin:'0 0 12px', fontSize:16 }}>Chọn ảnh áo</h3>
           <div style={{ position:'relative' }}>
             <button
               className="no-export"
@@ -213,7 +306,7 @@ const TShirtDesigner = () => {
               onWheel={(e)=>{ if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) thumbsRef.current.scrollLeft += e.deltaY; }}
             >
               <style>{`div::-webkit-scrollbar{ display:none; }`}</style>
-              {baseImages.map((img, idx)=>(
+              {baseImages.map((img, idx)=>( 
                 <div key={img.src}
                      onClick={()=>setBaseIndex(idx)}
                      title={img.label}
@@ -241,7 +334,7 @@ const TShirtDesigner = () => {
         {/* Properties panel */}
         {selectedElementData && (
           <div>
-            <h3 style={{ margin:'0 0 15px', fontSize:18 }}>
+            <h3 style={{ margin:'0 0 12px', fontSize:16 }}>
               Thuộc tính {selectedElementData.type==='text' ? 'Text' : selectedElementData.type==='decoration' ? 'Trang trí' : 'Hình ảnh'}
             </h3>
 
@@ -382,7 +475,7 @@ const TShirtDesigner = () => {
 
 /* ===== Helpers ===== */
 const Labeled = ({ label, children }) => (
-  <div style={{ marginBottom:15 }}>
+  <div style={{ marginBottom:12 }}>
     <label style={{ display:'block', marginBottom:6, fontSize:14 }}>{label}</label>
     {children}
   </div>

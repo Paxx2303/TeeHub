@@ -13,6 +13,7 @@ import java.util.List;
 public class ShoppingCartItemDTO {
     private Integer id;
     private Integer cartId;
+    private String productName;
     private Integer productItemId;
     private Integer qty;
     private Integer price;

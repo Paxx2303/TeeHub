@@ -1,3 +1,4 @@
+// src/pages/admin/Products/Products.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import ReactPaginate from 'react-paginate';
 import styles from './Products.module.css';
@@ -5,12 +6,13 @@ import { productService } from '../../../services/productService';
 import { categoryService } from '../../../services/categoryService';
 
 const ITEMS_PER_PAGE = 10;
+
 //state chỉnh sửa sản phẩm
 const getInitialFormData = () => ({
   productId: null, // <-- Thêm ID (quan trọng để biết là sửa hay thêm)
   productName: '',
   categoryId: '',
-  description: '',
+  productDescription: '',
   productMainImage: null, // Sẽ là file (khi thêm) hoặc string (khi sửa)
   items: [
     {
@@ -23,6 +25,7 @@ const getInitialFormData = () => ({
     }
   ]
 });
+
 function Products() {
   // State cho sản phẩm và phân trang
   const [products, setProducts] = useState([]);
@@ -40,12 +43,6 @@ function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  // State cho modal
-
-
-  // State cho form thêm sản phẩm
-
-
   //state chỉnh sửa sản phẩm
   const [showModal, setShowModal] = useState(false); // <- Đổi tên (thay vì showAddModal)
   const [modalMode, setModalMode] = useState('ADD');   // <- State MỚI: 'ADD' hoặc 'EDIT'
@@ -58,13 +55,12 @@ function Products() {
   const [imagePreview, setImagePreview] = useState(null);
   const [itemImagePreviews, setItemImagePreviews] = useState({}); // Preview cho từng item
 
-
   // --- Effect: Tải variations (Color, Size, etc.) ---
   useEffect(() => {
     const fetchVariations = async () => {
       setLoadingVariations(true);
       try {
-        // TODO: Gọi API lấy danh sách variations
+        // TODO: Gọi API lấy danh sách variations thật sự
         // const data = await variationService.getAllVariations();
 
         // MOCK DATA - Thay bằng API call thực tế
@@ -74,15 +70,27 @@ function Products() {
             variationName: 'Color',
             options: [
               { variationOptionId: 1, value: 'White' },
-              { variationOptionId: 2, value: 'Black' }
+              { variationOptionId: 2, value: 'Black' },
+              { variationOptionId: 3, value: 'Red' },
+              { variationOptionId: 4, value: 'Pink' },
+              { variationOptionId: 5, value: 'Grey' },
+              { variationOptionId: 6, value: 'Brown' },
+              { variationOptionId: 7, value: 'Blue' },
+              { variationOptionId: 8, value: 'Green' },
+              { variationOptionId: 9, value: 'Navy' },
+              // ...
             ]
           },
           {
             variationId: 2,
             variationName: 'Size',
             options: [
-              { variationOptionId: 3, value: 'M' },
-              { variationOptionId: 4, value: 'L' }
+              { variationOptionId: 10, value: 'S' },
+              { variationOptionId: 11, value: 'M' },
+              { variationOptionId: 12, value: 'L' },
+              { variationOptionId: 13, value: 'XL' },
+              { variationOptionId: 14, value: 'XXL' },
+              // ...
             ]
           }
         ];
@@ -97,6 +105,14 @@ function Products() {
     };
     fetchVariations();
   }, []);
+
+  // Helper: tìm variationId theo variationOptionId (fallback khi backend ko trả variationId)
+  const findVariationIdByOptionId = (optionId) => {
+    for (const v of variations) {
+      if (v.options.some(o => o.variationOptionId === optionId)) return v.variationId;
+    }
+    return null;
+  };
 
   // Handler cho input thay đổi
   const handleInputChange = (e) => {
@@ -157,27 +173,24 @@ function Products() {
   };
 
   // Handler cho configuration thay đổi
-  const handleConfigurationChange = (itemIndex, variationOptionId, variationName, value) => {
+  const handleConfigurationChange = (itemIndex, variationId, variationOptionId, variationName, value) => {
     const newItems = [...formData.items];
-    const configs = newItems[itemIndex].configurations;
+    const configs = newItems[itemIndex].configurations ? [...newItems[itemIndex].configurations] : [];
 
-    // Tìm xem variation này đã có chưa
-    const existingIndex = configs.findIndex(c => c.variationName === variationName);
+    // tìm theo variationId (nếu đã có thì update, chưa có thì push)
+    const existingIndex = configs.findIndex(c => c.variationId === variationId);
+
+    const newConfig = {
+      variationId: parseInt(variationId, 10),
+      variationOptionId: parseInt(variationOptionId, 10),
+      variationName,
+      value
+    };
 
     if (existingIndex >= 0) {
-      // Update existing
-      configs[existingIndex] = {
-        variationOptionId: parseInt(variationOptionId),
-        variationName,
-        value
-      };
+      configs[existingIndex] = newConfig;
     } else {
-      // Add new
-      configs.push({
-        variationOptionId: parseInt(variationOptionId),
-        variationName,
-        value
-      });
+      configs.push(newConfig);
     }
 
     newItems[itemIndex].configurations = configs;
@@ -186,6 +199,7 @@ function Products() {
       items: newItems
     }));
   };
+
   // Thêm biến thể mới
   const handleAddItem = () => {
     setFormData(prev => ({
@@ -225,12 +239,40 @@ function Products() {
     setImagePreview(null);
     setItemImagePreviews({});
   };
-  // Submit form thêm sản phẩm
-  // Trong Products.jsx (trang admin)
 
+  // Helper: build items payload, dedupe configurations by variationId
+  const buildItemsPayload = (items) => {
+    return items.map(item => {
+      // reduce configs theo variationId (nếu có nhiều mục cùng variation -> lấy mục cuối ghi)
+      const mapByVariation = (item.configurations || []).reduce((acc, c) => {
+        const vid = c.variationId != null ? c.variationId : findVariationIdByOptionId(c.variationOptionId);
+        const key = vid != null ? `vid_${vid}` : `vname_${c.variationName || 'unknown'}`;
+        acc[key] = {
+          variationId: vid,
+          variationOptionId: c.variationOptionId
+        };
+        return acc;
+      }, {});
+
+      const variationSelections = Object.values(mapByVariation).filter(Boolean);
+
+      // Depending on backend expectation: here we keep variationOptionIds (array of ids)
+      const variationOptionIds = variationSelections.map(s => s.variationOptionId);
+
+      return {
+        productItemId: item.productItemId ?? null,
+        sku: item.sku,
+        qtyInStock: parseInt(item.qtyInStock, 10) || 0,
+        price: parseFloat(item.price) || 0,
+        variationOptionIds
+      };
+    });
+  };
+
+  // Submit form thêm sản phẩm (không dùng riêng nữa, keep for compatibility)
   const handleAddProductSubmit = async (event) => {
     event.preventDefault();
-
+    // If you use modal form's single submit handler, this may be unused.
     try {
       setLoading(true);
 
@@ -248,31 +290,22 @@ function Products() {
         throw new Error("Vui lòng chọn ảnh chính cho sản phẩm.");
       }
 
-      // 3. Chuẩn bị mảng items (chỉ gửi ID của variation)
-      const itemsData = formData.items.map((item, index) => ({
-        sku: item.sku,
-        qtyInStock: parseInt(item.qtyInStock),
-        price: parseFloat(item.price),
-        // Chỉ gửi mảng các ID
-        variationOptionIds: item.configurations.map(c => c.variationOptionId),
-      }));
+      // 3. Chuẩn bị mảng items (dedupe configurations)
+      const itemsData = buildItemsPayload(formData.items);
+
+      // Debug
+      console.log('itemsData to send (ADD):', itemsData);
 
       // 4. Append mảng items dưới dạng chuỗi JSON
       formDataToSend.append('items', JSON.stringify(itemsData));
 
       // 5. Append tất cả file ảnh của items (với cùng 1 key là "itemImages")
-      // Backend sẽ nhận chúng dưới dạng List<MultipartFile>
       formData.items.forEach((item, index) => {
-        if (item.itemImage) {
+        if (item.itemImage && typeof item.itemImage !== 'string') {
           // Dùng chung key "itemImages"
           formDataToSend.append(`itemImages`, item.itemImage);
         }
       });
-
-      // In ra để kiểm tra
-      // for (let [key, value] of formDataToSend.entries()) {
-      //   console.log(key, value);
-      // }
 
       await productService.createProduct(formDataToSend);
 
@@ -287,7 +320,8 @@ function Products() {
       setLoading(false);
     }
   };
-  //handle sửa sản phẩm
+
+  //handle sửa / submit sản phẩm (được gọi bởi form modal)
   const handleFormSubmit = async (event) => {
     event.preventDefault();
     setLoading(true); // Bật loading (có thể dùng state riêng cho modal)
@@ -305,15 +339,11 @@ function Products() {
         formDataToSend.append('productMainImage', formData.productMainImage);
       }
 
-      // Chuẩn bị mảng items
-      const itemsData = formData.items.map(item => ({
-        productItemId: item.productItemId, // Gửi ID item (null nếu là item mới)
-        sku: item.sku,
-        qtyInStock: parseInt(item.qtyInStock),
-        price: parseFloat(item.price),
-        // Chỉ gửi mảng ID
-        variationOptionIds: item.configurations.map(c => c.variationOptionId),
-      }));
+      // Chuẩn bị mảng items (dedupe trước khi gửi)
+      const itemsData = buildItemsPayload(formData.items);
+
+      // Debug
+      console.log('itemsData to send (FORM SUBMIT):', itemsData);
 
       // Append mảng items JSON
       formDataToSend.append('items', JSON.stringify(itemsData));
@@ -325,7 +355,6 @@ function Products() {
           formDataToSend.append('itemImages', item.itemImage);
         }
         // Nếu là string (ảnh cũ) hoặc null, không gửi gì cả
-        // (Backend update cần logic để xử lý việc này)
       });
 
       // --- 2. Quyết định gọi API nào (Add hay Edit) ---
@@ -350,6 +379,7 @@ function Products() {
       setLoading(false);
     }
   };
+
   // --- Effect 1: Tải danh mục ---
   useEffect(() => {
     const fetchCategories = async () => {
@@ -452,7 +482,6 @@ function Products() {
     }).format(amount);
   };
 
-
   // sửa sản phẩm
   const handleOpenAddModal = () => {
     setFormData(getInitialFormData()); // Reset form về rỗng
@@ -461,34 +490,49 @@ function Products() {
     setModalMode('ADD');
     setShowModal(true);
   };
+
   // Mở modal ở chế độ "Sửa"
   const handleOpenEditModal = (product) => {
     // Chuyển đổi cấu trúc product từ API sang cấu trúc formData
+    // Nếu backend trả item.configurations là toàn bộ option (như payload bạn dán),
+    // cần reduce để giữ 1 option cho mỗi variation.
+    const items = (product.items || []).map(item => {
+      const reducedConfigs = (item.configurations || []).reduce((acc, config) => {
+        // Try to find variationId from config if provided, else use lookup from variations
+        const variationIdFromConfig = config.variationId != null ? config.variationId : findVariationIdByOptionId(config.variationOptionId);
+        const key = variationIdFromConfig != null ? `vid_${variationIdFromConfig}` : `vname_${config.variationName}`;
+        if (!acc[key]) {
+          acc[key] = {
+            variationId: variationIdFromConfig,
+            variationOptionId: config.variationOptionId,
+            variationName: config.variationName,
+            value: config.value
+          };
+        }
+        return acc;
+      }, {});
+      return {
+        productItemId: item.productItemId,
+        sku: item.sku,
+        qtyInStock: item.qtyInStock,
+        price: item.price,
+        itemImage: item.itemImage, // Đây là URL ảnh cũ (string)
+        configurations: Object.values(reducedConfigs)
+      };
+    });
+
     const editData = {
       productId: product.productId,
       productName: product.productName,
       categoryId: product.category?.categoryId || '',
       productDescription: product.productDescription,
       productMainImage: product.productMainImage, // Đây là URL ảnh cũ (string)
-      items: product.items.map(item => ({
-        productItemId: item.productItemId,
-        sku: item.sku,
-        qtyInStock: item.qtyInStock,
-        price: item.price,
-        itemImage: item.itemImage, // Đây là URL ảnh cũ (string)
-        // Chuyển 'configurations' thành 'variationOptionIds' (như frontend cần)
-        // LƯU Ý: Đây là logic quan trọng
-        configurations: item.configurations.map(config => ({
-          variationOptionId: config.variationOptionId,
-          variationName: config.variationName,
-          value: config.value
-        }))
-      }))
+      items
     };
     setFormData(editData);
 
     // Đặt ảnh preview là ảnh cũ
-    setImagePreview(`/Product/${product.productMainImage}`);
+    setImagePreview(product.productMainImage ? `/Product/${product.productMainImage}` : null);
     const itemPreviews = {};
     product.items.forEach((item, index) => {
       if (item.itemImage) {
@@ -500,7 +544,6 @@ function Products() {
     setModalMode('EDIT'); // Đặt chế độ
     setShowModal(true);  // Mở modal
   };
-
 
   // --- Render ---
   return (
@@ -858,8 +901,9 @@ function Products() {
                         <label className={styles.configLabel}>Cấu hình biến thể:</label>
                         <div className={styles.configurationsGrid}>
                           {variations.map(variation => {
+                            // lookup config theo variationId (an toàn hơn theo tên)
                             const currentValue = item.configurations.find(
-                              c => c.variationName === variation.variationName
+                              c => c.variationId === variation.variationId
                             );
 
                             return (
@@ -868,12 +912,16 @@ function Products() {
                                 <select
                                   value={currentValue?.variationOptionId || ''}
                                   onChange={(e) => {
+                                    const selectedOptionId = parseInt(e.target.value, 10);
+                                    // tìm option theo id
                                     const selectedOption = variation.options.find(
-                                      opt => opt.variationOptionId === parseInt(e.target.value)
+                                      opt => opt.variationOptionId === selectedOptionId
                                     );
                                     if (selectedOption) {
+                                      // truyền cả variationId và variationOptionId cho handler
                                       handleConfigurationChange(
                                         index,
+                                        variation.variationId,
                                         selectedOption.variationOptionId,
                                         variation.variationName,
                                         selectedOption.value
@@ -926,4 +974,3 @@ function Products() {
 }
 
 export default Products;
-

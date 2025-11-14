@@ -1,162 +1,174 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { STORAGE_KEYS } from '../../utils/constants';
+// src/store/slices/cartSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { generateId } from '../../utils/helpers';
+import CartService from '@/services/cart_service'; // adjust if alias absent
 
-// Mock cart data để test
-const MOCK_CART_DATA = [
-  {
-    id: 'cart-item-001',
-    productId: 'demo-tee-001',
-    name: 'Áo thun Perfect React',
-    price: 199000,
-    image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200&auto=format&fit=crop',
-    quantity: 2,
-    size: 'M',
-    color: 'white',
-    design: null,
-    customizations: {},
-    addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'cart-item-002',
-    productId: 'demo-tee-002',
-    name: 'Áo thun Vintage Classic',
-    price: 249000,
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1200&auto=format&fit=crop',
-    quantity: 1,
-    size: 'L',
-    color: 'black',
-    design: {
-      type: 'text',
-      content: 'VINTAGE',
-      position: { x: 50, y: 50 },
-      color: '#FFFFFF',
-      fontSize: 24,
-    },
-    customizations: {
-      textColor: '#FFFFFF',
-      backgroundColor: 'transparent',
-    },
-    addedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  }
-];
-
-const getInitialCart = () => {
-  if (typeof window === 'undefined') return [];
-  
-  const savedCart = localStorage.getItem(STORAGE_KEYS.CART);
-  
-  // Nếu có cart đã lưu, trả về cart đó
-  if (savedCart) {
-    return JSON.parse(savedCart);
-  }
-  
-  // Nếu chưa có cart, thêm mock data và lưu vào localStorage
-  localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(MOCK_CART_DATA));
-  console.log('✅ Mock cart data đã được thêm tự động!');
-  
-  return MOCK_CART_DATA;
+// Normalize function
+const normalizeServerItems = (serverItems = []) => {
+  if (!Array.isArray(serverItems)) return [];
+  return serverItems.map((it) => ({
+    id: it.id ?? it.cartItemId ?? generateId(),
+    productId: it.productId ?? it.sku ?? it.product?.id ?? null,
+    name: it.name ?? it.productName ?? it.product?.name ?? '',
+    price: Number(it.price ?? it.unitPrice ?? 0) || 0,
+    image: it.image ?? it.productImage ?? it.product?.image ?? null,
+    quantity: Number(it.qty ?? it.quantity ?? 0) || 0,
+    size: it.size ?? null,
+    color: it.color ?? null,
+    design: it.design ?? null,
+    customizations: it.customizations ?? {},
+    addedAt: it.addedAt ?? it.createdAt ?? new Date().toISOString(),
+    product: it.product ?? null,
+    _serverRaw: it
+  }));
 };
 
-const saveCartToStorage = (cart) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
+// ---- Thunks (exported) ----
+export const fetchCartFromServer = createAsyncThunk(
+  'cart/fetchFromServer',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await CartService.getCart();
+      const serverItems = Array.isArray(res) ? res : (res?.items ?? []);
+      return normalizeServerItems(serverItems);
+    } catch (err) {
+      return rejectWithValue(err?.message ?? 'Fetch cart failed');
+    }
   }
-};
+);
 
+export const addItemToServer = createAsyncThunk(
+  'cart/addItemToServer',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const res = await CartService.addToCart(payload);
+      const serverItems = Array.isArray(res) ? res : (res?.items ?? (res?.item ? [res.item] : null));
+      return normalizeServerItems(serverItems ?? []);
+    } catch (err) {
+      return rejectWithValue(err?.message ?? 'Add item failed');
+    }
+  }
+);
+
+export const removeItemFromServer = createAsyncThunk(
+  'cart/removeItemFromServer',
+  async (itemId, { rejectWithValue }) => {
+    try {
+      const res = await CartService.removeCartItem(itemId);
+      if (!res) return itemId;
+      const serverItems = Array.isArray(res) ? res : (res?.items ?? null);
+      if (serverItems) return normalizeServerItems(serverItems);
+      return itemId;
+    } catch (err) {
+      return rejectWithValue(err?.message ?? 'Remove failed');
+    }
+  }
+);
+
+export const updateItemOnServer = createAsyncThunk(
+  'cart/updateItemOnServer',
+  async ({ itemId, qty }, { rejectWithValue }) => {
+    try {
+      const res = await CartService.updateCartItem(itemId, qty);
+      const serverItems = Array.isArray(res) ? res : (res?.items ?? (res?.item ? [res.item] : null));
+      return normalizeServerItems(serverItems ?? []);
+    } catch (err) {
+      return rejectWithValue(err?.message ?? 'Update failed');
+    }
+  }
+);
+
+// ---- initial state & helpers ----
 const initialState = {
-  items: getInitialCart(),
+  items: [],
   total: 0,
   itemCount: 0,
+  isLoading: false,
+  error: null,
+  lastSyncedAt: null
 };
 
+const computeTotals = (items) => {
+  const total = items.reduce((s, it) => {
+    const q = Number(it.quantity ?? 0) || 0;
+    const price = Number(it.price ?? 0) || 0;
+    return s + price * q;
+  }, 0);
+  const itemCount = items.reduce((s, it) => s + (Number(it.quantity ?? 0) || 0), 0);
+  return { total, itemCount };
+};
+
+// ---- slice ----
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
   reducers: {
-    addToCart: (state, action) => {
-      const { product, quantity = 1, size, color, design } = action.payload;
-      const existingItemIndex = state.items.findIndex(
-        item => 
-          item.id === product.id && 
-          item.size === size && 
-          item.color === color &&
-          JSON.stringify(item.design) === JSON.stringify(design)
-      );
-
-      if (existingItemIndex >= 0) {
-        state.items[existingItemIndex].quantity += quantity;
-      } else {
-        state.items.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          quantity,
-          size,
-          color,
-          design,
-          productId: product.id,
-        });
-      }
-
-      saveCartToStorage(state.items);
-      cartSlice.caseReducers.calculateTotals(state);
-    },
-
-    removeFromCart: (state, action) => {
-      const itemId = action.payload;
-      state.items = state.items.filter(item => item.id !== itemId);
-      saveCartToStorage(state.items);
-      cartSlice.caseReducers.calculateTotals(state);
-    },
-
-    updateQuantity: (state, action) => {
-      const { itemId, quantity } = action.payload;
-      const item = state.items.find(item => item.id === itemId);
-      if (item) {
-        if (quantity <= 0) {
-          state.items = state.items.filter(item => item.id !== itemId);
-        } else {
-          item.quantity = quantity;
-        }
-        saveCartToStorage(state.items);
-        cartSlice.caseReducers.calculateTotals(state);
-      }
-    },
-
     clearCart: (state) => {
       state.items = [];
       state.total = 0;
       state.itemCount = 0;
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem(STORAGE_KEYS.CART);
-      }
+      state.isLoading = false;
+      state.error = null;
     },
-
-    calculateTotals: (state) => {
-      state.itemCount = state.items.reduce((total, item) => total + item.quantity, 0);
-      state.total = state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-    },
-
-    loadCartFromStorage: (state) => {
-      if (typeof window !== 'undefined') {
-        const savedCart = localStorage.getItem(STORAGE_KEYS.CART);
-        if (savedCart) {
-          state.items = JSON.parse(savedCart);
-          cartSlice.caseReducers.calculateTotals(state);
-        }
-      }
-    },
+    setCart: (state, action) => {
+      const items = Array.isArray(action.payload) ? action.payload : (action.payload?.items ?? []);
+      state.items = items;
+      const t = computeTotals(state.items);
+      state.total = t.total;
+      state.itemCount = t.itemCount;
+      state.lastSyncedAt = new Date().toISOString();
+    }
   },
+  extraReducers: (builder) => {
+    builder
+      // fetch
+      .addCase(fetchCartFromServer.pending, (s) => { s.isLoading = true; s.error = null; })
+      .addCase(fetchCartFromServer.fulfilled, (s, a) => {
+        s.isLoading = false;
+        s.items = a.payload ?? [];
+        const t = computeTotals(s.items);
+        s.total = t.total; s.itemCount = t.itemCount; s.lastSyncedAt = new Date().toISOString();
+      })
+      .addCase(fetchCartFromServer.rejected, (s, a) => { s.isLoading = false; s.error = a.payload ?? a.error?.message; })
+
+      // add
+      .addCase(addItemToServer.pending, (s) => { s.isLoading = true; s.error = null; })
+      .addCase(addItemToServer.fulfilled, (s, a) => {
+        s.isLoading = false;
+        const payload = a.payload ?? [];
+        if (Array.isArray(payload) && payload.length > 0) s.items = payload;
+        const t = computeTotals(s.items);
+        s.total = t.total; s.itemCount = t.itemCount; s.lastSyncedAt = new Date().toISOString();
+      })
+      .addCase(addItemToServer.rejected, (s, a) => { s.isLoading = false; s.error = a.payload ?? a.error?.message; })
+
+      // remove
+      .addCase(removeItemFromServer.pending, (s) => { s.isLoading = true; s.error = null; })
+      .addCase(removeItemFromServer.fulfilled, (s, a) => {
+        s.isLoading = false;
+        const payload = a.payload;
+        if (Array.isArray(payload)) s.items = payload;
+        else if (payload) s.items = s.items.filter(i => i.id !== payload);
+        const t = computeTotals(s.items);
+        s.total = t.total; s.itemCount = t.itemCount; s.lastSyncedAt = new Date().toISOString();
+      })
+      .addCase(removeItemFromServer.rejected, (s, a) => { s.isLoading = false; s.error = a.payload ?? a.error?.message; })
+
+      // update
+      .addCase(updateItemOnServer.pending, (s) => { s.isLoading = true; s.error = null; })
+      .addCase(updateItemOnServer.fulfilled, (s, a) => {
+        s.isLoading = false;
+        const payload = a.payload;
+        if (Array.isArray(payload) && payload.length) s.items = payload;
+        const t = computeTotals(s.items);
+        s.total = t.total; s.itemCount = t.itemCount; s.lastSyncedAt = new Date().toISOString();
+      })
+      .addCase(updateItemOnServer.rejected, (s, a) => { s.isLoading = false; s.error = a.payload ?? a.error?.message; });
+  }
 });
 
-export const {
-  addToCart,
-  removeFromCart,
-  updateQuantity,
-  clearCart,
-  calculateTotals,
-  loadCartFromStorage,
-} = cartSlice.actions;
+// named exports for actions
+export const { clearCart, setCart } = cartSlice.actions;
 
+// default export reducer
 export default cartSlice.reducer;

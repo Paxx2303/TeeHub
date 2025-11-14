@@ -65,4 +65,5 @@ public interface SiteUserRepo extends JpaRepository<SiteUser, Integer> {
         order by su.id desc
     """)
     List<SiteUserResponse> searchAsDto(@Param("kw") String keyword);
+
 }

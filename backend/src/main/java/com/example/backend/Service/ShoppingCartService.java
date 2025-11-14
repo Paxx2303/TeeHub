@@ -26,7 +26,8 @@ public class ShoppingCartService {
     private CustomProductRepo customProductRepo; // ✅ Repo cho custom_product
     @Autowired
     private EntityManager entityManager;
-
+    @Autowired
+    private ProductRepo productRepo;
 
     // ====================== ADD TO CART ======================
     @Transactional
@@ -115,7 +116,7 @@ public class ShoppingCartService {
                     dto.setCartId(cart.getId());
                     dto.setProductItemId(item.getProductItemId());
                     dto.setQty(item.getQty());
-
+                    dto.setProductName(productRepo.findNameById((item.getProductItemId())));
                     // 🔍 Tìm xem có custom product tương ứng hay không
                     Optional<CustomProduct> customOpt = customProductRepo
                             .findByUserIdAndProductId(cart.getUserId(), item.getProductItemId());

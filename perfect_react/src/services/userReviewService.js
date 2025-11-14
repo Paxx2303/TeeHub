@@ -38,5 +38,16 @@ export const reviewService = {
             console.error('Error posting review:', error);
             throw error;
         }
+    },
+    getFeaturedReviews: async (limit = 3) => {
+        try {
+            // Gọi API mới mà bạn vừa tạo
+            const response = await api.get(`/api/reviews/featured?limit=${limit}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching featured reviews:', error);
+            throw error;
+        }
     }
+
 };

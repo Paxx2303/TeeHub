@@ -16,14 +16,28 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-
         default_schema: ecommerce
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
 server:
   port: 8080
 
 app:
   jwt:
     secret: "p6n8fBq7Yw7o2C0l3o2yQm1nq2VqV8yDk2Z9h3lE5yI="
+  # ====== THÊM MỚI (LOCAL) ======
+  avatar:
+    dir: "C:\\Users\\wangt\\Downloads\\THUDO\\TeeHub-main\\perfect_react\\public\\Avatar"
+  product:
+    dir: "C:\\Users\\wangt\\Downloads\\THUDO\\TeeHub-main\\perfect_react\\public\\Product"
+  custom:
+    dir: "C:\\Users\\wangt\\Downloads\\THUDO\\TeeHub-main\\perfect_react\\public\\CustomProduct"
+  external:
+    base-url: "http://localhost:8080"   # để BE trả về avatarUrl đầy đủ
 
 logging:
   level:

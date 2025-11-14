@@ -59,10 +59,19 @@ public class SecurityConfig {
                         .requestMatchers("/api/cart/**", "/api/orders/**").hasAnyRole("USER", "ADMIN")
 
 
+
+
                         // === PHẦN ADMIN (hasRole) ===
                         // QUY TẮC TỔNG QUÁT (phải nằm SAU quy tắc /me)
                         // Chỉ ADMIN mới được truy cập các đường dẫn /api/users/ CÒN LẠI (ví dụ: lấy tất cả user, xóa user)
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/avatars/**").permitAll()
+
+
+
+                        .requestMatchers(HttpMethod.POST, "/custom-products/**").hasAnyRole("USER", "ADMIN")
+
+
 
                         .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**").hasRole("ADMIN")

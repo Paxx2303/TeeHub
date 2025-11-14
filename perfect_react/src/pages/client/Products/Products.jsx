@@ -12,7 +12,7 @@ const SORT_OPTIONS = [
   // { id: 'price-desc', label: 'Giá cao đến thấp', icon: '💰' }, // Backend cần sắp xếp theo giá giảm dần
   // { id: 'price-asc', label: 'Giá thấp đến cao', icon: '💵' }, // Backend cần sắp xếp theo giá tăng dần
   { id: 'hot', label: 'Bán chạy nhất', icon: '🔥' }, // Backend cần logic riêng
-  //   { id: 'popular', label: 'Nổi bật nhất', icon: '⭐' } // Backend cần logic riêng
+  //   { id: 'popular', label: 'Nổi bật nhất', icon: '⭐' } // Backend cần logic riêng
 ];
 const formatCurrency = (amount) => {
   if (amount == null) return '';
@@ -278,7 +278,7 @@ function Product() {
                         />
                         <div className={styles.cardBody}>
                           <h2 className={styles.name}>{product.productName}</h2>
-                          <p>Category: {product.category?.categoryName}</p>
+                          {/* <p>Category: {product.category?.categoryName}</p> */}
 
 
                           {/* 2. SỬA LẠI KHỐI GIÁ */}
@@ -305,11 +305,15 @@ function Product() {
                               // Không có item (không có giá)
                               <span className={styles.normalPrice}>Liên hệ</span>
                             )}
-                            {product.totalSold >= 0 && (
+
+                            {/* === ĐÃ SỬA === */}
+                            {/* Luôn hiển thị 'Đã bán' nếu > 0 */}
+                            {product.totalSold != null && product.totalSold > 0 && (
                               <div className={styles.soldCount}>
                                 Đã bán {product.totalSold}
                               </div>
                             )}
+                            {/* === HẾT PHẦN SỬA === */}
                           </div>
                           {/* HẾT PHẦN SỬA GIÁ */}
 
@@ -317,9 +321,9 @@ function Product() {
                             <a href={`/products/${product.productId}`} className={styles.linkBtn}>
                               View Details
                             </a>
-                            <a href="#" className={`${styles.linkBtn} ${styles.secondaryBtn}`}>
+                            {/* <a href="#" className={`${styles.linkBtn} ${styles.secondaryBtn}`}>
                               Add to Cart
-                            </a>
+                            </a> */}
                           </div>
                         </div>
                       </div>
@@ -342,15 +346,15 @@ function Product() {
 
                     // --- SỬ DỤNG LẠI CLASS TỪ CODE CŨ CỦA BẠN ---
                     containerClassName={styles.paginationContainer}
-                    pageClassName={styles.paginationPage}         // Class cho <li> chứa số trang
-                    pageLinkClassName={styles.paginationLink}       // Class cho <a> chứa số trang
+                    pageClassName={styles.paginationPage}       // Class cho <li> chứa số trang
+                    pageLinkClassName={styles.paginationLink}     // Class cho <a> chứa số trang
                     previousClassName={styles.paginationPrevious}   // Class cho <li> nút Previous
                     previousLinkClassName={styles.paginationLink}   // Class cho <a> nút Previous
-                    nextClassName={styles.paginationNext}           // Class cho <li> nút Next
-                    nextLinkClassName={styles.paginationLink}       // Class cho <a> nút Next
-                    breakClassName={styles.paginationBreak}         // Class cho <li> dấu "..."
-                    breakLinkClassName={styles.paginationLink}      // Class cho <a> dấu "..."
-                    activeClassName={styles.paginationActive}       // Class cho <li> trang hiện tại
+                    nextClassName={styles.paginationNext}         // Class cho <li> nút Next
+                    nextLinkClassName={styles.paginationLink}     // Class cho <a> nút Next
+                    breakClassName={styles.paginationBreak}       // Class cho <li> dấu "..."
+                    breakLinkClassName={styles.paginationLink}    // Class cho <a> dấu "..."
+                    activeClassName={styles.paginationActive}     // Class cho <li> trang hiện tại
                     disabledClassName={styles.paginationDisabled}   // Class cho <li> nút Previous/Next bị vô hiệu hóa
                     // --- HẾT PHẦN CLASS ---
                     renderOnZeroPageCount={null} // Không render gì nếu pageCount = 0

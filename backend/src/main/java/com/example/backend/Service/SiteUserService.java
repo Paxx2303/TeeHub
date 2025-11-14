@@ -6,17 +6,29 @@ import com.example.backend.Entity.SiteUser;
 import com.example.backend.Repos.SiteUserRepo;
 import com.example.backend.DTO.Request.RegisterRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class SiteUserService {
 
     private final SiteUserRepo siteUserRepo;
+
+    @Value("${app.avatar.dir}")
+    private String avatarDir;
+
+    @Value("${app.external.base-url}")
+    private String baseUrl;
 
     /* =========================
        Helpers
@@ -94,10 +106,7 @@ public class SiteUserService {
         su.setUserAvatar(req.getUser_avatar());
         su.setEmailAddress(emailLower);
         su.setPhoneNumber(req.getPhone_number());
-
-        // KHÔNG mã hoá
         su.setPassword(req.getPassword());
-
         su.setRole(normalizeRole(req.getRole()));
 
         su = siteUserRepo.save(su);
@@ -110,12 +119,10 @@ public class SiteUserService {
         SiteUser user = siteUserRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User không tồn tại"));
 
-        // So sánh plain text
         if (!oldPassword.equals(user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu cũ không đúng");
         }
 
-        // Lưu plain text
         user.setPassword(newPassword);
         siteUserRepo.save(user);
     }
@@ -130,20 +137,10 @@ public class SiteUserService {
         if (req.getUser_avatar() != null)  su.setUserAvatar(req.getUser_avatar());
         if (req.getPhone_number() != null) su.setPhoneNumber(req.getPhone_number());
 
-        // Nếu muốn cho update email:
-        // if (req.getEmail_address() != null) {
-        //     String newEmail = req.getEmail_address().trim().toLowerCase();
-        //     if (!newEmail.equalsIgnoreCase(su.getEmailAddress()) && siteUserRepo.existsByEmailAddress(newEmail)) {
-        //         throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã tồn tại: " + newEmail);
-        //     }
-        //     su.setEmailAddress(newEmail);
-        // }
-
         if (req.getRole() != null) {
             su.setRole(normalizeRole(req.getRole()));
         }
 
-        // Admin đặt lại mật khẩu (plain text)
         if (req.getNew_password() != null && !req.getNew_password().isBlank()) {
             su.setPassword(req.getNew_password());
         }
@@ -168,6 +165,46 @@ public class SiteUserService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User " + id + " không tồn tại.");
         }
         siteUserRepo.deleteById(id);
+    }
+
+    /* ===== Upload Avatar ===== */
+
+    @Transactional
+    public String uploadAvatar(Integer userId, MultipartFile file) throws IOException {
+        SiteUser user = siteUserRepo.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User không tồn tại: " + userId));
+
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File rỗng hoặc không hợp lệ");
+        }
+
+        Path uploadDir = Paths.get(avatarDir).toAbsolutePath().normalize();
+        if (!Files.exists(uploadDir)) {
+            Files.createDirectories(uploadDir);
+        }
+
+        String ext = "";
+        String originalName = file.getOriginalFilename();
+        int idx = originalName != null ? originalName.lastIndexOf('.') : -1;
+        if (idx > 0) ext = originalName.substring(idx);
+        String filename = UUID.randomUUID() + ext;
+
+        Path target = uploadDir.resolve(filename);
+        Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+
+        // Xóa ảnh cũ (nếu có)
+        String old = user.getUserAvatar();
+        if (old != null && old.contains("/avatars/")) {
+            String oldFile = old.substring(old.lastIndexOf('/') + 1);
+            Files.deleteIfExists(uploadDir.resolve(oldFile));
+        }
+
+        // Tạo URL public để FE load
+        String avatarUrl = baseUrl.replaceAll("/+$", "") + "/avatars/" + filename;
+
+        user.setUserAvatar(avatarUrl);
+        siteUserRepo.save(user);
+        return avatarUrl;
     }
 
     /* ===== Helper mapping ===== */

@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 
-
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -30,25 +29,29 @@ public class ProductService {
             int pageSize = pageable.getPageSize();
             int offset = pageNumber * pageSize;
 
-            // Xử lý sort (hiện tại chỉ hỗ trợ productId)
-            String sortColumn = "p_sub.product_id";
-            String sortDirection = "DESC";
+            // 2. KIỂM TRA LOẠI SORT
+            boolean isHotSort = false;
+            String sortProperty = "productId"; // Mặc định
             Sort sort = pageable.getSort();
+
+            // Lấy thuộc tính sort đầu tiên
             if (sort.isSorted()) {
                 Sort.Order order = sort.iterator().next();
-                if ("productId".equalsIgnoreCase(order.getProperty())) {
-                    sortColumn = "p_sub.product_id";
-                    sortDirection = order.isAscending() ? "ASC" : "DESC";
+                sortProperty = order.getProperty();
+                if ("hot".equalsIgnoreCase(sortProperty)) {
+                    isHotSort = true;
                 }
-                // Bỏ qua các sort khác cho native query này
             }
+            long totalElements;
+            String jsonData;
+            if (isHotSort) {
+                totalElements = productRepo.countHottestProducts(categoryId, searchTerm);
+                jsonData = productRepo.getHottestProductsAsJsonPaged(pageSize, offset, categoryId, searchTerm);
 
-            // 2. Gọi query đếm (COUNT)
-
-            long totalElements = productRepo.countAllProducts(categoryId, searchTerm);
-            // 3. Gọi query lấy dữ liệu (DATA)
-            String jsonData = productRepo.getAllProductsAsJsonPaged(pageSize, offset, categoryId, searchTerm);
-            // 4. Deserialize JSON (giống như cũ)
+            } else {
+                totalElements = productRepo.countAllProducts(categoryId, searchTerm);
+                jsonData = productRepo.getAllProductsAsJsonPaged(pageSize, offset, categoryId, searchTerm);
+            }
             List<ProductResponse> content;
             if (jsonData == null || jsonData.equals("[]")) {
                 content = Collections.emptyList();
@@ -56,10 +59,8 @@ public class ProductService {
                 content = objectMapper.readValue(jsonData, new TypeReference<List<ProductResponse>>() {});
             }
 
-            // 5. Tính toán thông tin phân trang
             int totalPages = (int) Math.ceil((double) totalElements / (double) pageSize);
 
-            // 6. Xây dựng PagedResponse
             ProductPageResponse<ProductResponse> response = new ProductPageResponse<>();
             response.setContent(content);
             response.setPageNumber(pageNumber);
@@ -75,6 +76,9 @@ public class ProductService {
         }
     }
 
+    /**
+     * LẤY CHI TIẾT SẢN PHẨM
+     */
     public ProductResponse getProductById(Integer productId) {
         try {
             String jsonData = productRepo.getProductDetailAsJson(productId);
@@ -90,61 +94,15 @@ public class ProductService {
     }
 
     /**
-     * XOÁ một sản phẩm (DELETE)
+     * XOÁ SẢN PHẨM
      */
     @Transactional
     public String deleteProduct(Integer productId) {
-
-        // 1. Kiểm tra xem sản phẩm có tồn tại không
         if (!productRepo.existsById(productId)) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
-
-        // 2. Xoá
         productRepo.deleteById(productId);
         return "Deleted product successful with id: " + productId;
     }
 
-    //lọc sản phẩm theo giá
-    public ProductPageResponse<ProductResponse> getHottestProducts(Pageable pageable) {
-        try {
-            // 1. Lấy tham số phân trang (giống hệt hàm cũ)
-            int pageNumber = pageable.getPageNumber();
-            int pageSize = pageable.getPageSize();
-            int offset = pageNumber * pageSize;
-
-            // (Không cần xử lý sort, vì query đã hardcode ORDER BY total_sold DESC)
-
-            // 2. Gọi query đếm (COUNT) - (Gọi hàm repo MỚI)
-            long totalElements = productRepo.countHottestProducts();
-
-            // 3. Gọi query lấy dữ liệu (DATA) - (Gọi hàm repo MỚI)
-            String jsonData = productRepo.getHottestProductsAsJsonPaged(pageSize, offset);
-
-            // 4. Deserialize JSON (giống hệt hàm cũ)
-            List<ProductResponse> content;
-            if (jsonData == null || jsonData.equals("[]")) {
-                content = Collections.emptyList();
-            } else {
-                content = objectMapper.readValue(jsonData, new TypeReference<List<ProductResponse>>() {});
-            }
-
-            // 5. Tính toán thông tin phân trang (giống hệt hàm cũ)
-            int totalPages = (int) Math.ceil((double) totalElements / (double) pageSize);
-
-            // 6. Xây dựng PagedResponse (giống hệt hàm cũ)
-            ProductPageResponse<ProductResponse> response = new ProductPageResponse<>();
-            response.setContent(content);
-            response.setPageNumber(pageNumber);
-            response.setPageSize(pageSize);
-            response.setTotalElements(totalElements);
-            response.setTotalPages(totalPages);
-            response.setLast(pageNumber >= (totalPages - 1));
-
-            return response;
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error parsing hot product data", e);
-        }
-    }
 }

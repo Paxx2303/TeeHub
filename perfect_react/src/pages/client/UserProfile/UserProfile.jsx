@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import styles from './UserProfile.module.css';
 import {
     getMyProfile,
@@ -427,21 +428,30 @@ const UserProfile = () => {
     };
 
     const handleAvatarChange = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-            setIsLoading(true);
-            const avatarUrl = await uploadAvatar(file);
-            const updated = { ...userFormData, userAvatar: avatarUrl };
-            setUserFormData(updated);
-            const resp = await updateUser(loggedInUserId, updated);
-            setUserProfile(resp);
-            setUserFormData(resp);
-        } catch (err) {
-            console.error(err);
-            alert('Không thể tải lên ảnh.');
-        } finally { setIsLoading(false); }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isLoading) return;
+
+    try {
+        setIsLoading(true);
+
+        // upload -> backend trả avatarUrl (và backend đã update DB)
+        const avatarUrl = await uploadAvatar(file);
+
+        // chỉ cập nhật local state (không gọi updateMyProfile)
+        setUserProfile(prev => ({ ...prev, userAvatar: avatarUrl }));
+        setUserFormData(prev => ({ ...prev, userAvatar: avatarUrl }));
+
+        // optional: show toast success
+    } catch (err) {
+        console.error('Avatar upload failed', err);
+        alert(err?.message || 'Không thể tải lên ảnh.');
+    } finally {
+        setIsLoading(false);
+    }
     };
+    
+
 
     const handleSaveUser = async () => {
         if (!userFormData.fullName || !userFormData.emailAddress) {
@@ -608,6 +618,13 @@ const UserProfile = () => {
                             Thông tin cá nhân
                         </h1>
                         <p className={styles.pageSubtitle}>Quản lý thông tin tài khoản của bạn</p>
+
+                        {/* Link to OrderHistory route */}
+                        <div style={{ marginTop: '1rem' }}>
+                            <Link to="/OrderHistory" className={styles.btnPrimary} style={{ textDecoration: 'none' }}>
+                                <span>📦</span>&nbsp; Xem lịch sử đơn hàng
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -620,10 +637,10 @@ const UserProfile = () => {
                                 <div className={styles.avatarWrapper}>
                                     <div className={styles.avatarContainer}>
                                         <img
-                                            src={userProfile.userAvatar || '/images/default-avatar.png'}
+                                            src={userProfile.userAvatar || '../src/assets/avt.png'}
                                             alt="Avatar"
                                             className={styles.avatar}
-                                            onError={(e) => { e.currentTarget.src = '/images/default-avatar.png'; }}
+                                            onError={(e) => { e.currentTarget.src = '../src/assets/avt.png'; }}
                                         />
                                         <div className={styles.avatarOverlay}>
                                             <label htmlFor="avatarUpload" className={styles.avatarLabel}>
