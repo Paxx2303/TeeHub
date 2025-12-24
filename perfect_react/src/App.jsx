@@ -8,8 +8,8 @@ import Footer from './components/common/Footer';
 import AppRoutes from './routes';
 import './styles/globals.css';
 import './styles/variables.css';
-// Routes centralized in src/routes
-// Error Boundary Component
+
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -68,7 +68,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Component để kiểm tra route và render layout phù hợp
+
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
@@ -76,7 +76,7 @@ function AppContent() {
 
   return (
     <div className="App">
-      {/* Render Header/Footer user nếu không phải trang login và không phải trang admin */}
+      {}
       {!isLoginPage && !isAdminPage && (
         <ErrorBoundary>
           <Header />

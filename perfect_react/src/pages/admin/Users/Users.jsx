@@ -1,151 +1,196 @@
-import React, { useState } from 'react';
+
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './Users.module.css';
+import {
+  adminFetchUsers,
+  adminSearchUsers,
+  adminCreateUser,
+  adminUpdateUser,
+  adminDeleteUser,
+  adminChangeRole, 
+} from '../../../services/userService.js'; 
+
+
+
+const roleOptions = [
+  { value: 'customer', label: 'Khách hàng' },
+  { value: 'admin', label: 'Quản trị viên' },
+];
+
+const toUiRole = (serverRole) => {
+  const r = String(serverRole || '').toUpperCase();
+  if (r.includes('ADMIN')) return 'admin';
+  if (r.includes('MOD'))   return 'moderator';
+  return 'customer'; 
+};
+const toServerRole = (uiRole) => {
+  const r = String(uiRole || '').toLowerCase();
+  if (r === 'admin') return 'ADMIN';
+  if (r === 'moderator') return 'MODERATOR';
+  return 'USER';
+};
+
+const roleColor = (role) =>
+  ({ customer: '#3b82f6', admin: '#ef4444', moderator: '#f59e0b' }[role] || '#6b7280');
+
+
+const normalizeUser = (u) => ({
+  id: u.id,
+  full_name: u.full_name || '',
+  user_avatar: u.user_avatar || '',
+  email_address: u.email_address || '',
+  phone_number: u.phone_number || '',
+  role: toUiRole(u.role),
+  __raw: u,
+});
 
 const Users = () => {
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [selectedRole, setSelectedRole] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
   const [showAddModal, setShowAddModal] = useState(false);
-
-  // Mock data - sẽ thay thế bằng API calls
-  const users = [
-    {
-      id: 'USER001',
-      name: 'Nguyễn Văn A',
-      email: 'nguyenvana@email.com',
-      phone: '0123456789',
-      role: 'customer',
-      status: 'active',
-      joinDate: '2024-01-10',
-      lastLogin: '2024-01-15',
-      totalOrders: 5,
-      totalSpent: 2500000,
-      avatar: 'https://via.placeholder.com/50x50/4F46E5/FFFFFF?text=NA'
-    },
-    {
-      id: 'USER002',
-      name: 'Trần Thị B',
-      email: 'tranthib@email.com',
-      phone: '0987654321',
-      role: 'customer',
-      status: 'active',
-      joinDate: '2024-01-08',
-      lastLogin: '2024-01-14',
-      totalOrders: 3,
-      totalSpent: 1200000,
-      avatar: 'https://via.placeholder.com/50x50/10B981/FFFFFF?text=TB'
-    },
-    {
-      id: 'USER003',
-      name: 'Lê Văn C',
-      email: 'levanc@email.com',
-      phone: '0369852147',
-      role: 'admin',
-      status: 'active',
-      joinDate: '2024-01-05',
-      lastLogin: '2024-01-15',
-      totalOrders: 0,
-      totalSpent: 0,
-      avatar: 'https://via.placeholder.com/50x50/F59E0B/FFFFFF?text=LC'
-    },
-    {
-      id: 'USER004',
-      name: 'Phạm Thị D',
-      email: 'phamthid@email.com',
-      phone: '0741852963',
-      role: 'customer',
-      status: 'inactive',
-      joinDate: '2024-01-03',
-      lastLogin: '2024-01-12',
-      totalOrders: 2,
-      totalSpent: 800000,
-      avatar: 'https://via.placeholder.com/50x50/EF4444/FFFFFF?text=PD'
-    }
-  ];
-
-  const roleOptions = [
-    { value: 'all', label: 'Tất cả vai trò' },
-    { value: 'customer', label: 'Khách hàng' },
-    { value: 'admin', label: 'Quản trị viên' },
-    { value: 'moderator', label: 'Điều hành viên' }
-  ];
-
-  const getRoleColor = (role) => {
-    const colors = {
-      customer: '#3b82f6',
-      admin: '#ef4444',
-      moderator: '#f59e0b'
-    };
-    return colors[role] || '#6b7280';
-  };
-
-  const getRoleText = (role) => {
-    const texts = {
-      customer: 'Khách hàng',
-      admin: 'Quản trị viên',
-      moderator: 'Điều hành viên'
-    };
-    return texts[role] || role;
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      active: '#10b981',
-      inactive: '#6b7280',
-      banned: '#ef4444'
-    };
-    return colors[status] || '#6b7280';
-  };
-
-  const getStatusText = (status) => {
-    const texts = {
-      active: 'Hoạt động',
-      inactive: 'Không hoạt động',
-      banned: 'Bị cấm'
-    };
-    return texts[status] || status;
-  };
-
-  const filteredUsers = users.filter(user => {
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.id.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesRole && matchesSearch;
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    full_name: '',
+    email_address: '',
+    phone_number: '',
+    role: 'customer',
+    password: '',
   });
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: null,
+    full_name: '',
+    email_address: '',
+    phone_number: '',
+    user_avatar: '',
+    role: 'customer',
+  });
 
-  const handleDeleteUser = (userId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) {
-      console.log(`Xóa người dùng ${userId}`);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await adminFetchUsers();
+      setList((data || []).map(normalizeUser));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleToggleStatus = (userId, currentStatus) => {
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    console.log(`Thay đổi trạng thái người dùng ${userId} thành ${newStatus}`);
+  useEffect(() => {
+    load();
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const base = list.filter((u) => selectedRole === 'all' || u.role === selectedRole);
+    if (!searchTerm.trim()) return base;
+    const kw = searchTerm.toLowerCase();
+    return base.filter(
+      (u) =>
+        String(u.id ?? '').toLowerCase().includes(kw) ||
+        (u.full_name || '').toLowerCase().includes(kw) ||
+        (u.email_address || '').toLowerCase().includes(kw) ||
+        (u.phone_number || '').toLowerCase().includes(kw)
+    );
+  }, [list, selectedRole, searchTerm]);
+
+  const onSearchSubmit = async (e) => {
+    e.preventDefault();
+    const data = await adminSearchUsers(searchTerm.trim());
+    setList((data || []).map(normalizeUser));
   };
 
-  const handleChangeRole = (userId, newRole) => {
-    console.log(`Thay đổi vai trò người dùng ${userId} thành ${newRole}`);
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa người dùng này?')) return;
+    await adminDeleteUser(userId);
+    setList((prev) => prev.filter((x) => x.id !== userId));
+  };
+
+  
+  const handleChangeRole = async (userId, newRoleUi) => {
+    const current = list.find((u) => u.id === userId);
+    if (!current) return;
+    if (current.role === newRoleUi) return;
+
+    if (newRoleUi === 'admin' && !window.confirm('Bạn sắp gán quyền Quản trị viên. Tiếp tục?')) return;
+
+    const admin_password = window.prompt('Nhập mật khẩu của bạn để xác nhận:');
+    if (!admin_password) return;
+
+    try {
+      const serverRole = toServerRole(newRoleUi);
+      const res = await adminChangeRole(userId, serverRole, admin_password);
+      const updated = normalizeUser(res);
+      setList((prev) => prev.map((x) => (x.id === userId ? updated : x)));
+    } catch (e) {
+      alert(e?.message || 'Đổi vai trò thất bại');
+      
+      setList((prev) => prev.map((x) => (x.id === userId ? { ...x, role: current.role } : x)));
+    }
+  };
+
+  const openEdit = (user) => {
+    setEditForm({
+      id: user.id,
+      full_name: user.full_name || '',
+      email_address: user.email_address || '',
+      phone_number: user.phone_number || '',
+      user_avatar: user.user_avatar || '',
+      role: user.role || 'customer',
+    });
+    setShowEditModal(true);
+  };
+
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      full_name: editForm.full_name,
+      email_address: editForm.email_address,  
+      phone_number: editForm.phone_number,
+      user_avatar: editForm.user_avatar,
+      role: toServerRole(editForm.role),
+    };
+    const res = await adminUpdateUser(editForm.id, payload);
+    const updated = normalizeUser(res);
+    setList((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+    setShowEditModal(false);
+  };
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const payload = {
+        full_name: form.full_name,
+        email_address: form.email_address,
+        phone_number: form.phone_number || undefined,
+        password: form.password,
+        role: toServerRole(form.role),
+      };
+      const res = await adminCreateUser(payload);
+      const created = normalizeUser(res);
+      setList((prev) => [created, ...prev]);
+      setShowAddModal(false);
+      setForm({ full_name: '', email_address: '', phone_number: '', role: 'customer', password: '' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className={styles.users}>
-      {/* Page header */}
+      {}
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Quản lý người dùng</h1>
-        <p className={styles.pageSubtitle}>Quản lý tài khoản và quyền hạn người dùng</p>
       </div>
 
-      {/* Filters and actions */}
+      {}
       <div className={styles.filters}>
-        <div className={styles.searchBox}>
+        <form className={styles.searchBox} onSubmit={onSearchSubmit}>
           <input
             type="text"
             placeholder="Tìm kiếm người dùng..."
@@ -153,8 +198,8 @@ const Users = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className={styles.searchInput}
           />
-          <span className={styles.searchIcon}>🔍</span>
-        </div>
+          <button type="submit" className={styles.searchIcon} title="Tìm">🔍</button>
+        </form>
 
         <div className={styles.roleFilter}>
           <label className={styles.filterLabel}>Vai trò:</label>
@@ -163,189 +208,175 @@ const Users = () => {
             onChange={(e) => setSelectedRole(e.target.value)}
             className={styles.roleSelect}
           >
-            {roleOptions.map(role => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
+            <option value="all">Tất cả vai trò</option>
+            {roleOptions.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
             ))}
           </select>
         </div>
 
         <div className={styles.actions}>
-          <button 
-            className={styles.addBtn}
-            onClick={() => setShowAddModal(true)}
-          >
-            ➕ Thêm người dùng
-          </button>
-          <button className={styles.exportBtn}>
-            📊 Xuất báo cáo
-          </button>
+          <button className={styles.addBtn} onClick={() => setShowAddModal(true)}>➕ Thêm người dùng</button>
         </div>
       </div>
 
-      {/* Users table */}
-      <div className={styles.usersTable}>
-        <div className={styles.tableHeader}>
-          <div className={styles.tableCell}>Người dùng</div>
-          <div className={styles.tableCell}>Vai trò</div>
-          <div className={styles.tableCell}>Trạng thái</div>
-          <div className={styles.tableCell}>Thống kê</div>
-          <div className={styles.tableCell}>Ngày tham gia</div>
-          <div className={styles.tableCell}>Đăng nhập cuối</div>
-          <div className={styles.tableCell}>Thao tác</div>
-        </div>
-
-        {filteredUsers.map((user, index) => (
-          <div key={index} className={styles.tableRow}>
-            <div className={styles.tableCell}>
-              <div className={styles.userInfo}>
-                <img src={user.avatar} alt={user.name} className={styles.userAvatar} />
-                <div className={styles.userDetails}>
-                  <div className={styles.userName}>{user.name}</div>
-                  <div className={styles.userContact}>
-                    {user.email} • {user.phone}
-                  </div>
-                  <div className={styles.userId}>{user.id}</div>
-                </div>
-              </div>
-            </div>
-            <div className={styles.tableCell}>
-              <select
-                value={user.role}
-                onChange={(e) => handleChangeRole(user.id, e.target.value)}
-                className={styles.roleSelect}
-                style={{ 
-                  backgroundColor: getRoleColor(user.role),
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                {roleOptions.slice(1).map(role => (
-                  <option key={role.value} value={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.tableCell}>
-              <span 
-                className={styles.statusBadge}
-                style={{ backgroundColor: getStatusColor(user.status) }}
-              >
-                {getStatusText(user.status)}
-              </span>
-            </div>
-            <div className={styles.tableCell}>
-              <div className={styles.userStats}>
-                <div className={styles.statItem}>
-                  <span className={styles.statLabel}>Đơn hàng:</span>
-                  <span className={styles.statValue}>{user.totalOrders}</span>
-                </div>
-                <div className={styles.statItem}>
-                  <span className={styles.statLabel}>Chi tiêu:</span>
-                  <span className={styles.statValue}>{formatCurrency(user.totalSpent)}</span>
-                </div>
-              </div>
-            </div>
-            <div className={styles.tableCell}>
-              <span className={styles.joinDate}>
-                {new Date(user.joinDate).toLocaleDateString('vi-VN')}
-              </span>
-            </div>
-            <div className={styles.tableCell}>
-              <span className={styles.lastLogin}>
-                {new Date(user.lastLogin).toLocaleDateString('vi-VN')}
-              </span>
-            </div>
-            <div className={styles.tableCell}>
-              <div className={styles.actionButtons}>
-                <button 
-                  className={styles.viewBtn}
-                  title="Xem chi tiết"
-                >
-                  👁️
-                </button>
-                <button 
-                  className={styles.editBtn}
-                  title="Chỉnh sửa"
-                >
-                  ✏️
-                </button>
-                <button 
-                  className={styles.toggleBtn}
-                  onClick={() => handleToggleStatus(user.id, user.status)}
-                  title={user.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                >
-                  {user.status === 'active' ? '⏸️' : '▶️'}
-                </button>
-                <button 
-                  className={styles.deleteBtn}
-                  onClick={() => handleDeleteUser(user.id)}
-                  title="Xóa"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
+      {}
+      {loading ? (
+        <div style={{ padding: 16 }}>Đang tải...</div>
+      ) : (
+        <div className={styles.usersTable}>
+          <div className={styles.tableHeader}>
+            <div className={styles.tableCell}>Người dùng</div>
+            <div className={styles.tableCell}>Email</div>
+            <div className={styles.tableCell}>Số điện thoại</div>
+            <div className={styles.tableCell}>Vai trò</div>
           </div>
-        ))}
-      </div>
 
-      {/* Add User Modal */}
+          {filteredUsers.map((u) => (
+            <div key={u.id} className={styles.tableRow}>
+              {}
+              <div className={styles.tableCell}>
+                <div className={styles.userInfo}>
+                  <img
+                    src={u.user_avatar || 'https://via.placeholder.com/50'}
+                    alt={u.full_name || 'Avatar'}
+                    className={styles.userAvatar}
+                  />
+                  <div className={styles.userDetails}>
+                    <div className={styles.userName}>{u.full_name || '(Chưa có tên)'}</div>
+                    <div className={styles.userId}>ID: {u.id}</div>
+                  </div>
+                </div>
+              </div>
+
+              {}
+              <div className={styles.tableCell}>{u.email_address}</div>
+
+              {}
+              <div className={styles.tableCell}>{u.phone_number || '-'}</div>
+
+              {}
+              <div className={styles.tableCell}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <select
+                    value={u.role}
+                    onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                    className={styles.roleSelect}
+                    style={{ backgroundColor: roleColor(u.role), color: 'white', border: 'none' }}
+                  >
+                    {roleOptions.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+
+                  <button className={styles.editBtn} title="Chỉnh sửa" onClick={() => openEdit(u)}>
+                    ✏️
+                  </button>
+                  <button className={styles.deleteBtn} title="Xóa" onClick={() => handleDeleteUser(u.id)}>
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {filteredUsers.length === 0 && (
+            <div className={styles.tableRow}>
+              <div className={styles.tableCell} style={{ gridColumn: '1 / -1', textAlign: 'center', opacity: 0.7 }}>
+                Không có người dùng nào phù hợp.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {}
       {showAddModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3>Thêm người dùng mới</h3>
-              <button 
-                className={styles.closeBtn}
-                onClick={() => setShowAddModal(false)}
-              >
-                ✕
-              </button>
+              <button className={styles.closeBtn} onClick={() => setShowAddModal(false)}>✕</button>
             </div>
             <div className={styles.modalContent}>
-              <form className={styles.addUserForm}>
+              <form className={styles.addUserForm} onSubmit={handleAdd}>
                 <div className={styles.formGroup}>
                   <label>Họ và tên</label>
-                  <input type="text" placeholder="Nhập họ và tên" />
+                  <input type="text" value={form.full_name} onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))} placeholder="Nhập họ và tên" />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Email</label>
-                  <input type="email" placeholder="Nhập email" />
+                  <input type="email" value={form.email_address} onChange={(e) => setForm((f) => ({ ...f, email_address: e.target.value }))} required placeholder="Nhập email" />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Số điện thoại</label>
-                  <input type="tel" placeholder="Nhập số điện thoại" />
+                  <input type="tel" value={form.phone_number} onChange={(e) => setForm((f) => ({ ...f, phone_number: e.target.value }))} placeholder="Nhập số điện thoại" />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Vai trò</label>
-                  <select>
-                    <option value="customer">Khách hàng</option>
-                    <option value="moderator">Điều hành viên</option>
-                    <option value="admin">Quản trị viên</option>
+                  <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+                    {roleOptions.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                 </div>
                 <div className={styles.formGroup}>
                   <label>Mật khẩu</label>
-                  <input type="password" placeholder="Nhập mật khẩu" />
+                  <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} required placeholder="Nhập mật khẩu" />
                 </div>
                 <div className={styles.formActions}>
-                  <button type="button" onClick={() => setShowAddModal(false)}>
-                    Hủy
-                  </button>
-                  <button type="submit">Thêm người dùng</button>
+                  <button type="button" onClick={() => setShowAddModal(false)}>Hủy</button>
+                  <button type="submit" disabled={submitting}>{submitting ? 'Đang thêm...' : 'Thêm người dùng'}</button>
                 </div>
               </form>
             </div>
           </div>
         </div>
       )}
+
+      {}
+      {showEditModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>Sửa thông tin người dùng</h3>
+              <button className={styles.closeBtn} onClick={() => setShowEditModal(false)}>✕</button>
+            </div>
+            <div className={styles.modalContent}>
+              <form className={styles.addUserForm} onSubmit={submitEdit}>
+                <div className={styles.formGroup}>
+                  <label>Họ và tên</label>
+                  <input type="text" value={editForm.full_name} onChange={(e) => setEditForm((f) => ({ ...f, full_name: e.target.value }))} placeholder="Nhập họ và tên" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Email</label>
+                  <input type="email" value={editForm.email_address} onChange={(e) => setEditForm((f) => ({ ...f, email_address: e.target.value }))} required placeholder="Nhập email" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Số điện thoại</label>
+                  <input type="tel" value={editForm.phone_number} onChange={(e) => setEditForm((f) => ({ ...f, phone_number: e.target.value }))} placeholder="Nhập số điện thoại" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Avatar URL</label>
+                  <input type="url" value={editForm.user_avatar} onChange={(e) => setEditForm((f) => ({ ...f, user_avatar: e.target.value }))} placeholder="https://..." />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Vai trò</label>
+                  <select value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}>
+                    <option value="customer">Khách hàng</option>
+                    <option value="admin">Quản trị viên</option>
+                  </select>
+                </div>
+                <div className={styles.formActions}>
+                  <button type="button" onClick={() => setShowEditModal(false)}>Hủy</button>
+                  <button type="submit">Lưu thay đổi</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
 export default Users;
-
-

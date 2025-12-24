@@ -2,45 +2,40 @@ package com.example.backend.Service;
 
 import com.example.backend.DTO.Request.PromotionRequest;
 import com.example.backend.DTO.Response.PromotionResponse;
-import com.example.backend.Entity.ProductCategory;
+import com.example.backend.Entity.Product;
 import com.example.backend.Entity.Promotion;
 import com.example.backend.Exception.ResourceNotFoundException;
-import com.example.backend.Repos.ProductCategoryRepo;
+import com.example.backend.Repos.ProductRepo;
 import com.example.backend.Repos.PromotionRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PromotionService {
     private final PromotionRepo promotionRepo;
-    private final ProductCategoryRepo categoryRepo; // Cần repo này để tìm category
+    private final ProductRepo productRepo;
 
-    // LẤY TẤT CẢ
     public List<PromotionResponse> getAllPromotions() {
         return promotionRepo.findAll().stream()
-                .map(PromotionResponse::new) // Chuyển Entity -> DTO
+                .map(p -> new PromotionResponse(p))
                 .collect(Collectors.toList());
     }
 
-    // LẤY MỘT
     public PromotionResponse getPromotionById(Integer promotionId) {
         Promotion promotion = promotionRepo.findById(promotionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Promotion not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion not found with id: " + promotionId));
         return new PromotionResponse(promotion);
     }
 
-    // TẠO MỚI
     @Transactional
     public PromotionResponse createPromotion(PromotionRequest request) {
-        // Tìm Category mà request muốn áp dụng
-        ProductCategory category = categoryRepo.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        Product product = productRepo.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
         Promotion promotion = new Promotion();
         promotion.setName(request.getName());
@@ -48,34 +43,33 @@ public class PromotionService {
         promotion.setDiscountRate(request.getDiscountRate());
         promotion.setStartDate(request.getStartDate());
         promotion.setEndDate(request.getEndDate());
-        promotion.setCategory(category); // Gán category
+
+        promotion.setProduct(product);
 
         Promotion savedPromotion = promotionRepo.save(promotion);
         return new PromotionResponse(savedPromotion);
     }
 
-    // CẬP NHẬT
     @Transactional
     public PromotionResponse updatePromotion(Integer promotionId, PromotionRequest request) {
         Promotion promotion = promotionRepo.findById(promotionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Promotion not found"));
 
-        // Tìm Category
-        ProductCategory category = categoryRepo.findById(request.getCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        Product product = productRepo.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         promotion.setName(request.getName());
         promotion.setDescription(request.getDescription());
         promotion.setDiscountRate(request.getDiscountRate());
         promotion.setStartDate(request.getStartDate());
         promotion.setEndDate(request.getEndDate());
-        promotion.setCategory(category);
+
+        promotion.setProduct(product);
 
         Promotion updatedPromotion = promotionRepo.save(promotion);
         return new PromotionResponse(updatedPromotion);
     }
 
-    // XÓA
     @Transactional
     public void deletePromotion(Integer promotionId) {
         if (!promotionRepo.existsById(promotionId)) {
@@ -83,16 +77,14 @@ public class PromotionService {
         }
         promotionRepo.deleteById(promotionId);
     }
-    public PromotionResponse getPromotionByCategoryId(Integer categoryId) {
-        // Tìm khuyến mãi
-        Optional<Promotion> promotionOpt = promotionRepo.findByCategoryId(categoryId);
 
-        if (promotionOpt.isEmpty()) {
-            // Nếu không có, ném lỗi 404 (để frontend biết là "chưa có")
-            throw new ResourceNotFoundException("No promotion found for category id: " + categoryId);
+    public PromotionResponse getPromotionByProductId(Integer productId) {
+        List<Promotion> promotions = promotionRepo.findByProduct_Id(productId);
+
+        if (promotions.isEmpty()) {
+            throw new ResourceNotFoundException("No promotion found for product id: " + productId);
         }
 
-        // Nếu có, chuyển sang DTO và trả về
-        return new PromotionResponse(promotionOpt.get());
+        return new PromotionResponse(promotions.get(0));
     }
 }

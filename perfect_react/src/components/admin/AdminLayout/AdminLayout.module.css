@@ -4,7 +4,7 @@
   background: #f8fafc;
 }
 
-/* Sidebar wrapper */
+
 .sidebarWrapper {
   position: fixed;
   left: 0;
@@ -13,7 +13,7 @@
   transition: transform 0.3s ease;
 }
 
-/* Main content area */
+
 .mainContent {
   flex: 1;
   margin-left: 280px;
@@ -22,7 +22,7 @@
   min-height: 100vh;
 }
 
-/* Page content */
+
 .pageContent {
   flex: 1;
   padding: 2rem;
@@ -35,7 +35,7 @@
   width: 100%;
 }
 
-/* Mobile overlay */
+
 .mobileOverlay {
   position: fixed;
   top: 0;
@@ -47,7 +47,7 @@
   display: none;
 }
 
-/* Responsive design */
+
 @media (max-width: 1024px) {
   .mainContent {
     margin-left: 240px;
@@ -82,7 +82,7 @@
   }
 }
 
-/* Scrollbar styling for main content */
+
 .pageContent::-webkit-scrollbar {
   width: 8px;
 }

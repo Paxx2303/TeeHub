@@ -21,17 +21,13 @@ public class CategoryController {
     private CategoryService categoryService;
     @Autowired
     private CategoryCUDService categoryWriteService;
-    /**
-     * API GET Lấy tất cả danh mục
-     */
+
     @GetMapping
     public ResponseEntity<List<CategoryWithCountResponse>> getAllCategoriesWithCount() { // <-- Sửa kiểu trả về
         List<CategoryWithCountResponse> categoriesWithCount = categoryService.getAllCategoriesWithCount(); // <-- Gọi hàm service mới
         return ResponseEntity.ok(categoriesWithCount);
     }
-    /**
-     * API GET Lấy 1 category theo ID
-     */
+
     @GetMapping("/{id}")
     public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Integer id) {
         CategoryResponse category = categoryService.getCategoryById(id);
@@ -42,7 +38,7 @@ public class CategoryController {
     public ResponseEntity<CategoryResponse> createCategory(
             @RequestBody CreateUpdateCategoryRequest request) {
 
-        // Gọi service "Ghi"
+
         CategoryResponse newCategory = categoryWriteService.createCategory(request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newCategory);

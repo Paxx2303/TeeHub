@@ -1,4 +1,4 @@
-// src/routes/index.jsx
+
 import { useRoutes } from "react-router-dom";
 import routes from "./routeConfig";
 

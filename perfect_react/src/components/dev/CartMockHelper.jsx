@@ -13,7 +13,7 @@ const CartMockHelper = ({ isVisible = false }) => {
   const handleAddMockData = () => {
     const added = populateMockCartData();
     if (added) {
-      window.location.reload(); // Reload để cập nhật cart
+      window.location.reload(); 
     }
   };
 
@@ -27,7 +27,7 @@ const CartMockHelper = ({ isVisible = false }) => {
   };
 
   const handleResetToMockData = () => {
-    // Xóa localStorage và reload để trigger mock data
+    
     localStorage.removeItem('tshirt_store_cart');
     window.location.reload();
   };

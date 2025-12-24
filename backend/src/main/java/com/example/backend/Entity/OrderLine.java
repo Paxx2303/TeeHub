@@ -25,7 +25,7 @@ public class OrderLine {
     private Integer price;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id") // ✅ liên kết đến ShopOrder
+    @JoinColumn(name = "order_id")
     private ShopOrder shopOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)

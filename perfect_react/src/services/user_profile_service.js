@@ -22,15 +22,15 @@ const handleApiError = (error, defaultMsg) => {
   }
 };
 
-// THÊM HÀM MỚI NÀY VÀO file user_profile_service.js
+
 
 export const getMyProfile = async () => {
   try {
-    // Không cần ID, backend sẽ tự biết bạn là ai qua JWT Token
+    
     const response = await api.get(`/api/users/me`); 
     const data = response.data;
     
-    // Tái sử dụng logic chuẩn hóa dữ liệu của bạn
+    
     return {
       userId: data.userId ?? data.id ?? data.user_id ?? null,
       fullName: data.fullName ?? data.full_name ?? data.name ?? '',
@@ -77,7 +77,7 @@ export const uploadAvatar = async (file) => {
   }
 };
 
-// ----- Address -----
+
 const normalizeAddress = (a) => {
   if (!a) return null;
   return {
@@ -90,19 +90,19 @@ const normalizeAddress = (a) => {
   };
 };
 
-// ... (đặt sau hàm deleteAddressForUser) ...
 
-// THÊM HÀM MỚI NÀY ĐỂ SỬA LỖI 403
+
+
 export const getMyAddresses = async () => {
   try {
-    // Gọi endpoint mới, không cần ID
-    // Backend sẽ tự biết bạn là ai qua JWT Token
+    
+    
     const response = await api.get(`/api/users/me/addresses`); 
     
     const data = response.data;
     if (!Array.isArray(data)) return [];
 
-    // Tái sử dụng hàm chuẩn hóa của bạn
+    
     return data.map(normalizeAddress); 
   } catch (err) {
     if (err.response?.status === 404) return [];
@@ -127,33 +127,33 @@ export const changeMyPassword = async (oldPassword, newPassword) => {
   if (!oldPassword || !newPassword) throw new Error("Cần mật khẩu cũ và mới");
   try {
     const payload = {
-      password: oldPassword, // Tên trường phải khớp backend DTO
-      new_password: newPassword, // Tên trường phải khớp backend DTO
+      password: oldPassword, 
+      new_password: newPassword, 
     };
-    const response = await api.put(`/api/users/me/password`, payload); // Gọi endpoint mới
+    const response = await api.put(`/api/users/me/password`, payload); 
     return response.data;
   } catch (error) {
-     // Xử lý lỗi (giống hàm cũ)
-     // ... (copy phần xử lý lỗi từ hàm changeUserPassword cũ)
-     handleApiError(error, "Lỗi khi đổi mật khẩu"); // Hoặc dùng handleApiError
+     
+     
+     handleApiError(error, "Lỗi khi đổi mật khẩu"); 
   }
 };
 
 export const updateMyProfile = async (userData) => {
-  // Validate data nếu cần
+  
   if (!userData?.fullName) throw new Error('Họ và tên là bắt buộc.');
   if (!userData?.emailAddress || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.emailAddress)) {
       throw new Error('Email không hợp lệ.');
   }
   try {
-    // Chuẩn hóa payload (đảm bảo tên trường khớp backend DTO, ví dụ: snake_case)
+    
     const payload = {
       full_name: userData.fullName,
       user_avatar: userData.userAvatar,
       email_address: userData.emailAddress,
       phone_number: userData.phoneNumber,
     };
-    const response = await api.put(`/api/users/me`, payload); // Gọi endpoint mới
+    const response = await api.put(`/api/users/me`, payload); 
     return response.data;
   } catch (err) {
     handleApiError(err, 'Không thể cập nhật thông tin.');
@@ -171,7 +171,7 @@ export const createMyAddress = async (addressData) => {
 
   try {
     const response = await api.post(`/api/users/me/addresses`, requestData); 
-    return normalizeAddress(response.data); // Tái sử dụng hàm chuẩn hóa
+    return normalizeAddress(response.data); 
   } catch (err) {
     handleApiError(err, 'Không thể tạo địa chỉ.');
   }
@@ -181,15 +181,15 @@ export const updateMyAddress = async (addressId, addressData) => {
   if (!addressId) throw new Error('Address ID is required.');
   
   const requestData = {
-    unit_number: addressData.unitNumber ?? '',    // (Thêm nếu cần)
-    street_number: addressData.streetNumber ?? '', // <-- Quan trọng
-    address_line: addressData.addressLine ?? '',   // <-- Quan trọng
-    is_default: addressData.isDefault ?? false   // (Thêm nếu cần)
+    unit_number: addressData.unitNumber ?? '',    
+    street_number: addressData.streetNumber ?? '', 
+    address_line: addressData.addressLine ?? '',   
+    is_default: addressData.isDefault ?? false   
   };
  
 
   try {
-    const response = await api.put(`/api/users/me/addresses/${addressId}`, requestData); // <-- Gửi requestData
+    const response = await api.put(`/api/users/me/addresses/${addressId}`, requestData); 
     return normalizeAddress(response.data); 
   } catch (err) {
     handleApiError(err, 'Không thể cập nhật địa chỉ.');

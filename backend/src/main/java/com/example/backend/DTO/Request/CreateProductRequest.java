@@ -17,7 +17,6 @@ public class CreateProductRequest {
     @Getter
     @Setter
     public static class ItemCreateRequest {
-        // Không có productItemId ở đây
         private String sku;
         private Integer qtyInStock;
         private String itemImage;

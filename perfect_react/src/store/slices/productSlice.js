@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { productService } from '../../services/productService';
 
-// Async thunks
+
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (params = {}, { rejectWithValue }) => {
@@ -91,7 +91,7 @@ const productSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch products
+      
       .addCase(fetchProducts.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -107,7 +107,7 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Fetch product by ID
+      
       .addCase(fetchProductById.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -121,7 +121,7 @@ const productSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Search products
+      
       .addCase(searchProducts.pending, (state) => {
         state.isSearching = true;
         state.error = null;

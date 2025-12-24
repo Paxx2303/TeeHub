@@ -23,7 +23,7 @@ const Button = ({
   const handleClick = (e) => {
     if (disabled || loading) return;
 
-    // Create ripple effect
+    
     const rect = e.currentTarget.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
     const x = e.clientX - rect.left - size / 2;
@@ -38,7 +38,7 @@ const Button = ({
 
     setRipples(prev => [...prev, newRipple]);
 
-    // Remove ripple after animation
+    
     setTimeout(() => {
       setRipples(prev => prev.filter(ripple => ripple.id !== newRipple.id));
     }, 600);
@@ -82,7 +82,7 @@ const Button = ({
       onClick={handleClick}
       {...props}
     >
-      {/* Ripple effects */}
+      {}
       <div className={styles.rippleContainer}>
         {ripples.map(ripple => (
           <span
@@ -98,7 +98,7 @@ const Button = ({
         ))}
       </div>
 
-      {/* Loading spinner */}
+      {}
       {loading && (
         <div className={styles.loadingContainer}>
           <svg
@@ -122,7 +122,7 @@ const Button = ({
         </div>
       )}
 
-      {/* Button content */}
+      {}
       <div className={cn(styles.content, {
         [styles.contentHidden]: loading
       })}>
@@ -131,10 +131,10 @@ const Button = ({
         {iconPosition === 'right' && renderIcon()}
       </div>
 
-      {/* Gradient overlay for gradient buttons */}
+      {}
       {gradient && <div className={styles.gradientOverlay} />}
 
-      {/* Glow effect */}
+      {}
       {glow && <div className={styles.glowEffect} />}
     </button>
   );

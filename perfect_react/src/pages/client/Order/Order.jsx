@@ -2,7 +2,7 @@ import React from "react";
 import "./Order.css";
 
 const Order = () => {
-    // ✅ Dữ liệu mẫu (sau này bạn có thể fetch từ API)
+    
     const order = {
         id: 2,
         userId: 4,
@@ -21,7 +21,7 @@ const Order = () => {
         <div className="order-container">
             <h1 className="order-title">🧾 Chi tiết đơn hàng #{order.id}</h1>
 
-            {/* Phần trạng thái đơn hàng */}
+            {}
             <div className="order-section status">
                 <h2>Trạng thái đơn hàng</h2>
                 <p>
@@ -33,7 +33,7 @@ const Order = () => {
                 </p>
             </div>
 
-            {/* Phần thanh toán */}
+            {}
             <div className="order-section payment">
                 <h2>Thông tin thanh toán</h2>
                 <p>
@@ -55,7 +55,7 @@ const Order = () => {
                 </p>
             </div>
 
-            {/* Phần vận chuyển */}
+            {}
             <div className="order-section shipping">
                 <h2>Thông tin giao hàng</h2>
                 <p>

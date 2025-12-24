@@ -23,12 +23,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwt;
     private final UserDetailsService userDetailsService;
-    // Thêm Logger
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest request, // Thêm @NonNull cho rõ ràng
+            @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {

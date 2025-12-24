@@ -1,7 +1,7 @@
 import React from "react";
 import { Label } from "./label";
 
-// Minimal address selector. Expects parent to hold state.
+
 const AddressSelector = ({ selectedAddressId, onSelectAddress }) => {
   const addresses = [
     { id: 1, label: "Địa chỉ 1: 123 Đường A, Quận B" },

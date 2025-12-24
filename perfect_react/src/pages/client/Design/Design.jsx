@@ -1,672 +1,489 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import html2canvas from 'html2canvas';
+import designService from '../../../services/designService.js';
+import CartService from '../../../services/cart_service.js';
+import { getUserId } from '../../../utils/auth';
+
+
+import styles from './design.module.css';
+
+
+import shirt1 from '../../../data/1a.png';
+import shirt2 from '../../../data/2a.png';
+import shirt3 from '../../../data/3a.png';
+import shirt5 from '../../../data/5a.png';
+import shirt7 from '../../../data/7a.png';
+
+
+const Icons = {
+    Text: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>,
+    Image: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>,
+    Save: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>,
+    Download: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+    Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+    Cart: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+};
+
+
+function broadcastCartChange() {
+    try {
+        window.dispatchEvent(new Event('cartUpdated')); 
+        window.dispatchEvent(new Event('cart-updated')); 
+    } catch (e) {  }
+    try {
+        localStorage.setItem('cart', String(Date.now())); 
+    } catch (e) {  }
+}
 
 const TShirtDesigner = () => {
-  const [elements, setElements] = useState([]);
-  const [selectedElement, setSelectedElement] = useState(null);
-  const [tshirtColor, setTshirtColor] = useState('#ffffff');
-  const [nextId, setNextId] = useState(1);
-  const [dragData, setDragData] = useState(null);
-  const canvasRef = useRef(null);
+    
+    const [elements, setElements] = useState([]);
+    const [selectedElement, setSelectedElement] = useState(null);
+    const [nextId, setNextId] = useState(1);
+    const [dragData, setDragData] = useState(null);
+    const canvasRef = useRef(null);
 
-  // Predefined decoration images
-  const decorationImages = [
-    { id: 'star', name: 'Ngôi sao', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' },
-    { id: 'heart', name: 'Trái tim', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' },
-    { id: 'music', name: 'Nốt nhạc', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>' },
-    { id: 'crown', name: 'Vương miện', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 16L3 12.5l3.5 1.5L12 8l5.5 6L21 12.5L19 16v3H5v-3z"/></svg>' },
-    { id: 'lightning', name: 'Sét', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>' },
-    { id: 'diamond', name: 'Kim cương', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h12l3 6-9 12L3 8l3-6z"/></svg>' },
-    { id: 'flower', name: 'Hoa', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.49 10 10-4.49 10-10 10zm0-18c-4.41 0-8 3.59-8 8 0 1.82.62 3.49 1.64 4.83 1.43-1.74 4.9-2.33 6.36-2.33s4.93.59 6.36 2.33C19.38 15.49 20 13.82 20 12c0-4.41-3.59-8-8-8z"/></svg>' },
-    { id: 'rocket', name: 'Tên lửa', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.44 5.58s2.12.21 4.41.21c.79 0 1.55-.05 2.23-.13-.01-.28-.01-.56-.01-.85 0-1.88.28-3.82.81-5.81zM10.56 12c-1.33.05-2.76.07-4.13.07v-.02c.5-1.25 1.26-2.44 2.27-3.52.36 1.23.53 2.37.61 3.47zM12 2C8.73 7.84 7 15.55 9.05 22c.42-.02.82-.08 1.21-.2 1.37-4.77 2.24-9.89 1.74-15.8C11.58 4.69 11.79 3.34 12 2zM16.97 12c0 1.39-.17 2.75-.5 4.03-.77.27-1.56.47-2.35.6.5-1.21.85-2.56.85-4.03 0-.69-.07-1.35-.2-2h2.2z"/></svg>' }
-  ];
+    const [name, setName] = useState('Áo thiết kế của tôi');
+    const [myDesigns, setMyDesigns] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const userId = getUserId();
 
-  const addTextElement = () => {
-    const newElement = {
-      id: nextId,
-      type: 'text',
-      content: 'Sample Text',
-      x: 150,
-      y: 200,
-      fontSize: 24,
-      fontFamily: 'Arial',
-      color: '#000000',
-      fontWeight: 'normal',
-      fontStyle: 'normal',
-      rotation: 0
-    };
-    setElements([...elements, newElement]);
-    setSelectedElement(newElement.id);
-    setNextId(nextId + 1);
-  };
+    const baseImages = [
+        { src: shirt1, label: 'Basic Tee' },
+        { src: shirt2, label: 'Slim Fit' },
+        { src: shirt3, label: 'V-Neck' },
+        { src: shirt5, label: 'Long Sleeve' },
+        { src: shirt7, label: 'Polo' },
+    ];
+    const [baseIndex, setBaseIndex] = useState(0);
 
-  const addImageElement = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const newElement = {
-            id: nextId,
-            type: 'image',
-            src: event.target.result,
-            x: 150,
-            y: 150,
-            width: 100,
-            height: 100,
-            rotation: 0
-          };
-          setElements((prev) => [...prev, newElement]);
-          setSelectedElement(newElement.id);
-          setNextId((prev) => prev + 1);
+    const decorationImages = [
+        { id: 'star', name: 'Star', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' },
+        { id: 'heart', name: 'Heart', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' },
+        { id: 'music', name: 'Note', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>' },
+        { id: 'smile', name: 'Smile', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>' },
+        { id: 'flash', name: 'Flash', svg: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>' },
+    ];
+
+    
+    const loadMyDesigns = useCallback(() => {
+        if (userId) {
+            designService.getMyDesigns(userId)
+                .then(data => setMyDesigns(Array.isArray(data) ? [...data].reverse() : []))
+                .catch(err => console.error("Load error:", err));
+        }
+    }, [userId]);
+
+    useEffect(() => { loadMyDesigns(); }, [loadMyDesigns]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElement) {
+                if (document.activeElement.tagName !== 'INPUT') {
+                    deleteElement(selectedElement);
+                }
+            }
         };
-        reader.readAsDataURL(file);
-      }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedElement]);
+
+    
+    const addTextElement = () => {
+        const el = { id: nextId, type: 'text', content: 'Double click to edit', x: 150, y: 200, fontSize: 24, fontFamily: 'Arial', color: '#1f2937', fontWeight: 'bold', fontStyle: 'normal', rotation: 0 };
+        setElements(p => [...p, el]);
+        setSelectedElement(el.id);
+        setNextId(p => p + 1);
     };
-    input.click();
-  };
 
-  const addDecorationElement = (decoration) => {
-    const newElement = {
-      id: nextId,
-      type: 'decoration',
-      svg: decoration.svg,
-      name: decoration.name,
-      x: 150,
-      y: 150,
-      width: 60,
-      height: 60,
-      color: '#000000',
-      rotation: 0
+    const addImageElement = () => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files?.[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const el = { id: nextId, type: 'image', src: ev.target.result, x: 140, y: 140, width: 120, height: 120, rotation: 0 };
+                setElements(p => [...p, el]);
+                setSelectedElement(el.id);
+                setNextId(p => p + 1);
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
     };
-    setElements((prev) => [...prev, newElement]);
-    setSelectedElement(newElement.id);
-    setNextId((prev) => prev + 1);
-  };
 
-  const updateElement = (id, updates) => {
-    setElements((prev) => prev.map(el => (el.id === id ? { ...el, ...updates } : el)));
-  };
+    const addDecorationElement = (d) => {
+        const el = { id: nextId, type: 'decoration', svg: d.svg, name: d.name, x: 180, y: 180, width: 80, height: 80, color: '#6366f1', rotation: 0 };
+        setElements(p => [...p, el]);
+        setSelectedElement(el.id);
+        setNextId(p => p + 1);
+    };
 
-  const deleteElement = (id) => {
-    setElements((prev) => prev.filter(el => el.id !== id));
-    if (selectedElement === id) {
-      setSelectedElement(null);
-    }
-  };
+    const updateElement = (id, updates) => setElements(p => p.map(el => el.id === id ? { ...el, ...updates } : el));
+    
+    const deleteElement = (id) => {
+        setElements(p => p.filter(el => el.id !== id));
+        if (selectedElement === id) setSelectedElement(null);
+    };
 
-  const handleMouseDown = useCallback((e, elementId) => {
-    e.preventDefault();
-    setSelectedElement(elementId);
+    
+    const handleMouseDown = useCallback((e, elementId) => {
+        e.preventDefault(); e.stopPropagation();
+        setSelectedElement(elementId);
+        const rect = canvasRef.current?.getBoundingClientRect();
+        const el = elements.find(x => x.id === elementId);
+        if (rect && el) {
+            setDragData({ elementId, startX: e.clientX - rect.left - el.x, startY: e.clientY - rect.top - el.y });
+        }
+    }, [elements]);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const element = elements.find(el => el.id === elementId);
-    if (!element) return;
+    const handleMouseMove = useCallback((e) => {
+        if (!dragData) return;
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+            let newX = e.clientX - rect.left - dragData.startX;
+            let newY = e.clientY - rect.top - dragData.startY;
+            newX = Math.max(-100, Math.min(newX, 400));
+            newY = Math.max(-100, Math.min(newY, 500));
+            updateElement(dragData.elementId, { x: newX, y: newY });
+        }
+    }, [dragData]);
 
-    setDragData({
-      elementId,
-      startX: e.clientX - rect.left - element.x,
-      startY: e.clientY - rect.top - element.y
-    });
-  }, [elements]);
+    const handleMouseUp = useCallback(() => setDragData(null), []);
 
-  const handleMouseMove = useCallback((e) => {
-    if (!dragData) return;
+    useEffect(() => {
+        if (dragData) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [dragData, handleMouseMove, handleMouseUp]);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const newX = e.clientX - rect.left - dragData.startX;
-    const newY = e.clientY - rect.top - dragData.startY;
+    
+    const exportCanvasBlob = async (node) => {
+        const prevSelected = selectedElement;
+        setSelectedElement(null);
+        await new Promise(r => setTimeout(r, 100));
 
-    updateElement(dragData.elementId, { x: newX, y: newY });
-  }, [dragData]);
+        try {
+            const canvas = await html2canvas(node, {
+                backgroundColor: null,
+                scale: 2,
+                logging: false,
+                useCORS: true
+            });
+            setSelectedElement(prevSelected);
+            return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.9));
+        } catch (error) {
+            setSelectedElement(prevSelected);
+            throw error;
+        }
+    };
 
-  const handleMouseUp = useCallback(() => {
-    setDragData(null);
-  }, []);
+    const saveDesignToServer = async () => {
+        if (!getUserId()) return alert("Vui lòng đăng nhập để lưu!");
+        setIsSaving(true);
+        try {
+            const blob = await exportCanvasBlob(canvasRef.current);
+            const payload = {
+                name: name.trim() || `Design ${Date.now()}`,
+                description: 'Custom Design',
+                price: '400000',
+                baseImage: baseImages[baseIndex]?.label,
+                designJson: JSON.stringify(elements)
+            };
+            const res = await designService.createCustomProductWithImage(payload, blob, { filename: `d_${Date.now()}.png` });
+            if (res?.id) {
+                alert('🎉 Đã lưu thành công!');
+                loadMyDesigns();
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi khi lưu thiết kế!');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
-  React.useEffect(() => {
-    if (dragData) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [dragData, handleMouseMove, handleMouseUp]);
+    const downloadDesign = async () => {
+        if (!canvasRef.current) return;
+        const blob = await exportCanvasBlob(canvasRef.current);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `my_design_${Date.now()}.png`;
+        link.click();
+    };
 
-  const selectedElementData = elements.find(el => el.id === selectedElement);
+    
+    const handleAddToCart = async (design) => {
+        const currentUserId = getUserId();
+        if (!currentUserId) {
+            alert("⚠️ Vui lòng đăng nhập để thêm vào giỏ hàng!");
+            return;
+        }
 
-  return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      fontFamily: 'Arial, sans-serif',
-      backgroundColor: '#f5f5f5'
-    }}>
-      {/* Sidebar */}
-      <div style={{
-        width: '300px',
-        backgroundColor: '#2c3e50',
-        color: 'white',
-        padding: '20px',
-        overflowY: 'auto'
-      }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '24px' }}>T-Shirt Designer</h2>
+        if (!confirm(`Thêm mẫu "${design.customName || 'này'}" vào giỏ hàng?`)) return;
 
-        {/* Tools */}
-        <div style={{ marginBottom: '30px' }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Công cụ</h3>
-          <button
-            onClick={addTextElement}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '10px',
-              backgroundColor: '#3498db',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            + Thêm Text
-          </button>
-          <button
-            onClick={addImageElement}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '10px',
-              backgroundColor: '#e74c3c',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            + Thêm Hình ảnh
-          </button>
-        </div>
+        try {
+            
+            const cartPayload = {
+                userId: currentUserId,
+                qty: 1,
+                
+                
+                isCustomed: true, is_customed: true,
+                customProductId: design.id, custom_product_id: design.id,
+                
+                
+                productItemId: null, product_item_id: null,
+                
+                selectedOptions: []
+            };
 
-        {/* Decoration Images */}
-        <div style={{ marginBottom: '30px' }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Trang trí có sẵn</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '8px'
-          }}>
-            {decorationImages.map((decoration) => (
-              <div
-                key={decoration.id}
-                onClick={() => addDecorationElement(decoration)}
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  backgroundColor: '#34495e',
-                  border: '2px solid #5a6c7d',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  transition: 'all 0.2s',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#3498db';
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#34495e';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-                title={decoration.name}
-                dangerouslySetInnerHTML={{
-                  __html: decoration.svg.replace('viewBox="0 0 24 24"', 'viewBox="0 0 24 24" width="24" height="24"')
-                }}
-              />
-            ))}
-          </div>
-        </div>
+            console.log("🛒 Payload gửi đi:", cartPayload);
 
-        {/* T-shirt color */}
-        <div style={{ marginBottom: '30px' }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>Màu áo</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '8px',
-            marginBottom: '15px'
-          }}>
-            {[
-              '#ffffff', '#000000', '#ff0000', '#00ff00',
-              '#0000ff', '#ffff00', '#ff00ff', '#00ffff',
-              '#ffa500', '#800080', '#ffc0cb', '#a52a2a',
-              '#808080', '#add8e6', '#90ee90', '#dda0dd'
-            ].map((color) => (
-              <div
-                key={color}
-                onClick={() => setTshirtColor(color)}
-                style={{
-                  width: '35px',
-                  height: '35px',
-                  backgroundColor: color,
-                  border: tshirtColor === color ? '3px solid #3498db' : '2px solid #bdc3c7',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  boxShadow: tshirtColor === color ? '0 2px 8px rgba(52, 152, 219, 0.3)' : 'none'
-                }}
-                title={color}
-              />
-            ))}
-          </div>
-          <div style={{ marginTop: '10px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', opacity: 0.8 }}>
-              Màu tùy chỉnh:
-            </label>
-            <input
-              type="color"
-              value={tshirtColor}
-              onChange={(e) => setTshirtColor(e.target.value)}
-              style={{
-                width: '100%',
-                height: '35px',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer'
-              }}
-            />
-          </div>
-        </div>
+            await CartService.addToCart(currentUserId, cartPayload);
 
-        {/* Properties panel */}
-        {selectedElementData && (
-          <div>
-            <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>
-              Thuộc tính {selectedElementData.type === 'text' ? 'Text' :
-                selectedElementData.type === 'decoration' ? 'Trang trí' : 'Hình ảnh'}
-            </h3>
+            
+            broadcastCartChange();
 
-            {selectedElementData.type === 'text' && (
-              <div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Nội dung:
-                  </label>
-                  <input
-                    type="text"
-                    value={selectedElementData.content}
-                    onChange={(e) => updateElement(selectedElement, { content: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  />
+            
+            if(confirm("✅ Đã thêm vào giỏ thành công! Đi tới giỏ hàng ngay?")) {
+                window.location.href = '/cart';
+            }
+        } catch (error) {
+            console.error("❌ Lỗi thêm giỏ hàng:", error);
+            const msg = error.response?.data?.message || error.message;
+            if (msg && msg.includes("409")) {
+                alert("⚠️ Sản phẩm này đã có trong giỏ hàng rồi!");
+            } else {
+                alert(`❌ Lỗi thêm giỏ hàng: ${msg}`);
+            }
+        }
+    };
+
+    const handleDeleteDesign = async (id) => {
+        if (!confirm("Bạn chắc chắn muốn xóa?")) return;
+        try {
+            await designService.deleteDesign(id);
+            setMyDesigns(p => p.filter(i => i.id !== id));
+        } catch (e) { alert("Không thể xóa (có thể đang có trong đơn hàng)."); }
+    };
+
+    const selectedData = elements.find(el => el.id === selectedElement);
+
+    
+    return (
+        <div className={styles.container}>
+            {}
+            <header className={styles.header}>
+                <div style={{display:'flex', alignItems:'center'}}>
+                    <div className={styles.brand}>Studio</div>
+                    <div className={styles.metaInfo}>
+                        <input className={styles.inputName} value={name} onChange={e => setName(e.target.value)} placeholder="Nhập tên thiết kế..." />
+                        <span className={styles.priceTag}>400,000 đ</span>
+                    </div>
                 </div>
-
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Kích thước: {selectedElementData.fontSize}px
-                  </label>
-                  <input
-                    type="range"
-                    min="12"
-                    max="72"
-                    value={selectedElementData.fontSize}
-                    onChange={(e) => updateElement(selectedElement, { fontSize: parseInt(e.target.value) })}
-                    style={{ width: '100%' }}
-                  />
+                
+                <div className={styles.actions}>
+                    <button className={`${styles.btnAction} ${styles.btnSecondary}`} onClick={downloadDesign}>
+                        <Icons.Download /> Tải ảnh
+                    </button>
+                    <button className={`${styles.btnAction} ${styles.btnPrimary}`} onClick={saveDesignToServer} disabled={isSaving}>
+                        <Icons.Save /> {isSaving ? 'Đang lưu...' : 'Lưu thiết kế'}
+                    </button>
                 </div>
+            </header>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Font:
-                  </label>
-                  <select
-                    value={selectedElementData.fontFamily}
-                    onChange={(e) => updateElement(selectedElement, { fontFamily: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '14px'
-                    }}
-                  >
-                    <option value="Arial">Arial</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Impact">Impact</option>
-                  </select>
-                </div>
+            {}
+            <div className={styles.workspace}>
+                {}
+                <aside className={styles.leftPanel}>
+                    <div className={styles.sectionTitle}>Công cụ</div>
+                    <div className={styles.toolGrid}>
+                        <button className={styles.toolBtn} onClick={addTextElement}>
+                            <div className={styles.toolIcon}><Icons.Text /></div>
+                            <span className={styles.toolLabel}>Thêm Chữ</span>
+                        </button>
+                        <button className={styles.toolBtn} onClick={addImageElement}>
+                            <div className={styles.toolIcon}><Icons.Image /></div>
+                            <span className={styles.toolLabel}>Thêm Ảnh</span>
+                        </button>
+                    </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-                    Màu chữ:
-                  </label>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(6, 1fr)',
-                    gap: '6px',
-                    marginBottom: '10px'
-                  }}>
-                    {[
-                      '#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00',
-                      '#ff00ff', '#00ffff', '#ffa500', '#800080', '#ffc0cb', '#a52a2a'
-                    ].map((color) => (
-                      <div
-                        key={color}
-                        onClick={() => updateElement(selectedElement, { color })}
-                        style={{
-                          width: '25px',
-                          height: '25px',
-                          backgroundColor: color,
-                          border: selectedElementData.color === color ? '2px solid #3498db' : '1px solid #bdc3c7',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                  <input
-                    type="color"
-                    value={selectedElementData.color}
-                    onChange={(e) => updateElement(selectedElement, { color: e.target.value })}
-                    style={{
-                      width: '100%',
-                      height: '30px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  />
-                </div>
+                    <div className={styles.sectionTitle}>Stickers</div>
+                    <div className={styles.stickerGrid}>
+                        {decorationImages.map(d => (
+                            <div key={d.id} className={styles.stickerItem} onClick={() => addDecorationElement(d)} title={d.name}
+                                dangerouslySetInnerHTML={{ __html: d.svg.replace('viewBox="0 0 24 24"', 'viewBox="0 0 24 24" width="28" height="28"') }} />
+                        ))}
+                    </div>
 
-                <div style={{ marginBottom: '15px', display: 'flex', gap: '10px' }}>
-                  <button
-                    onClick={() => updateElement(selectedElement, {
-                      fontWeight: selectedElementData.fontWeight === 'bold' ? 'normal' : 'bold'
-                    })}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      backgroundColor: selectedElementData.fontWeight === 'bold' ? '#3498db' : '#7f8c8d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    B
-                  </button>
-                  <button
-                    onClick={() => updateElement(selectedElement, {
-                      fontStyle: selectedElementData.fontStyle === 'italic' ? 'normal' : 'italic'
-                    })}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      backgroundColor: selectedElementData.fontStyle === 'italic' ? '#3498db' : '#7f8c8d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontStyle: 'italic'
-                    }}
-                  >
-                    I
-                  </button>
-                </div>
-              </div>
-            )}
+                    <div className={styles.sectionTitle}>Chọn Mẫu Áo</div>
+                    <div className={styles.shirtList}>
+                        {baseImages.map((img, idx) => (
+                            <div key={idx} className={`${styles.shirtThumb} ${baseIndex === idx ? styles.shirtThumbActive : ''}`} onClick={() => setBaseIndex(idx)}>
+                                <img src={img.src} alt={img.label} />
+                            </div>
+                        ))}
+                    </div>
+                </aside>
 
-            {selectedElementData.type === 'decoration' && (
-              <div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Tên: {selectedElementData.name}
-                  </label>
-                </div>
+                {}
+                <main className={styles.centerArea} onClick={() => setSelectedElement(null)}>
+                    <div className={styles.canvasContainer}>
+                        <div ref={canvasRef} className={styles.canvasPaper}>
+                            <img src={baseImages[baseIndex].src} alt="shirt" className={styles.baseImage} draggable={false} />
+                            {elements.map((el) => (
+                                <div key={el.id}
+                                    className={styles.draggable}
+                                    style={{ left: el.x, top: el.y, transform: `rotate(${el.rotation}deg)` }}
+                                    onMouseDown={(e) => handleMouseDown(e, el.id)}>
+                                    
+                                    {el.type === 'text' ? (
+                                        <span style={{ fontSize: `${el.fontSize}px`, fontFamily: el.fontFamily, color: el.color, fontWeight: el.fontWeight, fontStyle: el.fontStyle, padding: '4px 8px', display: 'block', whiteSpace: 'nowrap', textShadow: '0 0 2px rgba(255,255,255,0.5)' }}>
+                                            {el.content}
+                                        </span>
+                                    ) : el.type === 'decoration' ? (
+                                        <div style={{ width: el.width, height: el.height, color: el.color, display: 'flex' }}
+                                            dangerouslySetInnerHTML={{ __html: el.svg.replace('viewBox="0 0 24 24"', `viewBox="0 0 24 24" width="${el.width}" height="${el.height}"`) }} />
+                                    ) : (
+                                        <img src={el.src} style={{ width: el.width, height: el.height, objectFit: 'contain', display: 'block' }} draggable={false} alt="" />
+                                    )}
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Kích thước: {selectedElementData.width}px
-                  </label>
-                  <input
-                    type="range"
-                    min="30"
-                    max="150"
-                    value={selectedElementData.width}
-                    onChange={(e) => {
-                      const newSize = parseInt(e.target.value);
-                      updateElement(selectedElement, { width: newSize, height: newSize });
-                    }}
-                    style={{ width: '100%' }}
-                  />
-                </div>
+                                    {selectedElement === el.id && (
+                                        <div className={styles.selectionBox}>
+                                            <div className={`${styles.corner} ${styles.tl}`}></div>
+                                            <div className={`${styles.corner} ${styles.tr}`}></div>
+                                            <div className={`${styles.corner} ${styles.bl}`}></div>
+                                            <div className={`${styles.corner} ${styles.br}`}></div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </main>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px' }}>
-                    Màu trang trí:
-                  </label>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(6, 1fr)',
-                    gap: '6px',
-                    marginBottom: '10px'
-                  }}>
-                    {[
-                      '#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00',
-                      '#ff00ff', '#00ffff', '#ffa500', '#800080', '#ffc0cb', '#a52a2a'
-                    ].map((color) => (
-                      <div
-                        key={color}
-                        onClick={() => updateElement(selectedElement, { color })}
-                        style={{
-                          width: '25px',
-                          height: '25px',
-                          backgroundColor: color,
-                          border: selectedElementData.color === color ? '2px solid #3498db' : '1px solid #bdc3c7',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s'
-                        }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                  <input
-                    type="color"
-                    value={selectedElementData.color}
-                    onChange={(e) => updateElement(selectedElement, { color: e.target.value })}
-                    style={{
-                      width: '100%',
-                      height: '30px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+                {}
+                <aside className={styles.rightPanel}>
+                    <div className={styles.sectionTitle}>Thuộc tính</div>
+                    {selectedData ? (
+                        <div className="animate-fade-in">
+                            {selectedData.type === 'text' && (
+                                <div className={styles.propGroup}>
+                                    <label className={styles.propLabel}>Nội dung</label>
+                                    <input className={styles.formControl} value={selectedData.content} onChange={e => updateElement(selectedElement, { content: e.target.value })} autoFocus />
+                                    
+                                    <div style={{marginTop: 12}}>
+                                        <label className={styles.propLabel}>Font chữ</label>
+                                        <select className={styles.formControl} value={selectedData.fontFamily} onChange={e => updateElement(selectedElement, { fontFamily: e.target.value })}>
+                                            <option value="Arial">Arial</option>
+                                            <option value="Times New Roman">Times New Roman</option>
+                                            <option value="Courier New">Courier New</option>
+                                            <option value="Verdana">Verdana</option>
+                                            <option value="Impact">Impact</option>
+                                        </select>
+                                    </div>
 
-            {selectedElementData.type === 'image' && (
-              <div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Chiều rộng: {selectedElementData.width}px
-                  </label>
-                  <input
-                    type="range"
-                    min="50"
-                    max="300"
-                    value={selectedElementData.width}
-                    onChange={(e) => updateElement(selectedElement, { width: parseInt(e.target.value) })}
-                    style={{ width: '100%' }}
-                  />
-                </div>
+                                    <div style={{marginTop: 12}}>
+                                        <label className={styles.propLabel}>Màu sắc</label>
+                                        <div className={styles.colorPickerWrapper}>
+                                            <div className={styles.colorCircle} style={{background: selectedData.color}}>
+                                                <input type="color" className={styles.nativeColorInput} value={selectedData.color} onChange={e => updateElement(selectedElement, { color: e.target.value })} />
+                                            </div>
+                                            <span className={styles.colorValue}>{selectedData.color}</span>
+                                        </div>
+                                    </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                    Chiều cao: {selectedElementData.height}px
-                  </label>
-                  <input
-                    type="range"
-                    min="50"
-                    max="300"
-                    value={selectedElementData.height}
-                    onChange={(e) => updateElement(selectedElement, { height: parseInt(e.target.value) })}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-            )}
+                                    <div style={{marginTop: 12}}>
+                                        <label className={styles.propLabel}>Định dạng</label>
+                                        <div className={styles.btnGroup}>
+                                            <button className={`${styles.btnToggle} ${selectedData.fontWeight === 'bold' ? styles.btnToggleActive : ''}`}
+                                                onClick={() => updateElement(selectedElement, { fontWeight: selectedData.fontWeight === 'bold' ? 'normal' : 'bold' })}>B</button>
+                                            <button className={`${styles.btnToggle} ${selectedData.fontStyle === 'italic' ? styles.btnToggleActive : ''}`}
+                                                onClick={() => updateElement(selectedElement, { fontStyle: selectedData.fontStyle === 'italic' ? 'normal' : 'italic' })}>I</button>
+                                        </div>
+                                    </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px' }}>
-                Xoay: {selectedElementData.rotation}°
-              </label>
-              <input
-                type="range"
-                min="-180"
-                max="180"
-                value={selectedElementData.rotation}
-                onChange={(e) => updateElement(selectedElement, { rotation: parseInt(e.target.value) })}
-                style={{ width: '100%' }}
-              />
+                                    <div style={{marginTop: 15}}>
+                                        <label className={styles.propLabel}>Cỡ chữ: {selectedData.fontSize}</label>
+                                        <input type="range" className={styles.rangeInput} min="12" max="120" value={selectedData.fontSize} onChange={e => updateElement(selectedElement, { fontSize: parseInt(e.target.value) })} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {(selectedData.type === 'image' || selectedData.type === 'decoration') && (
+                                <div className={styles.propGroup}>
+                                    <label className={styles.propLabel}>Kích thước: {selectedData.width}px</label>
+                                    <input type="range" className={styles.rangeInput} min="20" max="400" value={selectedData.width} 
+                                        onChange={e => {
+                                            const w = parseInt(e.target.value);
+                                            const h = selectedData.type === 'decoration' ? w : (w * (selectedData.height / selectedData.width));
+                                            updateElement(selectedElement, { width: w, height: h });
+                                        }} />
+                                    
+                                    {selectedData.type === 'decoration' && (
+                                        <div style={{marginTop: 15}}>
+                                            <label className={styles.propLabel}>Màu sắc</label>
+                                            <div className={styles.colorPickerWrapper}>
+                                                <div className={styles.colorCircle} style={{background: selectedData.color}}>
+                                                    <input type="color" className={styles.nativeColorInput} value={selectedData.color} onChange={e => updateElement(selectedElement, { color: e.target.value })} />
+                                                </div>
+                                                <span className={styles.colorValue}>{selectedData.color}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className={styles.propGroup}>
+                                <label className={styles.propLabel}>Xoay: {selectedData.rotation}°</label>
+                                <input type="range" className={styles.rangeInput} min="-180" max="180" value={selectedData.rotation} onChange={e => updateElement(selectedElement, { rotation: parseInt(e.target.value) })} />
+                            </div>
+
+                            <button className={styles.btnDelete} onClick={() => deleteElement(selectedElement)}>
+                                <Icons.Trash /> Xóa đối tượng
+                            </button>
+                        </div>
+                    ) : (
+                        <div className={styles.emptyState}>
+                            <div className={styles.emptyIcon}>🎨</div>
+                            <p>Chọn đối tượng trên áo<br/>để chỉnh sửa</p>
+                        </div>
+                    )}
+                </aside>
             </div>
 
-            <button
-              onClick={() => deleteElement(selectedElement)}
-              style={{
-                width: '100%',
-                padding: '10px',
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                marginTop: '10px'
-              }}
-            >
-              Xóa Element
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Main canvas area */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px'
-      }}>
-        <div
-          ref={canvasRef}
-          style={{
-            position: 'relative',
-            width: '400px',
-            height: '500px',
-            backgroundColor: tshirtColor,
-            borderRadius: '20px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-            overflow: 'hidden',
-            cursor: 'default',
-            clipPath: 'polygon(25% 8%, 75% 8%, 85% 15%, 85% 25%, 95% 30%, 95% 100%, 5% 100%, 5% 30%, 15% 25%, 15% 15%)'
-          }}
-          onClick={() => setSelectedElement(null)}
-        >
-          {/* Elements */}
-          {elements.map((element) => (
-            <div
-              key={element.id}
-              onMouseDown={(e) => handleMouseDown(e, element.id)}
-              style={{
-                position: 'absolute',
-                left: element.x,
-                top: element.y,
-                cursor: 'move',
-                transform: `rotate(${element.rotation}deg)`,
-                transformOrigin: 'center',
-                border: selectedElement === element.id ? '2px dashed #3498db' : '2px solid transparent',
-                userSelect: 'none'
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedElement(element.id);
-              }}
-            >
-              {element.type === 'text' ? (
-                <span style={{
-                  fontSize: `${element.fontSize}px`,
-                  fontFamily: element.fontFamily,
-                  color: element.color,
-                  fontWeight: element.fontWeight,
-                  fontStyle: element.fontStyle,
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                  padding: '4px'
-                }}>
-                  {element.content}
-                </span>
-              ) : element.type === 'decoration' ? (
-                <div
-                  style={{
-                    width: `${element.width}px`,
-                    height: `${element.height}px`,
-                    color: element.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  dangerouslySetInnerHTML={{
-                    __html: element.svg.replace('viewBox="0 0 24 24"', `viewBox="0 0 24 24" width="${element.width}" height="${element.height}"`)
-                  }}
-                />
-              ) : (
-                <img
-                  src={element.src}
-                  alt="Design element"
-                  style={{
-                    width: `${element.width}px`,
-                    height: `${element.height}px`,
-                    objectFit: 'contain',
-                    display: 'block'
-                  }}
-                  draggable={false}
-                />
-              )}
-            </div>
-          ))}
+            {}
+            {myDesigns.length > 0 && (
+                <div className={styles.filmStrip}>
+                    <div className={styles.stripHeader}>
+                        <span className={styles.stripTitle}>Bộ sưu tập của bạn</span>
+                        <span style={{fontSize: 12, color: '#999'}}>{myDesigns.length} thiết kế</span>
+                    </div>
+                    <div className={styles.stripList}>
+                        {myDesigns.map(d => (
+                            <div key={d.id} className={styles.stripItem} title={d.customName}>
+                                <img src={d.customImageUrl?.startsWith('http') ? d.customImageUrl : `/CustomProduct/${d.customImageUrl}`} 
+                                     alt="design" 
+                                     onError={e => e.target.src = 'https://via.placeholder.com/150'} />
+                                <div className={styles.stripActions}>
+                                    <button className={`${styles.stripBtn} danger`} onClick={(e) => {e.stopPropagation(); handleDeleteDesign(d.id)}} title="Xóa"><Icons.Trash /></button>
+                                    <button className={styles.stripBtn} onClick={(e) => {e.stopPropagation(); handleAddToCart(d)}} title="Thêm vào giỏ" style={{color: '#6366f1'}}><Icons.Cart /></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default TShirtDesigner;

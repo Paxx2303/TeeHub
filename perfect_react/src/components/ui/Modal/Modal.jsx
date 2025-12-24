@@ -14,7 +14,7 @@ const Modal = ({
   className = '',
   ...props
 }) => {
-  // Handle escape key
+  
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && closable) {

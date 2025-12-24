@@ -1,4 +1,17 @@
-// API Endpoints
+
+
+
+export const API_BASE_URL = 'http://localhost:8080';
+export const OAUTH2_REDIRECT_URI = 'http://localhost:5173/oauth2/redirect';
+
+export const GOOGLE_AUTH_URL = `${API_BASE_URL}/oauth2/authorization/google?redirect_uri=${OAUTH2_REDIRECT_URI}`;
+export const FACEBOOK_AUTH_URL = `${API_BASE_URL}/oauth2/authorization/facebook?redirect_uri=${OAUTH2_REDIRECT_URI}`;
+export const GITHUB_AUTH_URL = `${API_BASE_URL}/oauth2/authorization/github?redirect_uri=${OAUTH2_REDIRECT_URI}`;
+
+
+
+
+
 export const API_ENDPOINTS = {
   PRODUCTS: '/api/products',
   AI_TRY_ON: '/api/ai/try-on',
@@ -9,7 +22,7 @@ export const API_ENDPOINTS = {
   UPLOAD: '/api/upload'
 };
 
-// Product Categories
+
 export const PRODUCT_CATEGORIES = {
   T_SHIRT: 't-shirt',
   HOODIE: 'hoodie',
@@ -17,10 +30,10 @@ export const PRODUCT_CATEGORIES = {
   LONG_SLEEVE: 'long-sleeve'
 };
 
-// Product Sizes
+
 export const PRODUCT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-// Product Colors
+
 export const PRODUCT_COLORS = {
   WHITE: '#FFFFFF',
   BLACK: '#000000',
@@ -34,7 +47,7 @@ export const PRODUCT_COLORS = {
   GRAY: '#808080'
 };
 
-// AI Try-On Status
+
 export const AI_TRY_ON_STATUS = {
   IDLE: 'idle',
   UPLOADING: 'uploading',
@@ -43,7 +56,7 @@ export const AI_TRY_ON_STATUS = {
   ERROR: 'error'
 };
 
-// Design Tools
+
 export const DESIGN_TOOLS = {
   TEXT: 'text',
   IMAGE: 'image',
@@ -51,7 +64,7 @@ export const DESIGN_TOOLS = {
   BRUSH: 'brush'
 };
 
-// Routes
+
 export const ROUTES = {
   HOME: '/',
   PRODUCTS: '/products',
@@ -63,7 +76,7 @@ export const ROUTES = {
   CONTACT: '/contact'
 };
 
-// Local Storage Keys
+
 export const STORAGE_KEYS = {
   CART: 'tshirt_store_cart',
   USER: 'tshirt_store_user',

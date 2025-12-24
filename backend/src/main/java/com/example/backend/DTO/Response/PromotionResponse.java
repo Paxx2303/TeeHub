@@ -16,10 +16,10 @@ public class PromotionResponse {
     private BigDecimal discountRate;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Integer categoryId;
-    private String categoryName;
 
-    // Constructor để tự động chuyển đổi từ Entity sang DTO
+    private Integer productId;
+    private String productName;
+
     public PromotionResponse(Promotion entity) {
         this.promotionId = entity.getId();
         this.name = entity.getName();
@@ -27,9 +27,10 @@ public class PromotionResponse {
         this.discountRate = entity.getDiscountRate();
         this.startDate = entity.getStartDate();
         this.endDate = entity.getEndDate();
-        if (entity.getCategory() != null) {
-            this.categoryId = entity.getCategory().getId(); // Lấy ID từ Entity ProductCategory
-            this.categoryName = entity.getCategory().getCategoryName(); // Lấy tên từ Entity
+
+        if (entity.getProduct() != null) {
+            this.productId = entity.getProduct().getId();
+            this.productName = entity.getProduct().getName();
         }
     }
 }

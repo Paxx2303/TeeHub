@@ -21,7 +21,6 @@
 
     @Service
     public class ProductCreateService {
-        // Tiêm (Inject) tất cả các Repo cần thiết
         @Autowired
         private ProductRepo productRepo;
 
@@ -41,33 +40,26 @@
         @Autowired
         private ProductService productService;
 
-        /**
-         * TẠO MỚI một sản phẩm (POST)
-         */
+
         @Transactional // Rất quan trọng!
         public ProductResponse createProduct(CreateProductRequest request) {
 
-            // --- 1. Tạo Product chính ---
             Product product = new Product();
             product.setName(request.getProductName());
             product.setDescription(request.getProductDescription());
             product.setProductImage(request.getProductMainImage());
 
-            // --- 2. Lấy và Gán Category ---
             if (request.getCategoryId() != null) {
                 ProductCategory category = categoryRepo.findById(request.getCategoryId())
                         .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
                 product.setCategory(category);
             }
 
-            // --- 3. LƯU Product (Quan trọng!) ---
             Product savedProduct = productRepo.save(product);
 
-            // --- 4. Tạo các ProductItem (và Configuration lồng nhau) ---
             if (request.getItems() != null) {
                 for (CreateProductRequest.ItemCreateRequest reqItem : request.getItems()) {
 
-                    // 4a. Tạo ProductItem
                     ProductItem newItem = new ProductItem();
                     newItem.setProduct(savedProduct); // Gán vào Product cha
                     newItem.setSku(reqItem.getSku());
@@ -75,10 +67,8 @@
                     newItem.setProductImage(reqItem.getItemImage());
                     newItem.setPrice(reqItem.getPrice());
 
-                    // 4b. LƯU ProductItem
                     ProductItem savedItem = itemRepo.save(newItem);
 
-                    // 4c. Tạo các ProductConfiguration (bảng join)
                     if (reqItem.getVariationOptionIds() != null) {
                         for (Integer optionId : reqItem.getVariationOptionIds()) {
 
@@ -87,7 +77,6 @@
 
                             ProductConfiguration newConfig = new ProductConfiguration();
 
-                            // 4d. Tạo Composite ID
                             ProductConfigurationId configId = new ProductConfigurationId();
                             configId.setProductItemId(savedItem.getId()); // ID từ item vừa lưu
                             configId.setVariationOptionId(optionId);
@@ -102,17 +91,14 @@
                 }
             }
 
-            // --- 5. Trả về DTO hoàn chỉnh ---
-            // Gọi lại hàm GET để lấy dữ liệu mới nhất
             return productService.getProductById(savedProduct.getId());
         }
-        private final Path rootImageLocation = Paths.get("C:/Using/TeeHub/perfect_react/public/Product");
+        private final Path rootImageLocation = Paths.get("E:\\nam4\\Project\\TeeHub-main\\perfect_react\\public\\Product");
         private String saveFile(MultipartFile file) throws IOException {
             if (file == null || file.isEmpty()) {
                 return null;
             }
 
-            // Tạo tên file duy nhất để tránh trùng lặp
             String originalFilename = file.getOriginalFilename();
             String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
 
@@ -165,7 +151,7 @@
                 newItem.setQtyInStock(reqItem.getQtyInStock());
                 newItem.setPrice(reqItem.getPrice());
 
-                // 3a. Lưu ảnh của item (nếu có)
+                //  Lưu ảnh của item
                 if (itemImageFiles != null && i < itemImageFiles.size()) {
                     MultipartFile itemImageFile = itemImageFiles.get(i);
                     if (itemImageFile != null && !itemImageFile.isEmpty()) {
@@ -176,7 +162,7 @@
 
                 ProductItem savedItem = itemRepo.save(newItem);
 
-                // 3b. Tạo Configurations
+                //  Tạo Configurations
                 if (reqItem.getVariationOptionIds() != null) {
                     for (Integer optionId : reqItem.getVariationOptionIds()) {
                         // Tìm entity VariationOption (ví dụ: "White" hoặc "M")
@@ -192,8 +178,8 @@
                         configId.setVariationOptionId(optionId);
 
                         newConfig.setId(configId);
-                        newConfig.setProductItem(savedItem); // Gán quan hệ
-                        newConfig.setVariationOption(option); // Gán quan hệ
+                        newConfig.setProductItem(savedItem);
+                        newConfig.setVariationOption(option);
 
                         // Lưu liên kết vào DB
                         configRepo.save(newConfig);

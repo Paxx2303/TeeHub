@@ -9,7 +9,6 @@ import lombok.*;
 @Builder
 public class SiteUserRequest {
 
-    /* ===== Validation Groups ===== */
     public interface Create {}
     public interface Update {}
 

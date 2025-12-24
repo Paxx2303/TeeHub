@@ -13,6 +13,7 @@ import java.util.List;
 public class ShoppingCartItemDTO {
     private Integer id;
     private Integer cartId;
+    private String productName;
     private Integer productItemId;
     private Integer qty;
     private Integer price;
@@ -20,4 +21,5 @@ public class ShoppingCartItemDTO {
     private Boolean is_customed;
     private Integer custom_id;
     private List<VariationOptionDTO> selectedOptions;
+    private Integer stock;
 }

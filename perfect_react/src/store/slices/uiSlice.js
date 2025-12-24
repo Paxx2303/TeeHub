@@ -11,7 +11,7 @@ const initialState = {
   toast: {
     isVisible: false,
     message: '',
-    type: 'info', // 'success', 'error', 'warning', 'info'
+    type: 'info', 
     duration: 3000,
   },
   loading: {
@@ -98,7 +98,7 @@ const uiSlice = createSlice({
         ...action.payload,
       };
       state.notifications.unshift(notification);
-      // Keep only last 50 notifications
+      
       if (state.notifications.length > 50) {
         state.notifications = state.notifications.slice(0, 50);
       }
@@ -144,7 +144,7 @@ const uiSlice = createSlice({
       state.layout.itemsPerPage = action.payload;
     },
     
-    // Reset UI state
+    
     resetUI: (state) => {
       state.sidebarOpen = false;
       state.modal = {

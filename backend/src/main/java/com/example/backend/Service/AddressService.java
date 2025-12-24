@@ -32,7 +32,6 @@ public class AddressService {
                 .build();
     }
 
-    /* ====== Nhóm toàn bảng (giữ nguyên, KHÔNG ném 404 danh sách) ====== */
 
     public List<AddressResponse> getAllAddresses() {
         return addressRepo.findAll().stream().map(this::toResponse).toList();
@@ -78,7 +77,6 @@ public class AddressService {
         addressRepo.deleteById(id);
     }
 
-    /* ====== Nhóm THEO USER (KHÔNG ném 404 danh sách) ====== */
 
     public List<AddressResponse> getAddressesOfUser(Integer userId) {
         return addressRepo.findByUserId(userId).stream().map(this::toResponse).toList();

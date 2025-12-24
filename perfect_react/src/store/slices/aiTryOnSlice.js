@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { aiService } from '../../services/aiService.js';
 import { AI_TRY_ON_STATUS } from '../../utils/constants.js';
 
-// Async thunks
+
 export const uploadImage = createAsyncThunk(
   'aiTryOn/uploadImage',
   async (file, { rejectWithValue }) => {
@@ -107,7 +107,7 @@ const aiTryOnSlice = createSlice({
         timestamp: new Date().toISOString(),
         settings: state.settings,
       });
-      // Keep only last 10 items
+      
       if (state.history.length > 10) {
         state.history = state.history.slice(0, 10);
       }
@@ -118,7 +118,7 @@ const aiTryOnSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Upload image
+      
       .addCase(uploadImage.pending, (state) => {
         state.status = AI_TRY_ON_STATUS.UPLOADING;
         state.error = null;
@@ -132,7 +132,7 @@ const aiTryOnSlice = createSlice({
         state.error = action.payload;
       })
       
-      // Process try-on
+      
       .addCase(processTryOn.pending, (state) => {
         state.status = AI_TRY_ON_STATUS.PROCESSING;
         state.progress = 0;
@@ -150,7 +150,7 @@ const aiTryOnSlice = createSlice({
         state.progress = 0;
       })
       
-      // Generate variations
+      
       .addCase(generateVariations.pending, (state) => {
         state.status = AI_TRY_ON_STATUS.PROCESSING;
         state.error = null;

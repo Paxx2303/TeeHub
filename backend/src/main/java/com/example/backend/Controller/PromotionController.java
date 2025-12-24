@@ -24,7 +24,7 @@ public class PromotionController {
         return ResponseEntity.ok(promotionService.getAllPromotions());
     }
 
-    // API: GET /api/promotions/1 (Lấy 1 cái)
+    // API: GET /api/promotions/1 (Lấy chi tiết 1 KM)
     @GetMapping("/{id}")
     public ResponseEntity<PromotionResponse> getPromotionById(@PathVariable Integer id) {
         return ResponseEntity.ok(promotionService.getPromotionById(id));
@@ -50,12 +50,10 @@ public class PromotionController {
         promotionService.deletePromotion(id);
         return ResponseEntity.ok(Map.of("message", "Promotion deleted successfully with id: " + id));
     }
-    /**
-     * API: GET /api/promotions/category/1 (Lấy KM theo categoryId)
-     */
-    @GetMapping("/category/{categoryId}")
-    public ResponseEntity<PromotionResponse> getPromotionByCategoryId(@PathVariable Integer categoryId) {
-        // Service sẽ ném 404 nếu không tìm thấy
-        return ResponseEntity.ok(promotionService.getPromotionByCategoryId(categoryId));
+
+
+    @GetMapping("/product/{productId}")
+    public ResponseEntity<PromotionResponse> getPromotionByProductId(@PathVariable Integer productId) {
+        return ResponseEntity.ok(promotionService.getPromotionByProductId(productId));
     }
 }

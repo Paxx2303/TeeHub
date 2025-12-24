@@ -1,5 +1,9 @@
 package com.example.backend.Sercurity;
 
+// Đảm bảo import đúng đường dẫn 2 file service mới tạo
+import com.example.backend.Service.CustomOAuth2UserService;
+import com.example.backend.Sercurity.OAuth2AuthenticationSuccessHandler;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.http.HttpMethod;
@@ -9,7 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder; // <-- Dùng NoOp
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -22,30 +26,34 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
-    private final UserDetailsService myUserDetailsService; // MyUserDetailsService của bạn
+    private final UserDetailsService myUserDetailsService;
+
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Chỉ định rõ bean cors
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // ... bên trong SecurityFilterChain ...
+
                 .authorizeHttpRequests(auth -> auth
-                        // === PHẦN PUBLIC (permitAll) ===
+                        //  PHẦN PUBLIC (permitAll)
                         .requestMatchers("/auth/**").permitAll()
+                        // Thêm quyền cho OAuth2 endpoint
+                        .requestMatchers("/oauth2/**", "/login/**").permitAll()
+
                         .requestMatchers("/api/cart/**").permitAll()
                         .requestMatchers("/api/orders/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**", "/api/reviews/**").permitAll()
-                        .requestMatchers("/api/**").permitAll()
-                        // === PHẦN USER (authenticated) ===
-                        // SỬA Ở ĐÂY: Thêm quy tắc CỤ THỂ cho user
-                        // Cho phép USER (hoặc ADMIN) đã đăng nhập được GET/PUT thông tin của CHÍNH HỌ
-                        // cho phép preflight OPTIONS (quan trọng)
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // cho phép public route location proxy
+                        .requestMatchers("/api/**").permitAll()
+
+                        // PHẦN USER (authenticated)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/locations/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/me").hasAnyRole("USER", "ADMIN")
@@ -53,23 +61,26 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/users/me/password").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/users/me/addresses/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/me/addresses/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/users/me/addresses").hasAnyRole("USER", "ADMIN") // (Dùng để tạo mới)
-                        // Gửi review, xem giỏ hàng...
+                        .requestMatchers(HttpMethod.POST, "/api/users/me/addresses").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/reviews/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/cart/**", "/api/orders/**").hasAnyRole("USER", "ADMIN")
 
-
-                        // === PHẦN ADMIN (hasRole) ===
-                        // QUY TẮC TỔNG QUÁT (phải nằm SAU quy tắc /me)
-                        // Chỉ ADMIN mới được truy cập các đường dẫn /api/users/ CÒN LẠI (ví dụ: lấy tất cả user, xóa user)
+                        // PHẦN ADMIN
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-
+                        .requestMatchers("/avatars/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/custom-products/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**", "/api/categories/**").hasRole("ADMIN")
 
-                        // Tất cả các request còn lại BẮT BUỘC phải xác thực
                         .anyRequest().authenticated()
+                )
+                //  2. CẤU HÌNH OAUTH2 LOGIN
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(e -> e.baseUri("/oauth2/authorization"))
+                        .redirectionEndpoint(e -> e.baseUri("/login/oauth2/code/*"))
+                        .userInfoEndpoint(e -> e.userService(customOAuth2UserService)) // Service lưu user vào DB
+                        .successHandler(oAuth2AuthenticationSuccessHandler) // Handler tạo JWT và redirect về React
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -79,7 +90,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // ⚠️ SỬ DỤNG NoOpPasswordEncoder (KHÔNG BẢO MẬT) THEO YÊU CẦU
         return NoOpPasswordEncoder.getInstance();
     }
 
@@ -87,7 +97,7 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider p = new DaoAuthenticationProvider();
         p.setUserDetailsService(myUserDetailsService);
-        p.setPasswordEncoder(passwordEncoder()); // Sẽ tự động dùng NoOp
+        p.setPasswordEncoder(passwordEncoder());
         return p;
     }
 
@@ -100,7 +110,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         var conf = new CorsConfiguration();
         conf.setAllowCredentials(true);
-        conf.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:8080"));
+        conf.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:8080")); // Đảm bảo React port đúng
         conf.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         conf.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         var src = new UrlBasedCorsConfigurationSource();

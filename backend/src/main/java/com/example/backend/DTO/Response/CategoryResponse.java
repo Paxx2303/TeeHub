@@ -15,9 +15,7 @@ public class CategoryResponse {
     private String categoryName;
     private Integer parentCategoryId; // Chỉ trả về ID của cha
 
-    /**
-     * Hàm helper (constructor) để chuyển từ Entity sang DTO
-     */
+
     public CategoryResponse(ProductCategory entity) {
         this.categoryId = entity.getId();
         this.categoryName = entity.getCategoryName();

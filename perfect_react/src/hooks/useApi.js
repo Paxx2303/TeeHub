@@ -7,12 +7,12 @@ export const useApi = (apiFunction, options = {}) => {
   const abortControllerRef = useRef(null);
 
   const execute = useCallback(async (...args) => {
-    // Cancel previous request if still pending
+    
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
 
-    // Create new abort controller
+    
     abortControllerRef.current = new AbortController();
 
     setLoading(true);
@@ -60,7 +60,7 @@ export const useApi = (apiFunction, options = {}) => {
   };
 };
 
-// Hook for handling form submissions with API calls
+
 export const useApiForm = (apiFunction, options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -98,7 +98,7 @@ export const useApiForm = (apiFunction, options = {}) => {
   };
 };
 
-// Hook for handling paginated API calls
+
 export const usePaginatedApi = (apiFunction, initialParams = {}) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);

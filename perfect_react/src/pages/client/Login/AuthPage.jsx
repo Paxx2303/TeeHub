@@ -5,7 +5,10 @@ import { unwrapResult } from '@reduxjs/toolkit';
 import { loginUser, registerUser } from "../../../store/slices/authSlice.js";
 import { normalizeRole } from "../../../utils/auth.js";
 
-// Icon components using SVG
+import { GOOGLE_AUTH_URL, FACEBOOK_AUTH_URL, GITHUB_AUTH_URL} from "../../../utils/constants.js";
+
+
+
 const Mail = () => (
   <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -48,14 +51,14 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Login states
+  
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Register states
+  
   const [fullName, setFullName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
@@ -121,7 +124,7 @@ export default function AuthPage() {
     }
   };
 
-  const handleRegister = async (e) => {
+const handleRegister = async (e) => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMessage("");
@@ -151,35 +154,41 @@ export default function AuthPage() {
       );
 
       const { accessToken, email, role, userId } = unwrapResult(resultAction);
-      console.log("Register thunk successful! Payload received:", { accessToken: '...', email, role, userId });
+      console.log("Register thunk successful!", { accessToken: '...', email, role, userId });
 
       if (!accessToken) {
-        console.error("Register successful but no accessToken received in payload.");
         throw new Error("Không nhận được thông tin xác thực sau khi đăng ký.");
       }
 
-      console.log("Raw role received:", role);
+      
       const r = normalizeRole(role || "");
-      console.log("Normalized role for redirect:", r);
-
       const from = location.state?.from?.pathname;
       if (from) {
-        console.log("Redirecting to previous location:", from);
         navigate(from, { replace: true });
         return;
       }
-
       const redirectTo = r === "ROLE_ADMIN" ? "/admin" : "/";
-      console.log("Redirecting based on role to:", redirectTo);
       navigate(redirectTo, { replace: true });
 
     } catch (err) {
-      console.error("Registration failed:", err);
-      const msg =
-        err?.message ||
-        err ||
-        "Đăng ký thất bại. Vui lòng thử lại.";
+      console.error("Registration failed details:", err);
+      
+      
+      let msg = "Đăng ký thất bại. Vui lòng thử lại.";
+
+      if (typeof err === 'string') {
+        
+        msg = err;
+      } else if (err?.message) {
+        
+        msg = err.message;
+      } else if (err?.error) {
+        
+        msg = err.error;
+      }
+      
       setErrorMsg(msg);
+      
     } finally {
       setLoading(false);
     }
@@ -498,14 +507,14 @@ export default function AuthPage() {
         }
       `}</style>
 
-      {/* Background Blobs */}
+      {}
       <div style={{...styles.backgroundBlob, width: '300px', height: '300px', top: '-100px', left: '-100px', animationDelay: '0s'}} />
       <div style={{...styles.backgroundBlob, width: '250px', height: '250px', top: '20%', right: '-80px', animationDelay: '2s'}} />
       <div style={{...styles.backgroundBlob, width: '200px', height: '200px', bottom: '10%', left: '10%', animationDelay: '4s'}} />
 
-      {/* Main Container */}
+      {}
       <div style={styles.mainContainer} className="main-container">
-        {/* Brand Panel */}
+        {}
         <div style={styles.brandPanel} className="brand-panel">
           <div style={styles.brandContent}>
             <div style={styles.logoContainer}>
@@ -531,7 +540,7 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Auth Panel */}
+        {}
         <div style={styles.authPanel} className="auth-panel">
           <div style={styles.authHeader}>
             <h2 style={styles.authTitle}>
@@ -544,7 +553,7 @@ export default function AuthPage() {
             </p>
           </div>
 
-          {/* Tabs */}
+          {}
           <div style={styles.tabContainer}>
             <button
               onClick={() => handleTabChange("login")}
@@ -568,7 +577,7 @@ export default function AuthPage() {
             </button>
           </div>
 
-          {/* Login Form */}
+          {}
           {activeTab === "login" && (
             <form onSubmit={handleLogin}>
               <div style={styles.inputGroup}>
@@ -625,7 +634,7 @@ export default function AuthPage() {
             </form>
           )}
 
-          {/* Register Form */}
+          {}
           {activeTab === "register" && (
             <form onSubmit={handleRegister}>
               <div style={styles.inputGroup}>
@@ -725,7 +734,7 @@ export default function AuthPage() {
             </form>
           )}
 
-          {/* Social Login */}
+          {}
           <div style={styles.divider}>
             <div style={styles.dividerLine} />
             <span style={styles.dividerText}>Hoặc tiếp tục với</span>
@@ -733,13 +742,31 @@ export default function AuthPage() {
           </div>
 
           <div style={styles.socialGrid}>
-            <button type="button" style={styles.socialButton} className="social-btn">
+
+            <button 
+              type="button" 
+              style={styles.socialButton} 
+              className="social-btn"
+              onClick={() => window.location.href = GOOGLE_AUTH_URL} 
+            >
               <img src="https://www.google.com/favicon.ico" alt="Google" style={{width: '20px', height: '20px'}} />
             </button>
-            <button type="button" style={styles.socialButton} className="social-btn">
-              <img src="https://www.facebook.com/favicon.ico" alt="Facebook" style={{width: '20px', height: '20px'}} />
+            
+            <button 
+              type="button" 
+              style={styles.socialButton} 
+              className="social-btn"
+              onClick={() => window.location.href = FACEBOOK_AUTH_URL} 
+            >
+              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="Facebook" style={{width: '20px', height: '20px'}} />
             </button>
-            <button type="button" style={styles.socialButton} className="social-btn">
+            
+            <button 
+              type="button" 
+              style={styles.socialButton} 
+              className="social-btn"
+              onClick={() => window.location.href = GITHUB_AUTH_URL} 
+            >
               <img src="https://github.com/favicon.ico" alt="GitHub" style={{width: '20px', height: '20px'}} />
             </button>
           </div>

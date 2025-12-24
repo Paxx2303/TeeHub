@@ -2,7 +2,7 @@
   padding: 0;
 }
 
-/* Page header */
+
 .pageHeader {
   margin-bottom: 2rem;
 }
@@ -20,7 +20,7 @@
   margin: 0;
 }
 
-/* Stats grid */
+
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -115,7 +115,7 @@
   font-weight: 500;
 }
 
-/* Content grid */
+
 .contentGrid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -163,7 +163,7 @@
   background: #f1f5f9;
 }
 
-/* Orders table */
+
 .ordersTable {
   display: flex;
   flex-direction: column;
@@ -226,7 +226,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Products list */
+
 .productsList {
   display: flex;
   flex-direction: column;
@@ -286,7 +286,7 @@
   border-radius: 50%;
 }
 
-/* Quick actions */
+
 .quickActions {
   background: white;
   border-radius: 16px;
@@ -337,7 +337,7 @@
   font-weight: 500;
 }
 
-/* Responsive design */
+
 @media (max-width: 1024px) {
   .contentGrid {
     grid-template-columns: 1fr;

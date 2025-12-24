@@ -2,7 +2,7 @@
   padding: 0;
 }
 
-/* Page header */
+
 .pageHeader {
   margin-bottom: 2rem;
 }
@@ -20,7 +20,7 @@
   margin: 0;
 }
 
-/* Filters */
+
 .filters {
   display: flex;
   gap: 1.5rem;
@@ -102,7 +102,7 @@
   transform: translateY(-2px);
 }
 
-/* Table Layout */
+
 .tableContainer {
   background: white;
   border-radius: 12px;
@@ -228,7 +228,7 @@
   border-left: 4px solid #ef4444;
 }
 
-/* Pagination */
+
 .paginationContainer {
   display: flex;
   justify-content: center;
@@ -271,7 +271,7 @@
   cursor: not-allowed;
 }
 
-/* Modal */
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -416,7 +416,7 @@
   cursor: not-allowed;
 }
 
-/* Responsive design */
+
 @media (max-width: 768px) {
   .filters {
     flex-direction: column;

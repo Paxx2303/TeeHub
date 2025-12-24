@@ -15,12 +15,11 @@ public class Address {
     @Column(name = "address_id", nullable = false)
     private Integer id;
 
-    /* Liên kết bắt buộc để gộp API theo user */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // FK -> site_user.user_id
+    @JoinColumn(name = "user_id")
     private SiteUser user;
 
-    @Column(name = "unit_number", length = 50)   // dùng trong Service/DTO của bạn
+    @Column(name = "unit_number", length = 50)
     private String unitNumber;
 
     @Column(name = "street_number", length = 50)

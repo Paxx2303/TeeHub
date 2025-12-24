@@ -88,8 +88,8 @@
   text-decoration: none;
 }
 
-/* Các style hiện có cho products, container, grid, card, v.v. giữ nguyên */
-/* Chỉ thêm hoặc sửa phần CSS cho react-paginate */
+
+
 
 .paginationContainer {
   display: flex;
@@ -142,14 +142,14 @@
   opacity: 0.6;
 }
 
-/* Đảm bảo các nút Previous/Next có kích thước đồng đều */
+
 .paginationPrevious .paginationLink,
 .paginationNext .paginationLink {
   min-width: 80px;
   text-align: center;
 }
 
-/* Tùy chỉnh dấu "..." */
+
 .paginationBreak .paginationLink {
   cursor: default;
   background-color: transparent;
@@ -157,30 +157,30 @@
 }
 
 
-/* sidebar */
 
-/* ========== PRODUCTS CONTAINER ========== */
+
+
 .products {
   background: #f5f7fa;
   min-height: 100vh;
   padding: 0 !important;
-  /* Force override */
+  
 }
 
 .container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px var(--spacing-md) 0;
-  /* Giảm padding-top xuống 20px */
+  
 }
 
-/* ========== HEADER ========== */
+
 .headerSection {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
 }
 
 .titleSection {
@@ -203,13 +203,14 @@
   margin: 0;
 }
 
-/* ========== SEARCH BOX ========== */
+
 .searchBox {
   display: flex;
   align-items: center;
   position: relative;
-  min-width: 280px;
+  min-width: 180px;
   flex-shrink: 0;
+  margin-bottom: 20px;
 }
 
 .searchInput {
@@ -240,34 +241,35 @@
   pointer-events: none;
 }
 
-/* ========== CONTENT WRAPPER ========== */
+
 .contentWrapper {
   display: flex;
   gap: 30px;
   align-items: flex-start;
 }
 
-/* ========== SIDEBAR STYLES ========== */
+
 .sidebar {
   width: 280px;
   background: white;
   padding: 25px;
+  margin: 20px 0 0 0;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 90px !important;
-  /* Force top position - điều chỉnh theo chiều cao header */
+  
   flex-shrink: 0;
   align-self: flex-start;
   max-height: calc(100vh - 110px);
-  /* Chiều cao tối đa = viewport - (top + margin) */
+  
   overflow-y: auto;
-  /* Cho phép scroll dọc */
+  
   overflow-x: hidden;
-  /* Ẩn scroll ngang */
+  
 }
 
-/* Custom scrollbar cho sidebar */
+
 .sidebar::-webkit-scrollbar {
   width: 6px;
 }
@@ -303,7 +305,7 @@
   border-bottom: 2px solid #4285f4;
 }
 
-/* ========== CATEGORY LIST ========== */
+
 .categoryList {
   list-style: none;
   padding: 0;
@@ -350,7 +352,7 @@
   color: white;
 }
 
-/* ========== CUSTOM DROPDOWN STYLES ========== */
+
 .customDropdown {
   position: relative;
   width: 100%;
@@ -463,7 +465,7 @@
   font-weight: 600;
 }
 
-/* ========== PRODUCTS CONTAINER ========== */
+
 .productsContainer {
   flex: 1;
   min-width: 0;
@@ -476,7 +478,7 @@
   font-size: 16px;
 }
 
-/* ========== PRODUCT GRID ========== */
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -484,7 +486,7 @@
   margin-bottom: 40px;
 }
 
-/* ========== PRODUCT CARD ========== */
+
 .card {
   background: white;
   border-radius: 12px;
@@ -572,7 +574,7 @@
   background: white;
 }
 
-/* ========== PAGINATION STYLES ========== */
+
 .paginationContainer {
   display: flex;
   justify-content: center;
@@ -639,7 +641,7 @@
   border: none;
 }
 
-/* ========== RESPONSIVE ========== */
+
 @media (max-width: 992px) {
   .contentWrapper {
     flex-direction: column;
@@ -719,81 +721,80 @@
 }
 
 
-/* comment */
 
-/* giảm giá */
-/* --- THÊM VÀO CUỐI FILE Products.module.css --- */
 
-/* Sửa lại class .card để .saleBadge có thể định vị */
+
+
+
+
 .card {
   position: relative;
-  /* BẮT BUỘC: Thêm dòng này */
-  /* ... (các thuộc tính cũ của .card giữ nguyên) ... */
+  
+  
 }
 
-/* Tag giảm giá (ví dụ: -20%) */
+
 .saleBadge {
   position: absolute;
   top: 12px;
   left: 12px;
   background: #ef4444;
-  /* Màu đỏ */
+  
   color: white;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 0.75rem;
-  /* Nhỏ hơn 1 chút */
+  
   font-weight: 700;
   z-index: 5;
 }
 
-/* Sửa lại class .price (thành .priceContainer) để chứa 2 giá */
+
 .priceContainer {
   display: flex;
   align-items: baseline;
-  /* Căn theo baseline */
+  
   gap: 8px;
-  /* Khoảng cách giữa giá cũ và mới */
+  
   margin-top: 8px;
   min-height: 1.5rem;
-  /* Giữ chiều cao ổn định */
+  
 }
 
-/* Giá gốc (bị gạch) */
+
 .originalPrice {
   font-size: 0.9rem;
   color: #6b7280;
-  /* Xám */
+  
   text-decoration: line-through;
-  /* Gạch ngang */
+  
 }
 
-/* Giá mới (đã giảm) */
+
 .newPrice {
   font-size: 1.15rem;
-  /* To hơn giá gốc */
+  
   font-weight: 700;
   color: #ef4444;
-  /* Màu đỏ sale */
+  
 }
 
-/* Giá bình thường (khi không sale) */
+
 .normalPrice {
   font-size: 1.15rem;
   font-weight: 700;
   color: #1e293b;
-  /* Màu chữ đen/xám bình thường */
+  
 }
 
-/* XÓA hoặc Sửa class .price cũ nếu nó xung đột */
-/* .price { ... } */
-/* Tốt nhất là đổi tên .price trong JSX thành .normalPrice 
-   và xóa .price đi, hoặc sửa .price = .normalPrice */
+
+
+
 .soldCount {
   font-size: 0.85rem;
   color: #555;
   margin-top: 4px;
   font-weight: bold;
-  /* dịch sang góc phải */
+  
   padding-left: 15px;
 }

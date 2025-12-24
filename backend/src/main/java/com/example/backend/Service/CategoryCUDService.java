@@ -17,9 +17,7 @@ public class CategoryCUDService {
     @Autowired
     private ProductCategoryRepo categoryRepo;
 
-    /**
-     * TẠO MỚI 1 category (POST)
-     */
+
     @Transactional
     public CategoryResponse createCategory(CreateUpdateCategoryRequest request) {
 
@@ -47,9 +45,7 @@ public class CategoryCUDService {
         return new CategoryResponse(savedCategory);
     }
 
-    /**
-     * SỬA 1 category (PUT)
-     */
+
     @Transactional
     public CategoryResponse updateCategory(Integer categoryId, CreateUpdateCategoryRequest request) {
 
@@ -81,16 +77,14 @@ public class CategoryCUDService {
             category.setParentCategory(null); // Gỡ bỏ cha
         }
 
-        // 5. Lưu (JPA tự hiểu đây là update)
+        // 5. Lưu
         ProductCategory savedCategory = categoryRepo.save(category);
 
         // 6. Trả về DTO
         return new CategoryResponse(savedCategory);
     }
 
-    /**
-     * XOÁ 1 category (DELETE)
-     */
+
     @Transactional
     public String deleteCategory(Integer categoryId) {
 
@@ -100,7 +94,6 @@ public class CategoryCUDService {
         }
 
         // 2. Xoá
-        // (Các ràng buộc CASCADE và SET_NULL sẽ tự động được kích hoạt)
         categoryRepo.deleteById(categoryId);
 
         return "Deleted category successful with id: " + categoryId;

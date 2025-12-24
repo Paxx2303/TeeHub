@@ -21,13 +21,12 @@ public class ShoppingCartItem {
     @JoinColumn(name = "cart_id", nullable = false)
     private ShoppingCart cart;
 
-    @Column(name = "product_item_id", nullable = false)
+    @Column(name = "product_item_id")
     private Integer productItemId;
 
     @Column(nullable = false)
     private Integer qty;
 
-    // ✅ Đây là owning side (sẽ tạo bảng trung gian)
     @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinTable(
             name = "cart_item_variation_option",

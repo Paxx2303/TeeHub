@@ -53,7 +53,7 @@
   opacity: 0.6;
 }
 
-/* Icon styles */
+
 .leftIcon {
   position: absolute;
   left: var(--spacing-sm);
@@ -82,7 +82,7 @@
   padding-right: calc(var(--spacing-md) + var(--spacing-sm) + 16px);
 }
 
-/* Error state */
+
 .error {
   border-color: var(--error-color);
 }
@@ -105,13 +105,13 @@
   font-size: var(--font-size-xs);
 }
 
-/* Helper text */
+
 .helperText {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 
-/* Dark theme adjustments */
+
 [data-theme="dark"] .input {
   background-color: var(--bg-secondary);
   border-color: var(--border-color);
@@ -125,7 +125,7 @@
   background-color: var(--bg-primary);
 }
 
-/* Size variants */
+
 .input.sm {
   padding: var(--spacing-xs) var(--spacing-sm);
   font-size: var(--font-size-sm);
@@ -138,7 +138,7 @@
   min-height: 48px;
 }
 
-/* File input specific styles */
+
 .input[type="file"] {
   padding: var(--spacing-sm);
   cursor: pointer;
@@ -160,7 +160,7 @@
   background-color: var(--primary-dark);
 }
 
-/* Number input specific styles */
+
 .input[type="number"]::-webkit-outer-spin-button,
 .input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

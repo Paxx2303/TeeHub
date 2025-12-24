@@ -1,25 +1,20 @@
-// src/services/promotionService.js
-import api from './api'; // (Import file axios chung của bạn)
+
+
+import api from './httpClient'; 
 
 export const promotionService = {
-    /**
-     * Lấy KM cho 1 category.
-     * (Backend sẽ trả 404 nếu không có, chúng ta sẽ bắt lỗi này)
-     */
-    getPromotionByCategoryId: async (categoryId) => {
+    
+    getPromotionByProductId: async (productId) => {
         try {
-            const response = await api.get(`/api/promotions/category/${categoryId}`);
+            const response = await api.get(`/api/promotions/product/${productId}`);
             return response.data;
         } catch (error) {
-            console.error(`Error fetching promotion for category ${categoryId}:`, error);
-            throw error; // Ném lỗi để component bắt
+            
+            throw error;
         }
     },
 
-    /**
-     * Tạo KM mới
-     * (payload = { name, description, discountRate, startDate, endDate, categoryId })
-     */
+    
     createPromotion: async (promotionData) => {
         try {
             const response = await api.post('/api/promotions', promotionData);
@@ -30,9 +25,7 @@ export const promotionService = {
         }
     },
 
-    /**
-     * Cập nhật KM
-     */
+    
     updatePromotion: async (promotionId, promotionData) => {
         try {
             const response = await api.put(`/api/promotions/${promotionId}`, promotionData);
@@ -43,13 +36,11 @@ export const promotionService = {
         }
     },
 
-    /**
-     * Xóa KM
-     */
+    
     deletePromotion: async (promotionId) => {
         try {
             const response = await api.delete(`/api/promotions/${promotionId}`);
-            return response.data; // Thường là message { message: "..." }
+            return response.data;
         } catch (error) {
             console.error(`Error deleting promotion ${promotionId}:`, error);
             throw error;

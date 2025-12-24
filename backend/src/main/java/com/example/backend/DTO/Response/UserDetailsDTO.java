@@ -8,6 +8,6 @@ import lombok.Setter;
 public class UserDetailsDTO {
     private Integer userId;
     private String emailAddress;
-    private String password; // <-- Bắt buộc phải có
+    private String password;
     private String role;
 }

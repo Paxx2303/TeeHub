@@ -20,9 +20,9 @@ public class Promotion {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
-    @JoinColumn(name = "category_id")
-    private ProductCategory category;
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "product_id")
+    private Product product;
 
     @Column(name = "name")
     private String name;
@@ -38,5 +38,4 @@ public class Promotion {
 
     @Column(name = "end_date")
     private LocalDate endDate;
-
 }

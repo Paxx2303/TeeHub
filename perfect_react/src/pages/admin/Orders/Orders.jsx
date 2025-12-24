@@ -1,80 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './Orders.module.css';
+import OrderService from '../../../services/orderService.js';
+import { adminFetchUsers } from '../../../services/userService.js';
+
+
 
 const Orders = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [customDateRange, setCustomDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [userMap, setUserMap] = useState({});
 
-  // Mock data - sẽ thay thế bằng API calls
-  const orders = [
-    {
-      id: 'ORD001',
-      customer: 'Nguyễn Văn A',
-      email: 'nguyenvana@email.com',
-      phone: '0123456789',
-      products: [
-        { name: 'Áo thun TeeHub Basic', quantity: 2, price: 299000 },
-        { name: 'Áo hoodie TeeHub Premium', quantity: 1, price: 599000 }
-      ],
-      total: 1197000,
-      status: 'pending',
-      paymentMethod: 'COD',
-      orderDate: '2024-01-15',
-      shippingAddress: '123 Đường ABC, Quận 1, TP.HCM'
-    },
-    {
-      id: 'ORD002',
-      customer: 'Trần Thị B',
-      email: 'tranthib@email.com',
-      phone: '0987654321',
-      products: [
-        { name: 'Áo polo TeeHub Sport', quantity: 1, price: 399000 }
-      ],
-      total: 399000,
-      status: 'processing',
-      paymentMethod: 'Bank Transfer',
-      orderDate: '2024-01-15',
-      shippingAddress: '456 Đường XYZ, Quận 2, TP.HCM'
-    },
-    {
-      id: 'ORD003',
-      customer: 'Lê Văn C',
-      email: 'levanc@email.com',
-      phone: '0369852147',
-      products: [
-        { name: 'Áo thun custom design', quantity: 3, price: 449000 }
-      ],
-      total: 1347000,
-      status: 'shipped',
-      paymentMethod: 'Credit Card',
-      orderDate: '2024-01-14',
-      shippingAddress: '789 Đường DEF, Quận 3, TP.HCM'
-    },
-    {
-      id: 'ORD004',
-      customer: 'Phạm Thị D',
-      email: 'phamthid@email.com',
-      phone: '0741852963',
-      products: [
-        { name: 'Áo thun TeeHub Basic', quantity: 1, price: 299000 },
-        { name: 'Áo polo TeeHub Sport', quantity: 2, price: 399000 }
-      ],
-      total: 1097000,
-      status: 'completed',
-      paymentMethod: 'COD',
-      orderDate: '2024-01-14',
-      shippingAddress: '321 Đường GHI, Quận 4, TP.HCM'
-    }
-  ];
-
-  const statusOptions = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'pending', label: 'Chờ xử lý' },
-    { value: 'processing', label: 'Đang xử lý' },
-    { value: 'shipped', label: 'Đã giao' },
-    { value: 'completed', label: 'Hoàn thành' },
-    { value: 'cancelled', label: 'Đã hủy' }
-  ];
+  
+  const normalizeStatus = (statusRaw) => {
+    if (!statusRaw) return 'pending';
+    const s = String(statusRaw).trim().toLowerCase();
+    if (['pending', 'chờ thanh toán', 'đang chờ', 'p'].includes(s)) return 'pending';
+    if (['processing', 'đang xử lý'].includes(s)) return 'processing';
+    if (['shipped', 'đang giao', 'đã giao hàng', 'đã gửi'].includes(s)) return 'shipped';
+    if (['completed', 'hoàn thành', 'thành công'].includes(s)) return 'completed';
+    if (['cancelled', 'canceled', 'đã hủy', 'hủy'].includes(s)) return 'cancelled';
+    
+    if (['pending', 'processing', 'shipped', 'completed', 'cancelled'].includes(s)) return s;
+    return 'pending';
+  };
 
   const getStatusColor = (status) => {
     const colors = {
@@ -98,17 +56,163 @@ const Orders = () => {
     return texts[status] || status;
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+  const formatOrderId = (id) => `ORD${String(id).padStart(3, '0')}`;
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      
+      const [ordersData, usersData] = await Promise.all([
+        OrderService.getAllOrders(),
+        adminFetchUsers()
+      ]);
+
+      setOrders(Array.isArray(ordersData) ? ordersData : []);
+
+      
+      const mapping = {};
+      (usersData || []).forEach(user => {
+        const uid = user.id ?? user.userId;
+        if (uid) {
+          mapping[uid] = {
+            fullName: user.full_name ?? user.fullName ?? '',
+            emailAddress: user.email_address ?? user.emailAddress ?? '',
+          };
+        }
+      });
+      setUserMap(mapping);
+
+    } catch (e) {
+      setError(e?.message || 'Không thể tải danh sách đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  
+  const statusOptions = useMemo(() => {
+    const set = new Set();
+    orders.forEach(o => set.add(normalizeStatus(o.orderStatus)));
+    const list = Array.from(set).filter(Boolean);
+    const mapped = list.map(v => ({ value: v, label: getStatusText(v) }));
+    const all = { value: 'all', label: 'Tất cả' };
+    
+    const ensure = ['pending', 'processing', 'shipped', 'completed', 'cancelled'];
+    ensure.forEach(v => {
+      if (!list.includes(v)) mapped.push({ value: v, label: getStatusText(v) });
+    });
+    return [all, ...mapped];
+  }, [orders]);
+
+  const dateFilterOptions = [
+    { value: 'all', label: 'Tất cả' },
+    { value: 'today', label: 'Hôm nay' },
+    { value: 'yesterday', label: 'Hôm qua' },
+    { value: 'last7days', label: '7 ngày qua' },
+    { value: 'last30days', label: '30 ngày qua' },
+    { value: 'thisMonth', label: 'Tháng này' },
+    { value: 'lastMonth', label: 'Tháng trước' },
+    { value: 'custom', label: 'Tùy chỉnh' }
+  ];
+
+  
+  const isDateInRange = (orderDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const orderDateTime = new Date(orderDate);
+    orderDateTime.setHours(0, 0, 0, 0);
+
+    switch (dateFilter) {
+      case 'all':
+        return true;
+
+      case 'today':
+        return orderDateTime.getTime() === today.getTime();
+
+      case 'yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return orderDateTime.getTime() === yesterday.getTime();
+
+      case 'last7days':
+        const last7Days = new Date(today);
+        last7Days.setDate(last7Days.getDate() - 7);
+        return orderDateTime >= last7Days && orderDateTime <= today;
+
+      case 'last30days':
+        const last30Days = new Date(today);
+        last30Days.setDate(last30Days.getDate() - 30);
+        return orderDateTime >= last30Days && orderDateTime <= today;
+
+      case 'thisMonth':
+        return orderDateTime.getMonth() === today.getMonth() &&
+          orderDateTime.getFullYear() === today.getFullYear();
+
+      case 'lastMonth':
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        return orderDateTime >= lastMonth && orderDateTime <= lastMonthEnd;
+
+      case 'custom':
+        if (!customDateRange.startDate || !customDateRange.endDate) {
+          return true;
+        }
+        const startDate = new Date(customDateRange.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(customDateRange.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        return orderDateTime >= startDate && orderDateTime <= endDate;
+
+      default:
+        return true;
+    }
+  };
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      const internalStatus = normalizeStatus(order.orderStatus);
+      const matchesStatus = selectedStatus === 'all' || internalStatus === selectedStatus;
+      const idStr = String(order.id || '').toLowerCase();
+      const ordStr = formatOrderId(order.id || '').toLowerCase();
+      const userStr = String(order.userId || '').toLowerCase();
+      const providerStr = String(order.paymentProvider || '').toLowerCase();
+      const term = searchTerm.trim().toLowerCase();
+      const matchesSearch = !term ||
+        idStr.includes(term) ||
+        ordStr.includes(term) ||
+        userStr.includes(term) ||
+        providerStr.includes(term);
+      const matchesDate = isDateInRange(order.orderDate);
+      return matchesStatus && matchesSearch && matchesDate;
+    });
+  }, [orders, selectedStatus, searchTerm, dateFilter, customDateRange]);
 
   const handleStatusChange = (orderId, newStatus) => {
-    // Xử lý thay đổi trạng thái đơn hàng
-    console.log(`Thay đổi trạng thái đơn hàng ${orderId} thành ${newStatus}`);
+    
+    const apiStatus = normalizeStatus(newStatus);
+    
+    setOrders(prev =>
+      prev.map(o => (o.id === orderId ? { ...o, orderStatus: apiStatus } : o))
+    );
+    OrderService.updateOrderStatus(orderId, apiStatus).catch(() => {
+      
+      fetchOrders();
+    });
+  };
+
+  const handleDateFilterChange = (value) => {
+    setDateFilter(value);
+    
+    if (value !== 'custom') {
+      setCustomDateRange({ startDate: '', endDate: '' });
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -118,15 +222,92 @@ const Orders = () => {
     }).format(amount);
   };
 
+  const resetFilters = () => {
+    setSelectedStatus('all');
+    setSearchTerm('');
+    setDateFilter('all');
+    setCustomDateRange({ startDate: '', endDate: '' });
+    setPage(1);
+  };
+
+  
+  const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.orderTotal || 0), 0);
+
+  
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return filteredOrders.slice(start, end);
+  }, [filteredOrders, currentPage, pageSize]);
+
+  const exportCSV = () => {
+    const rows = filteredOrders.map(o => ({
+      id: o.id,
+      userId: o.userId,
+      paymentTypeName: o.paymentTypeName,
+      paymentProvider: o.paymentProvider,
+      orderStatus: normalizeStatus(o.orderStatus),
+      orderDate: o.orderDate,
+      orderTotal: o.orderTotal,
+      itemsCount: Array.isArray(o.items) ? o.items.length : 0
+    }));
+    const header = Object.keys(rows[0] || {
+      id: '', userId: '', paymentTypeName: '', paymentProvider: '', orderStatus: '', orderDate: '', orderTotal: '', itemsCount: ''
+    });
+    const csv = [
+      header.join(','),
+      ...rows.map(r => header.map(k => `"${String(r[k] ?? '').replaceAll('"', '""') }"`).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `orders_export_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={styles.orders}>
-      {/* Page header */}
+      {}
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Quản lý đơn hàng</h1>
         <p className={styles.pageSubtitle}>Theo dõi và xử lý tất cả đơn hàng</p>
       </div>
 
-      {/* Filters and search */}
+      {}
+      {loading && (
+        <div className={styles.statsBar}>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Đang tải dữ liệu...</span>
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className={styles.statsBar}>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel} style={{ color: '#ef4444' }}>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {}
+      <div className={styles.statsBar}>
+        <div className={styles.statItem}>
+          <span className={styles.statLabel}>Tổng đơn hàng:</span>
+          <span className={styles.statValue}>{filteredOrders.length}</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={styles.statLabel}>Tổng doanh thu:</span>
+          <span className={styles.statValue}>{formatCurrency(totalRevenue)}</span>
+        </div>
+      </div>
+
+      {}
       <div className={styles.filters}>
         <div className={styles.searchBox}>
           <input
@@ -139,32 +320,82 @@ const Orders = () => {
           <span className={styles.searchIcon}>🔍</span>
         </div>
 
-        <div className={styles.statusFilter}>
-          <label className={styles.filterLabel}>Trạng thái:</label>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className={styles.statusSelect}
-          >
-            {statusOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className={styles.filterGroup}>
+          <div className={styles.statusFilter}>
+            <label className={styles.filterLabel}>Trạng thái:</label>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className={styles.statusSelect}
+            >
+              {statusOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.dateFilter}>
+            <label className={styles.filterLabel}>Thời gian:</label>
+            <select
+              value={dateFilter}
+              onChange={(e) => handleDateFilterChange(e.target.value)}
+              className={styles.dateSelect}
+            >
+              {dateFilterOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {dateFilter === 'custom' && (
+            <div className={styles.customDateRange}>
+              <input
+                type="date"
+                value={customDateRange.startDate}
+                onChange={(e) => setCustomDateRange({
+                  ...customDateRange,
+                  startDate: e.target.value
+                })}
+                className={styles.dateInput}
+                placeholder="Từ ngày"
+              />
+              <span className={styles.dateSeparator}>đến</span>
+              <input
+                type="date"
+                value={customDateRange.endDate}
+                onChange={(e) => setCustomDateRange({
+                  ...customDateRange,
+                  endDate: e.target.value
+                })}
+                className={styles.dateInput}
+                placeholder="Đến ngày"
+              />
+            </div>
+          )}
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.exportBtn}>
+          <button
+            className={styles.resetBtn}
+            onClick={resetFilters}
+            title="Reset tất cả bộ lọc"
+          >
+            🔄 Reset
+          </button>
+          <button className={styles.exportBtn} onClick={exportCSV}>
             📊 Xuất báo cáo
           </button>
-          <button className={styles.refreshBtn}>
+          <button className={styles.refreshBtn} onClick={fetchOrders} disabled={loading}>
             🔄 Làm mới
           </button>
         </div>
       </div>
 
-      {/* Orders table */}
+      {}
       <div className={styles.ordersTable}>
         <div className={styles.tableHeader}>
           <div className={styles.tableCell}>Mã đơn</div>
@@ -173,97 +404,116 @@ const Orders = () => {
           <div className={styles.tableCell}>Tổng tiền</div>
           <div className={styles.tableCell}>Trạng thái</div>
           <div className={styles.tableCell}>Ngày đặt</div>
-          <div className={styles.tableCell}>Thao tác</div>
         </div>
 
-        {filteredOrders.map((order, index) => (
-          <div key={index} className={styles.tableRow}>
-            <div className={styles.tableCell}>
-              <span className={styles.orderId}>{order.id}</span>
-            </div>
-            <div className={styles.tableCell}>
-              <div className={styles.customerInfo}>
-                <div className={styles.customerName}>{order.customer}</div>
-                <div className={styles.customerContact}>
-                  {order.email} • {order.phone}
+        {filteredOrders.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>📭 Không tìm thấy đơn hàng nào</p>
+            <button onClick={resetFilters} className={styles.resetFiltersBtn}>
+              Xóa bộ lọc
+            </button>
+          </div>
+        ) : (
+          paginatedOrders.map((order, index) => (
+            <div key={index} className={styles.tableRow}>
+              <div className={styles.tableCell}>
+                <span className={styles.orderId}>{formatOrderId(order.id)}</span>
+              </div>
+              <div className={styles.tableCell}>
+                <div className={styles.customerInfo}>
+                  <div className={styles.customerName}>
+                    {userMap[order.userId]?.fullName || `Khách hàng #${order.userId}`}
+                  </div>
+                  <div className={styles.customerContact}>{order.paymentProvider || order.paymentTypeName || '—'}</div>
                 </div>
               </div>
-            </div>
-            <div className={styles.tableCell}>
-              <div className={styles.productsList}>
-                {order.products.map((product, idx) => (
-                  <div key={idx} className={styles.productItem}>
-                    <span className={styles.productName}>{product.name}</span>
-                    <span className={styles.productQuantity}>x{product.quantity}</span>
-                  </div>
-                ))}
+              <div className={styles.tableCell}>
+                <div className={styles.productsList}>
+                  {Array.isArray(order.items) && order.items.length > 0 ? (
+                    order.items.map((it, idx) => (
+                      <div key={idx} className={styles.productItem}>
+                        <span className={styles.productName}>
+                          {it.productName || `Item #${it.productItemId ?? it.id}`}
+                        </span>
+                        <span className={styles.productQuantity}>x{it.qty}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.productItem}>—</div>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className={styles.tableCell}>
-              <span className={styles.totalAmount}>
-                {formatCurrency(order.total)}
-              </span>
-            </div>
-            <div className={styles.tableCell}>
-              <select
-                value={order.status}
-                onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                className={styles.statusSelect}
-                style={{ 
-                  backgroundColor: getStatusColor(order.status),
-                  color: 'white',
-                  border: 'none'
-                }}
-              >
-                {statusOptions.slice(1).map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.tableCell}>
-              <span className={styles.orderDate}>
-                {new Date(order.orderDate).toLocaleDateString('vi-VN')}
-              </span>
-            </div>
-            <div className={styles.tableCell}>
-              <div className={styles.actionButtons}>
-                <button 
-                  className={styles.viewBtn}
-                  title="Xem chi tiết"
-                >
-                  👁️
-                </button>
-                <button 
-                  className={styles.editBtn}
-                  title="Chỉnh sửa"
-                >
-                  ✏️
-                </button>
-                <button 
-                  className={styles.deleteBtn}
-                  title="Xóa"
-                >
-                  🗑️
-                </button>
+              <div className={styles.tableCell}>
+                <span className={styles.totalAmount}>
+                  {formatCurrency(order.orderTotal || 0)}
+                </span>
               </div>
+              <div className={styles.tableCell}>
+                <select
+                  value={normalizeStatus(order.orderStatus)}
+                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                  className={styles.statusSelect}
+                  style={{
+                    backgroundColor: getStatusColor(normalizeStatus(order.orderStatus)),
+                    color: 'white',
+                    border: 'none'
+                  }}
+                >
+                  {statusOptions.slice(1).map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.tableCell}>
+                <span className={styles.orderDate}>
+                  {order.orderDate ? new Date(order.orderDate).toLocaleDateString('vi-VN') : '—'}
+                </span>
+              </div>
+
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
-      {/* Pagination */}
+      {}
       <div className={styles.pagination}>
-        <button className={styles.paginationBtn} disabled>
+        <div className={styles.paginationNumbers}>
+          <select
+            className={styles.paginationBtn}
+            value={pageSize}
+            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+            title="Số dòng / trang"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+        <button
+          className={styles.paginationBtn}
+          disabled={currentPage === 1}
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+        >
           ← Trước
         </button>
         <div className={styles.paginationNumbers}>
-          <button className={`${styles.paginationBtn} ${styles.active}`}>1</button>
-          <button className={styles.paginationBtn}>2</button>
-          <button className={styles.paginationBtn}>3</button>
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              className={`${styles.paginationBtn} ${currentPage === i + 1 ? styles.active : ''}`}
+              onClick={() => setPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
         </div>
-        <button className={styles.paginationBtn}>
+        <button
+          className={styles.paginationBtn}
+          disabled={currentPage === totalPages}
+          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+        >
           Sau →
         </button>
       </div>
@@ -272,5 +522,3 @@ const Orders = () => {
 };
 
 export default Orders;
-
-

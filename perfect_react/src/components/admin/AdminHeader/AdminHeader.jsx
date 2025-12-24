@@ -1,11 +1,12 @@
-// src/components/admin/AdminHeader/AdminHeader.jsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./AdminHeader.module.css";
+import logoImg from "../../../assets/t1.png";
 
-// dùng service & utils hiện có trong dự án
-import { logout as apiLogout } from "@/services/authService"; // hàm gọi POST /auth/logout + clearAuth
-import { clearAuth } from "@/utils/auth";                     // dự phòng nếu service chưa có
+
+import { logout as apiLogout } from "@/services/authService";
+import { clearAuth } from "@/utils/auth";
 
 export default function AdminHeader() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -13,20 +14,21 @@ export default function AdminHeader() {
 
   const toggleUserMenu = () => setIsUserMenuOpen((v) => !v);
 
+  
+  const handleGoHome = () => {
+    navigate("/"); 
+  };
+
   const handleLogout = async () => {
     try {
-      // gọi BE để xoá refresh_token (cookie) + clear FE session
       if (apiLogout) {
         await apiLogout();
       } else {
-        // fallback (nếu bạn chưa tạo service): tự xoá sessionStorage
         clearAuth();
       }
     } catch (_) {
-      // ignore lỗi mạng, vẫn xoá phiên FE
       clearAuth();
     } finally {
-      // điều hướng & thay thế history để Back không quay lại được
       navigate("/login", { replace: true });
     }
   };
@@ -34,29 +36,42 @@ export default function AdminHeader() {
   return (
     <header className={styles.adminHeader}>
       <div className={styles.headerContent}>
-        {/* Left: Logo */}
+        {}
         <div className={styles.headerLeft}>
           <div className={styles.logo} onClick={() => navigate("/admin")} role="button">
-            <span className={styles.logoIcon}>👽</span>
+            <span className={styles.logoIcon}><img src={logoImg} alt="TeeHub Logo" /></span>
             <span className={styles.logoText}>TeeHub Admin</span>
           </div>
         </div>
 
-        {/* Right: Actions & User menu */}
+        {}
         <div className={styles.headerRight}>
-          <div className={styles.notificationIcon} title="Thông báo">
-            <span className={styles.bellIcon}>🔔</span>
-            <span className={styles.notificationBadge}>3</span>
+          
+          {}
+          <div 
+            className={styles.actionIcon} 
+            onClick={handleGoHome} 
+            title="Về trang chủ website"
+          >
+            <svg 
+              width="22" 
+              height="22" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
           </div>
+          {}
 
+      
           <div className={styles.userMenu}>
             <button className={styles.userButton} onClick={toggleUserMenu}>
-              <div className={styles.userAvatar}>
-                <img
-                  src="https://via.placeholder.com/40x40/4F46E5/FFFFFF?text=A"
-                  alt="Admin Avatar"
-                />
-              </div>
               <div className={styles.userInfo}>
                 <span className={styles.userName}>Admin User</span>
                 <span className={styles.userRole}>Administrator</span>
@@ -68,29 +83,12 @@ export default function AdminHeader() {
 
             {isUserMenuOpen && (
               <div className={styles.dropdownMenu}>
-                <div
-                  className={styles.dropdownItem}
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    navigate("/admin/profile");
-                  }}
-                >
-                  <span className={styles.itemIcon}>👤</span>
-                  <span>Thông tin cá nhân</span>
-                </div>
-                <div
-                  className={styles.dropdownItem}
-                  onClick={() => {
-                    setIsUserMenuOpen(false);
-                    navigate("/admin/settings");
-                  }}
-                >
-                  <span className={styles.itemIcon}>⚙️</span>
-                  <span>Cài đặt</span>
-                </div>
-                <div className={styles.dropdownDivider}></div>
                 <div className={styles.dropdownItem} onClick={handleLogout}>
-                  <span className={styles.itemIcon}>🚪</span>
+                  <span className={styles.itemIcon}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
                   <span>Đăng xuất</span>
                 </div>
               </div>

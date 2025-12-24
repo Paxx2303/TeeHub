@@ -1,6 +1,6 @@
 import { MOCK_PRODUCTS } from './mockProducts';
 
-// Mock cart data với các sản phẩm đa dạng
+
 export const MOCK_CART_ITEMS = [
   {
     id: 'cart-item-001',
@@ -13,7 +13,7 @@ export const MOCK_CART_ITEMS = [
     color: 'white',
     design: null,
     customizations: {},
-    addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 ngày trước
+    addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
   },
   {
     id: 'cart-item-002',
@@ -35,7 +35,7 @@ export const MOCK_CART_ITEMS = [
       textColor: '#FFFFFF',
       backgroundColor: 'transparent',
     },
-    addedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 ngày trước
+    addedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), 
   },
   {
     id: 'cart-item-003',
@@ -56,21 +56,21 @@ export const MOCK_CART_ITEMS = [
       opacity: 0.8,
       blendMode: 'multiply',
     },
-    addedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 giờ trước
+    addedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), 
   },
 ];
 
-// Function để lấy mock cart data
+
 export const getMockCartData = () => {
   return MOCK_CART_ITEMS;
 };
 
-// Function để thêm mock data vào localStorage
+
 export const populateMockCartData = () => {
   if (typeof window !== 'undefined') {
     const existingCart = localStorage.getItem('tshirt_store_cart');
     
-    // Chỉ thêm mock data nếu giỏ hàng đang trống
+    
     if (!existingCart || JSON.parse(existingCart).length === 0) {
       localStorage.setItem('tshirt_store_cart', JSON.stringify(MOCK_CART_ITEMS));
       console.log('✅ Mock cart data đã được thêm vào giỏ hàng!');
@@ -83,7 +83,7 @@ export const populateMockCartData = () => {
   return false;
 };
 
-// Function để xóa mock data
+
 export const clearMockCartData = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('tshirt_store_cart');
@@ -93,7 +93,7 @@ export const clearMockCartData = () => {
   return false;
 };
 
-// Function để tạo mock cart với số lượng sản phẩm tùy chỉnh
+
 export const createMockCartWithProducts = (productIds = ['demo-tee-001', 'demo-tee-002']) => {
   const mockItems = productIds.map((productId, index) => {
     const product = MOCK_PRODUCTS.find(p => p.id === productId);
@@ -105,7 +105,7 @@ export const createMockCartWithProducts = (productIds = ['demo-tee-001', 'demo-t
       name: product.name,
       price: product.price,
       image: product.image,
-      quantity: Math.floor(Math.random() * 3) + 1, // 1-3 items
+      quantity: Math.floor(Math.random() * 3) + 1, 
       size: product.sizes[Math.floor(Math.random() * product.sizes.length)],
       color: product.colors[Math.floor(Math.random() * product.colors.length)].name,
       design: Math.random() > 0.5 ? {
@@ -116,19 +116,19 @@ export const createMockCartWithProducts = (productIds = ['demo-tee-001', 'demo-t
         fontSize: 20,
       } : null,
       customizations: {},
-      addedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(), // Random trong 7 ngày qua
+      addedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(), 
     };
   }).filter(Boolean);
 
   return mockItems;
 };
 
-// Function để lấy thông tin sản phẩm từ cart item
+
 export const getProductFromCartItem = (cartItem) => {
   return MOCK_PRODUCTS.find(p => p.id === cartItem.productId);
 };
 
-// Function để validate cart items
+
 export const validateCartItems = (cartItems) => {
   return cartItems.map(item => {
     const product = getProductFromCartItem(item);
@@ -140,7 +140,7 @@ export const validateCartItems = (cartItems) => {
   });
 };
 
-// Mock shipping info
+
 export const MOCK_SHIPPING_INFO = {
   fullName: 'Nguyễn Văn A',
   email: 'nguyenvana@example.com',
@@ -152,7 +152,7 @@ export const MOCK_SHIPPING_INFO = {
   notes: 'Giao hàng vào giờ hành chính'
 };
 
-// Mock order data
+
 export const MOCK_ORDER_DATA = {
   id: 'ORD-' + Date.now(),
   items: MOCK_CART_ITEMS,

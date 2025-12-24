@@ -1,4 +1,4 @@
-// src/services/authService.js 
+
 import api from './httpClient.js';
 import { setAuth, clearAuth } from '../utils/auth.js';
 
@@ -23,13 +23,13 @@ export async function login(email, password) {
   return { accessToken, email: me, role, userId };
 }
 
-// [MỚI] BỔ SUNG HÀM REGISTER CÒN THIẾU
+
 export async function register(userData) {
-  // userData đến từ thunk, vd: { fullName, email, password }
+  
   console.debug("Calling API POST /auth/register");
 
-  // 1. Gọi API đăng ký
-  // !!! Đảm bảo endpoint '/auth/register' là chính xác
+  
+  
   const res = await api.post("/auth/register", userData);
 
   if (!res || !res.data) {
@@ -38,7 +38,7 @@ export async function register(userData) {
   }
   console.debug("Register API response data:", res.data);
 
-  // 2. Xử lý response - Giả định API trả về auth info để auto-login
+  
   const { accessToken, email: me, role, userId } = res.data;
 
   if (!accessToken || userId === undefined || userId === null) {
@@ -46,11 +46,11 @@ export async function register(userData) {
     throw new Error("Thông tin đăng ký trả về không đầy đủ (thiếu token hoặc ID người dùng).");
   }
 
-  // 3. Tự động đăng nhập bằng cách lưu auth info
+  
   setAuth({ accessToken, email: me, role, userId });
   console.debug("Auth info (from register) saved to storage.");
   
-  // 4. Trả về auth info cho authSlice thunk
+  
   return { accessToken, email: me, role, userId };
 }
 
@@ -72,9 +72,9 @@ export async function logout({ redirect = true } = {}) {
   }
 }
 
-// Cập nhật cả object export (nếu bạn dùng nó ở đâu đó)
+
 export const authService = {
   login,
-  register, // <-- [MỚI] Thêm vào đây
+  register, 
   logout,
 };

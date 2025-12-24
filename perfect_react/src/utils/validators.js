@@ -1,4 +1,4 @@
-// Form validation functions
+
 
 export const validateRequired = (value) => {
   return value && value.trim().length > 0;
@@ -15,7 +15,7 @@ export const validatePhone = (phone) => {
 };
 
 export const validatePassword = (password) => {
-  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
+  
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
   return passwordRegex.test(password);
 };
@@ -38,11 +38,11 @@ export const validatePositiveNumber = (value) => {
 
 export const validateImageFile = (file) => {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 5 * 1024 * 1024; 
   return validTypes.includes(file.type) && file.size <= maxSize;
 };
 
-// Form validation schemas
+
 export const validationSchemas = {
   login: {
     email: [
@@ -94,7 +94,7 @@ export const validationSchemas = {
   }
 };
 
-// Generic validation function
+
 export const validateField = (value, validators) => {
   for (const { validator, message } of validators) {
     if (!validator(value)) {
@@ -104,7 +104,7 @@ export const validateField = (value, validators) => {
   return { isValid: true, message: '' };
 };
 
-// Validate entire form
+
 export const validateForm = (data, schema) => {
   const errors = {};
   let isValid = true;

@@ -1,4 +1,4 @@
-/* Table Layout */
+
 .tableContainer {
   background: white;
   border-radius: 12px;
@@ -102,7 +102,7 @@
   border: 1px solid #fecaca;
 }
 
-/* Pagination */
+
 .paginationContainer {
   display: flex;
   justify-content: center;
@@ -152,7 +152,7 @@
   border-color: #e2e8f0;
 }
 
-/* Modal Actions */
+
 .modalActions {
   display: flex;
   gap: 1rem;
@@ -229,7 +229,7 @@
   }
 }
 
-/* Filters Section - Hiển thị tất cả trên 1 hàng */
+
 .filters {
   display: flex;
   align-items: center;
@@ -243,7 +243,7 @@
   flex-wrap: wrap;
 }
 
-/* Search Box */
+
 .searchBox {
   display: flex;
   align-items: center;
@@ -279,7 +279,7 @@
   pointer-events: none;
 }
 
-/* Category Filter */
+
 .categoryFilter {
   display: flex;
   align-items: center;
@@ -321,7 +321,7 @@
   opacity: 0.6;
 }
 
-/* Actions */
+
 .actions {
   display: flex;
   gap: 0.75rem;
@@ -365,7 +365,7 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* Responsive Design */
+
 @media (max-width: 1200px) {
   .filters {
     gap: 0.75rem;
@@ -430,7 +430,7 @@
   }
 }
 
-/* Modal Overlay */
+
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -446,7 +446,7 @@
   padding: 1rem;
   animation: fadeIn 0.2s ease;
   overflow-y: auto;
-  /* Thêm scroll cho overlay */
+  
 }
 
 @keyframes fadeIn {
@@ -459,7 +459,7 @@
   }
 }
 
-/* Modal Container */
+
 .modal {
   background: white;
   border-radius: 16px;
@@ -467,14 +467,14 @@
   max-width: 800px;
   width: 100%;
   max-height: 90vh;
-  /* Giới hạn chiều cao */
+  
   margin: auto;
-  /* Căn giữa khi scroll */
+  
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease;
   position: relative;
-  /* Thêm position relative */
+  
 }
 
 @keyframes slideUp {
@@ -489,7 +489,7 @@
   }
 }
 
-/* Modal Header */
+
 .modalHeader {
   display: flex;
   justify-content: space-between;
@@ -498,7 +498,7 @@
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
   flex-shrink: 0;
-  /* Không cho co lại */
+  
 }
 
 .modalHeader h3 {
@@ -522,7 +522,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* Không cho co lại */
+  
 }
 
 .closeBtn:hover {
@@ -531,19 +531,19 @@
   transform: rotate(90deg);
 }
 
-/* Modal Content - QUAN TRỌNG: Phải scroll được */
+
 .modalContent {
   background-color: white;
   padding: 2rem;
   overflow-y: auto;
-  /* Cho phép scroll */
+  
   flex: 1;
-  /* Chiếm hết không gian còn lại */
+  
   min-height: 0;
-  /* Fix cho flexbox scroll */
+  
 }
 
-/* Custom scrollbar cho modalContent */
+
 .modalContent::-webkit-scrollbar {
   width: 8px;
 }
@@ -562,7 +562,7 @@
   background: #94a3b8;
 }
 
-/* Form Groups */
+
 .formGroup {
   margin-bottom: 1.5rem;
 }
@@ -591,7 +591,7 @@
   transition: all 0.2s ease;
   font-family: inherit;
   box-sizing: border-box;
-  /* Đảm bảo padding không làm vượt width */
+  
 }
 
 .formInput:focus,
@@ -607,7 +607,7 @@
   min-height: 100px;
 }
 
-/* Image Upload */
+
 .imageUpload {
   margin-top: 0.5rem;
 }
@@ -653,7 +653,7 @@
   object-fit: cover;
 }
 
-/* Items Section */
+
 .sectionHeader {
   display: flex;
   justify-content: space-between;
@@ -680,7 +680,7 @@
   box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
-/* Item Group */
+
 .itemGroup {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -737,7 +737,7 @@
   color: #475569;
 }
 
-/* Modal Actions - QUAN TRỌNG: Không được scroll */
+
 .modalActions {
   display: flex;
   gap: 1rem;
@@ -746,7 +746,7 @@
   justify-content: flex-end;
   background: #f8fafc;
   flex-shrink: 0;
-  /* Không cho co lại */
+  
 }
 
 .cancelBtn,
@@ -788,7 +788,7 @@
   opacity: 0.6;
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
   .modalOverlay {
     padding: 0.5rem;

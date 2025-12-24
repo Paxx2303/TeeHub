@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import styles from './UserProfile.module.css';
 import {
     getMyProfile,
@@ -13,21 +14,18 @@ import {
     deleteMyAddress,
 } from '../../../services/user_profile_service.js';
 
-/* -----------------------------------------------------------
- * VN PUBLIC APIs SERVICE - Tích hợp API thực tế
- * Base URL: https://vn-public-apis.fpo.vn
- * ----------------------------------------------------------- */
+
 
 const VN_API_BASE = 'https://vn-public-apis.fpo.vn';
 
 const locationService = {
-    // Lấy danh sách tất cả Tỉnh/Thành phố
+    
     getProvinces: async () => {
         try {
             const response = await fetch(`${VN_API_BASE}/provinces/getAll?limit=-1`);
             if (!response.ok) throw new Error('Không thể tải danh sách tỉnh/thành phố');
             const data = await response.json();
-            // API trả về: { error: 0, error_text: "Success", data: { data: [...] } }
+            
             return data.data?.data || [];
         } catch (error) {
             console.error('Error fetching provinces:', error);
@@ -35,7 +33,7 @@ const locationService = {
         }
     },
 
-    // Lấy danh sách Quận/Huyện theo mã tỉnh
+    
     getDistricts: async (provinceCode) => {
         if (!provinceCode) return [];
         try {
@@ -49,7 +47,7 @@ const locationService = {
         }
     },
 
-    // Lấy danh sách Phường/Xã theo mã huyện
+    
     getWards: async (districtCode) => {
         if (!districtCode) return [];
         try {
@@ -64,9 +62,7 @@ const locationService = {
     },
 };
 
-/**
- * Hàm tiện ích để chuyển đổi ID địa chỉ thành tên đầy đủ
- */
+
 const getFullAddressName = (address, locationData) => {
     const { provinces, districtsMap, wardsMap } = locationData;
 
@@ -77,7 +73,7 @@ const getFullAddressName = (address, locationData) => {
         return item?.name_with_type || item?.name || '';
     };
 
-    // Tái tạo tên từ ID và Map đã tải
+    
     const provinceName = findNameById(address.provinceId, provinces);
     const districtName = findNameById(address.districtId, districtsMap[address.provinceId] || []);
     const wardName = findNameById(address.wardId, wardsMap[address.districtId] || []);
@@ -89,19 +85,19 @@ const getFullAddressName = (address, locationData) => {
 };
 
 
-/* ---------------- AddressItem ---------------- */
+
 const AddressItem = ({ address, onSave, onDelete, locationData }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(address ?? {});
     const [isSaving, setIsSaving] = useState(false);
     const [addressError, setAddressError] = useState(null);
 
-    // State động để lưu danh sách Huyện và Xã đang được chỉnh sửa
+    
     const [editDistricts, setEditDistricts] = useState([]);
     const [editWards, setEditWards] = useState([]);
     const [isLocationLoading, setIsLocationLoading] = useState(false);
 
-    // Tải Districts khi tỉnh thay đổi (chỉ trong chế độ chỉnh sửa)
+    
     useEffect(() => {
         if (isEditing && formData.provinceId) {
             const fetchDistricts = async () => {
@@ -114,7 +110,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
         }
     }, [isEditing, formData.provinceId]);
 
-    // Tải Wards khi huyện thay đổi (chỉ trong chế độ chỉnh sửa)
+    
     useEffect(() => {
         if (isEditing && formData.districtId) {
             const fetchWards = async () => {
@@ -133,7 +129,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
 
-        // [LOGIC CASCADING] Reset cấp dưới nếu cấp trên thay đổi
+        
         if (name === 'provinceId') {
             setFormData(prev => ({ ...prev, districtId: '', wardId: '' }));
             setEditDistricts([]);
@@ -153,7 +149,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
 
         setIsSaving(true);
         try {
-            // Sử dụng dữ liệu động từ editDistricts và editWards
+            
             const tempLocationData = {
                 provinces: locationData.provinces,
                 districtsMap: { [formData.provinceId]: editDistricts },
@@ -193,7 +189,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
         }
     };
 
-    // Lấy danh sách Huyện/Xã đang được chỉnh sửa (sử dụng state động)
+    
     const currentDistricts = editDistricts.length > 0 ? editDistricts : locationData.districtsMap[formData.provinceId] || [];
     const currentWards = editWards.length > 0 ? editWards : locationData.wardsMap[formData.districtId] || [];
 
@@ -208,7 +204,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
                 </div>
                 {isLocationLoading && <div className={styles.loadingTiny}>Đang tải vị trí...</div>}
                 <div className={`${styles.formGrid} ${styles.addressSelectGrid}`}>
-                    {/* 1. Tỉnh/Thành phố */}
+                    {}
                     <div className={styles.formGroup}>
                         <label className={styles.label}><span className={styles.labelIcon}>🗺️</span>Tỉnh/Thành phố</label>
                         <select name="provinceId" value={formData.provinceId || ''} onChange={handleInputChange} className={styles.input}>
@@ -219,7 +215,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
                         </select>
                     </div>
 
-                    {/* 2. Quận/Huyện */}
+                    {}
                     <div className={styles.formGroup}>
                         <label className={styles.label}><span className={styles.labelIcon}>🏙️</span>Quận/Huyện</label>
                         <select name="districtId" value={formData.districtId || ''} onChange={handleInputChange} className={styles.input} disabled={!formData.provinceId || isLocationLoading}>
@@ -230,7 +226,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
                         </select>
                     </div>
 
-                    {/* 3. Phường/Xã */}
+                    {}
                     <div className={styles.formGroup}>
                         <label className={styles.label}><span className={styles.labelIcon}>🏡</span>Phường/Xã</label>
                         <select name="wardId" value={formData.wardId || ''} onChange={handleInputChange} className={styles.input} disabled={!formData.districtId || isLocationLoading}>
@@ -241,7 +237,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
                         </select>
                     </div>
 
-                    {/* 4. Số nhà/Đường */}
+                    {}
                     <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                         <label className={styles.label}><span className={styles.labelIcon}>🏠</span>Số nhà, Tên đường</label>
                         <input
@@ -306,7 +302,7 @@ const AddressItem = ({ address, onSave, onDelete, locationData }) => {
     );
 };
 
-/* ---------------- UserProfile ---------------- */
+
 const UserProfile = () => {
     const loggedInUserId = useSelector((state) => state.auth?.user?.userId);
 
@@ -325,7 +321,7 @@ const UserProfile = () => {
     });
     const [newAddressError, setNewAddressError] = useState(null);
 
-    // State cho form thêm địa chỉ mới
+    
     const [newDistricts, setNewDistricts] = useState([]);
     const [newWards, setNewWards] = useState([]);
     const [isNewLocationLoading, setIsNewLocationLoading] = useState(false);
@@ -338,7 +334,7 @@ const UserProfile = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // State lưu dữ liệu vị trí
+    
     const [locationData, setLocationData] = useState({
         provinces: [],
         districtsMap: {},
@@ -346,7 +342,7 @@ const UserProfile = () => {
         isLoaded: false,
     });
 
-    // Tải danh sách tỉnh/thành phố khi component mount
+    
     useEffect(() => {
         const fetchLocationData = async () => {
             try {
@@ -365,7 +361,7 @@ const UserProfile = () => {
         fetchLocationData();
     }, []);
 
-    // Fetch user & addresses
+    
     useEffect(() => {
         if (!loggedInUserId || !locationData.isLoaded) {
             if (!loggedInUserId) setIsLoading(false);
@@ -394,7 +390,7 @@ const UserProfile = () => {
         fetchData();
     }, [loggedInUserId, locationData.isLoaded]);
 
-    // Tải districts khi chọn tỉnh trong form thêm mới
+    
     useEffect(() => {
         if (isAddingAddress && newAddressData.provinceId) {
             const fetchDistricts = async () => {
@@ -407,7 +403,7 @@ const UserProfile = () => {
         }
     }, [isAddingAddress, newAddressData.provinceId]);
 
-    // Tải wards khi chọn huyện trong form thêm mới
+    
     useEffect(() => {
         if (isAddingAddress && newAddressData.districtId) {
             const fetchWards = async () => {
@@ -420,28 +416,37 @@ const UserProfile = () => {
         }
     }, [isAddingAddress, newAddressData.districtId]);
 
-    /* ---------------- Handlers ---------------- */
+    
     const handleUserInputChange = (e) => {
         const { name, value } = e.target;
         setUserFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleAvatarChange = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-            setIsLoading(true);
-            const avatarUrl = await uploadAvatar(file);
-            const updated = { ...userFormData, userAvatar: avatarUrl };
-            setUserFormData(updated);
-            const resp = await updateUser(loggedInUserId, updated);
-            setUserProfile(resp);
-            setUserFormData(resp);
-        } catch (err) {
-            console.error(err);
-            alert('Không thể tải lên ảnh.');
-        } finally { setIsLoading(false); }
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isLoading) return;
+
+    try {
+        setIsLoading(true);
+
+        
+        const avatarUrl = await uploadAvatar(file);
+
+        
+        setUserProfile(prev => ({ ...prev, userAvatar: avatarUrl }));
+        setUserFormData(prev => ({ ...prev, userAvatar: avatarUrl }));
+
+        
+    } catch (err) {
+        console.error('Avatar upload failed', err);
+        alert(err?.message || 'Không thể tải lên ảnh.');
+    } finally {
+        setIsLoading(false);
+    }
     };
+    
+
 
     const handleSaveUser = async () => {
         if (!userFormData.fullName || !userFormData.emailAddress) {
@@ -467,7 +472,7 @@ const UserProfile = () => {
         setIsEditingUser(false);
     };
 
-    /* ---------------- Address Handlers ---------------- */
+    
     const handleAddressSaved = (updatedAddress) => {
         const updatedId = updatedAddress?.addressId ?? updatedAddress?.id;
         setAddresses(prev => prev.map(a => (a?.addressId ?? a?.id) === updatedId ? updatedAddress : a));
@@ -481,7 +486,7 @@ const UserProfile = () => {
         const { name, value } = e.target;
         setNewAddressData(prev => ({ ...prev, [name]: value }));
 
-        // [LOGIC CASCADING] Reset cấp dưới nếu cấp trên thay đổi
+        
         if (name === 'provinceId') {
             setNewAddressData(prev => ({ ...prev, districtId: '', wardId: '' }));
             setNewDistricts([]);
@@ -534,7 +539,7 @@ const UserProfile = () => {
         setIsAddingAddress(false);
     };
 
-    /* ---------------- Password Handlers ---------------- */
+    
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
         setPasswordData(prev => ({ ...prev, [name]: value }));
@@ -567,7 +572,7 @@ const UserProfile = () => {
         }
     };
 
-    /* ---------------- Render ---------------- */
+    
     if (isLoading || !locationData.isLoaded) {
         return (
             <div className={styles.loadingContainer}>
@@ -600,7 +605,7 @@ const UserProfile = () => {
     return (
         <div className={styles.pageWrapper}>
             <div className={styles.container}>
-                {/* Header */}
+                {}
                 <div className={styles.pageHeader}>
                     <div className={styles.headerContent}>
                         <h1 className={styles.pageTitle}>
@@ -608,22 +613,29 @@ const UserProfile = () => {
                             Thông tin cá nhân
                         </h1>
                         <p className={styles.pageSubtitle}>Quản lý thông tin tài khoản của bạn</p>
+
+                        {}
+                        <div style={{ marginTop: '1rem' }}>
+                            <Link to="/OrderHistory" className={styles.btnPrimary} style={{ textDecoration: 'none' }}>
+                                <span>📦</span>&nbsp; Xem lịch sử đơn hàng
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
-                {/* Profile Section */}
+                {}
                 <div className={styles.section}>
                     <div className={styles.card}>
                         <div className={styles.profileContainer}>
-                            {/* Avatar & Name */}
+                            {}
                             <div className={styles.profileLeft}>
                                 <div className={styles.avatarWrapper}>
                                     <div className={styles.avatarContainer}>
                                         <img
-                                            src={userProfile.userAvatar || '/images/default-avatar.png'}
+                                            src={userProfile.userAvatar || '../src/assets/avt.png'}
                                             alt="Avatar"
                                             className={styles.avatar}
-                                            onError={(e) => { e.currentTarget.src = '/images/default-avatar.png'; }}
+                                            onError={(e) => { e.currentTarget.src = '../src/assets/avt.png'; }}
                                         />
                                         <div className={styles.avatarOverlay}>
                                             <label htmlFor="avatarUpload" className={styles.avatarLabel}>
@@ -651,7 +663,7 @@ const UserProfile = () => {
                                 </div>
                             </div>
 
-                            {/* Action Button */}
+                            {}
                             <div className={styles.profileRight}>
                                 {!isEditingUser ? (
                                     <button className={styles.btnPrimary} onClick={() => setIsEditingUser(true)}>
@@ -684,7 +696,7 @@ const UserProfile = () => {
                     </div>
                 </div>
 
-                {/* Personal Info Section */}
+                {}
                 <div className={styles.section}>
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>
@@ -756,7 +768,7 @@ const UserProfile = () => {
                     </div>
                 </div>
 
-                {/* Password Section */}
+                {}
                 <div className={styles.section}>
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>
@@ -849,7 +861,7 @@ const UserProfile = () => {
                     </div>
                 </div>
 
-                {/* Address Section */}
+                {}
                 <div className={styles.section}>
                     <div className={styles.card}>
                         <div className={styles.cardHeader}>
@@ -886,7 +898,7 @@ const UserProfile = () => {
                                     </div>
                                     {isNewLocationLoading && <div className={styles.loadingTiny}>Đang tải vị trí...</div>}
                                     <div className={`${styles.formGrid} ${styles.addressSelectGrid}`}>
-                                        {/* 1. Tỉnh/Thành phố */}
+                                        {}
                                         <div className={styles.formGroup}>
                                             <label className={styles.label}><span className={styles.labelIcon}>🗺️</span>Tỉnh/Thành phố</label>
                                             <select
@@ -905,7 +917,7 @@ const UserProfile = () => {
                                             </select>
                                         </div>
 
-                                        {/* 2. Quận/Huyện */}
+                                        {}
                                         <div className={styles.formGroup}>
                                             <label className={styles.label}><span className={styles.labelIcon}>🏙️</span>Quận/Huyện</label>
                                             <select
@@ -924,7 +936,7 @@ const UserProfile = () => {
                                             </select>
                                         </div>
 
-                                        {/* 3. Phường/Xã */}
+                                        {}
                                         <div className={styles.formGroup}>
                                             <label className={styles.label}><span className={styles.labelIcon}>🏡</span>Phường/Xã</label>
                                             <select
@@ -943,7 +955,7 @@ const UserProfile = () => {
                                             </select>
                                         </div>
 
-                                        {/* 4. Số nhà/Đường */}
+                                        {}
                                         <div className={`${styles.formGroup} ${styles.fullWidth}`}>
                                             <label className={styles.label}><span className={styles.labelIcon}>🏠</span>Số nhà, Tên đường</label>
                                             <input

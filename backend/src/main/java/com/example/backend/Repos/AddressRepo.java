@@ -13,7 +13,6 @@ import java.util.Optional;
 @Repository
 public interface AddressRepo extends JpaRepository<Address, Integer> {
 
-    /* Search toàn bảng (giữ như bạn đang dùng, thêm order cho đẹp) */
     @Query("""
         select a from Address a
         where (:q is null or :q = '')
@@ -24,7 +23,6 @@ public interface AddressRepo extends JpaRepository<Address, Integer> {
     """)
     List<Address> search(@Param("q") String q);
 
-    /* Địa chỉ theo user (phục vụ nested routes) */
     @Query("""
         select a from Address a
         join a.user u
@@ -33,7 +31,6 @@ public interface AddressRepo extends JpaRepository<Address, Integer> {
     """)
     List<Address> findByUserId(@Param("userId") Integer userId);
 
-    /* Lấy 1 địa chỉ thuộc user (để bảo vệ update/delete đúng chủ) */
     @Query("""
         select a from Address a
         join a.user u

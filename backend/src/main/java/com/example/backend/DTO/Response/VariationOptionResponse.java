@@ -9,11 +9,11 @@ import lombok.*;
 public class VariationOptionResponse {
     private Integer variation_option_id;
 
-    private Integer variation_id;     // từ Variation
-    private String  variation_name;   // từ Variation
+    private Integer variation_id;
+    private String  variation_name;
 
-    private Integer category_id;      // từ ProductCategory (qua Variation)
-    private String  category_name;    // từ ProductCategory (qua Variation)
+    private Integer category_id;
+    private String  category_name;
 
-    private String value;             // giá trị option
+    private String value;
 }

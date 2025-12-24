@@ -18,7 +18,7 @@
   flex-direction: column;
 }
 
-/* Navigation */
+
 .nav {
   flex: 1;
   padding: 0 1.5rem;
@@ -93,7 +93,7 @@
   text-align: center;
 }
 
-/* Quick Actions */
+
 .quickActions {
   padding: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -140,7 +140,7 @@
   font-size: 1rem;
 }
 
-/* System Info */
+
 .systemInfo {
   padding: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -202,7 +202,7 @@
   color: white;
 }
 
-/* Responsive */
+
 @media (max-width: 1024px) {
   .sidebar {
     width: 240px;
@@ -234,7 +234,7 @@
   }
 }
 
-/* Scrollbar styling */
+
 .sidebar::-webkit-scrollbar {
   width: 6px;
 }

@@ -1,10 +1,9 @@
-// src/store/slices/authSlice.js
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-// [MỚI] Import thêm `register`
 import { 
   login as apiLogin, 
   logout as apiLogout,
-  register as apiRegister // <-- [MỚI]
+  register as apiRegister 
 } from '../../services/authService.js';
 import {
   setAuth,
@@ -14,8 +13,25 @@ import {
   getRole,
   getUserId
 } from '../../utils/auth.js';
+import { API_BASE_URL } from '../../utils/constants.js';
 
-// ==== Thunks ====
+
+const extractErrorMessage = (err) => {
+  if (err.response && err.response.data) {
+    const data = err.response.data;
+    
+    if (typeof data === 'string') return data;
+    
+    if (data.message) return data.message;
+    
+    if (data.error) return data.error;
+  }
+  return err.message || 'Đã có lỗi xảy ra.';
+};
+
+
+
+
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ email, password }, { rejectWithValue }) => {
@@ -24,43 +40,39 @@ export const loginUser = createAsyncThunk(
       if (!loginResponse?.accessToken || !loginResponse?.userId) {
         throw new Error("Thông tin đăng nhập trả về không đầy đủ.");
       }
-      return loginResponse; // Trả về { accessToken, email, role, userId }
+      return loginResponse; 
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Login failed';
-      return rejectWithValue(msg);
+      return rejectWithValue(extractErrorMessage(err));
     }
   }
 );
 
-// [MỚI] Thêm registerUser thunk
+
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (userData, { rejectWithValue }) => {
-    // userData dự kiến là { fullName, email, password }
     try {
-      // Giả định apiRegister trả về cùng cấu trúc với apiLogin
-      // { accessToken, email, role, userId }
       const registerResponse = await apiRegister(userData); 
       if (!registerResponse?.accessToken || !registerResponse?.userId) {
         throw new Error("Thông tin đăng ký trả về không đầy đủ.");
       }
-      return registerResponse; // Trả về { accessToken, email, role, userId }
+      return registerResponse; 
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || 'Register failed';
-      return rejectWithValue(msg);
+      return rejectWithValue(extractErrorMessage(err));
     }
   }
 );
+
 
 export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { rejectWithValue }) => {
   try {
     await apiLogout();
     return null;
   } catch (err) {
-    const msg = err?.response?.data?.message || err?.message || 'Logout failed';
-    return rejectWithValue(msg);
+    return rejectWithValue(extractErrorMessage(err));
   }
 });
+
 
 export const getCurrentUser = createAsyncThunk('auth/getCurrentUser', async () => {
   const email = getEmail();
@@ -73,7 +85,37 @@ export const getCurrentUser = createAsyncThunk('auth/getCurrentUser', async () =
   return { email, role, userId };
 });
 
-// ==== State ban đầu ====
+
+export const fetchUserInfo = createAsyncThunk(
+  'auth/fetchUserInfo',
+  async (token, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch user info');
+      const data = await response.json();
+      
+      
+      return {
+        email: data.emailAddress,
+        role: data.role,
+        userId: data.id,
+        accessToken: token
+      };
+    } catch (err) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+
+
 const initialState = {
   user:
     getAccessToken() && getUserId() !== null
@@ -97,10 +139,17 @@ const authSlice = createSlice({
       state.error = null;
       clearAuthStorage();
     },
+    
+    setCredentials(state, action) {
+        const { accessToken, email, role, userId } = action.payload;
+        state.isAuthenticated = true;
+        state.user = { email, role, userId };
+        setAuth({ accessToken, email, role, userId });
+    }
   },
   extraReducers: (builder) => {
     builder
-      // === LOGIN ===
+      
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -108,49 +157,41 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         const { accessToken, email, role, userId } = action.payload;
-        
         setAuth({ accessToken, email, role, userId });
-        
         state.user = { email, role, userId };
         state.isAuthenticated = true;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Login failed';
+        state.error = action.payload; 
         state.user = null;
         state.isAuthenticated = false;
         clearAuthStorage();
       })
 
-      // === REGISTER === (Logic giống hệt Login) // [MỚI]
+      
       .addCase(registerUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        // Đăng ký thành công -> tự động đăng nhập
         const { accessToken, email, role, userId } = action.payload;
-        
         setAuth({ accessToken, email, role, userId });
-        
         state.user = { email, role, userId };
         state.isAuthenticated = true;
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || 'Register failed';
+        state.error = action.payload; 
         state.user = null;
         state.isAuthenticated = false;
         clearAuthStorage();
       })
 
-      // === LOGOUT ===
-      .addCase(logoutUser.pending, (state) => {
-        state.isLoading = true;
-      })
+      
       .addCase(logoutUser.fulfilled, (state) => {
         state.isLoading = false;
         state.user = null;
@@ -158,31 +199,23 @@ const authSlice = createSlice({
         state.error = null;
         clearAuthStorage();
       })
-      .addCase(logoutUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.user = null;
-        state.isAuthenticated = false;
-        state.error = action.payload || null;
-        clearAuthStorage();
-      })
 
-      // === GET CURRENT USER (từ storage) ===
-      .addCase(getCurrentUser.pending, (state) => {
-        state.isLoading = true;
-      })
+      
       .addCase(getCurrentUser.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.user = action.payload; // {email, role, userId}
+        state.user = action.payload;
         state.isAuthenticated = true;
       })
-      .addCase(getCurrentUser.rejected, (state) => {
+      
+      
+      .addCase(fetchUserInfo.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = null;
-        state.isAuthenticated = false;
-        clearAuthStorage();
+        const { accessToken, email, role, userId } = action.payload;
+        setAuth({ accessToken, email, role, userId });
+        state.user = { email, role, userId };
+        state.isAuthenticated = true;
       });
   },
 });
 
-export const { clearError, clearAuth } = authSlice.actions;
+export const { clearError, clearAuth, setCredentials } = authSlice.actions;
 export default authSlice.reducer;

@@ -3,14 +3,15 @@ import ReactPaginate from 'react-paginate';
 import styles from './Products.module.css';
 import { productService } from '../../../services/productService';
 import { categoryService } from '../../../services/categoryService';
-
+import { promotionService } from '../../../services/promotionService';
 const ITEMS_PER_PAGE = 10;
+
 //state chỉnh sửa sản phẩm
 const getInitialFormData = () => ({
   productId: null, // <-- Thêm ID (quan trọng để biết là sửa hay thêm)
   productName: '',
   categoryId: '',
-  description: '',
+  productDescription: '',
   productMainImage: null, // Sẽ là file (khi thêm) hoặc string (khi sửa)
   items: [
     {
@@ -23,66 +24,85 @@ const getInitialFormData = () => ({
     }
   ]
 });
+
 function Products() {
-  // State cho sản phẩm và phân trang
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [currentProductForPromo, setCurrentProductForPromo] = useState(null);
+  const [loadingPromo, setLoadingPromo] = useState(false);
+  const [promoFormData, setPromoFormData] = useState({
+    promotionId: null,
+    name: '',
+    description: '',
+    discountRate: '',
+    startDate: '',
+    endDate: '',
+    productId: null
+  });
+
+  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
 
-  // State cho danh mục
+  
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // State cho tìm kiếm
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  // State cho modal
+  
+  const [showModal, setShowModal] = useState(false); 
+  const [modalMode, setModalMode] = useState('ADD');   
+  const [formData, setFormData] = useState(getInitialFormData()); 
 
-
-  // State cho form thêm sản phẩm
-
-
-  //state chỉnh sửa sản phẩm
-  const [showModal, setShowModal] = useState(false); // <- Đổi tên (thay vì showAddModal)
-  const [modalMode, setModalMode] = useState('ADD');   // <- State MỚI: 'ADD' hoặc 'EDIT'
-  const [formData, setFormData] = useState(getInitialFormData()); // <- Dùng hàm helper
-
-  // State cho variations (lấy từ backend)
+  
   const [variations, setVariations] = useState([]);
   const [loadingVariations, setLoadingVariations] = useState(true);
 
   const [imagePreview, setImagePreview] = useState(null);
-  const [itemImagePreviews, setItemImagePreviews] = useState({}); // Preview cho từng item
+  const [itemImagePreviews, setItemImagePreviews] = useState({}); 
 
-
-  // --- Effect: Tải variations (Color, Size, etc.) ---
+  
   useEffect(() => {
     const fetchVariations = async () => {
       setLoadingVariations(true);
       try {
-        // TODO: Gọi API lấy danh sách variations
-        // const data = await variationService.getAllVariations();
+        
+        
 
-        // MOCK DATA - Thay bằng API call thực tế
+        
         const mockVariations = [
           {
             variationId: 1,
             variationName: 'Color',
             options: [
               { variationOptionId: 1, value: 'White' },
-              { variationOptionId: 2, value: 'Black' }
+              { variationOptionId: 2, value: 'Black' },
+              { variationOptionId: 3, value: 'Red' },
+              { variationOptionId: 4, value: 'Pink' },
+              { variationOptionId: 5, value: 'Grey' },
+              { variationOptionId: 6, value: 'Brown' },
+              { variationOptionId: 7, value: 'Blue' },
+              { variationOptionId: 8, value: 'Green' },
+              { variationOptionId: 9, value: 'Navy' },
+              
             ]
           },
           {
             variationId: 2,
             variationName: 'Size',
             options: [
-              { variationOptionId: 3, value: 'M' },
-              { variationOptionId: 4, value: 'L' }
+              { variationOptionId: 10, value: 'S' },
+              { variationOptionId: 11, value: 'M' },
+              { variationOptionId: 12, value: 'L' },
+              { variationOptionId: 13, value: 'XL' },
+              { variationOptionId: 14, value: 'XXL' },
+              
             ]
           }
         ];
@@ -98,7 +118,15 @@ function Products() {
     fetchVariations();
   }, []);
 
-  // Handler cho input thay đổi
+  
+  const findVariationIdByOptionId = (optionId) => {
+    for (const v of variations) {
+      if (v.options.some(o => o.variationOptionId === optionId)) return v.variationId;
+    }
+    return null;
+  };
+
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -107,7 +135,7 @@ function Products() {
     }));
   };
 
-  // Handler cho image upload
+  
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -124,7 +152,7 @@ function Products() {
     }
   };
 
-  // Handler cho items (biến thể)
+  
   const handleItemImageChange = (index, e) => {
     const file = e.target.files[0];
     if (file) {
@@ -135,7 +163,7 @@ function Products() {
         items: newItems
       }));
 
-      // Preview
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setItemImagePreviews(prev => ({
@@ -146,7 +174,7 @@ function Products() {
       reader.readAsDataURL(file);
     }
   };
-  // Handler cho item field thay đổi
+  
   const handleItemChange = (index, field, value) => {
     const newItems = [...formData.items];
     newItems[index][field] = value;
@@ -156,28 +184,25 @@ function Products() {
     }));
   };
 
-  // Handler cho configuration thay đổi
-  const handleConfigurationChange = (itemIndex, variationOptionId, variationName, value) => {
+  
+  const handleConfigurationChange = (itemIndex, variationId, variationOptionId, variationName, value) => {
     const newItems = [...formData.items];
-    const configs = newItems[itemIndex].configurations;
+    const configs = newItems[itemIndex].configurations ? [...newItems[itemIndex].configurations] : [];
 
-    // Tìm xem variation này đã có chưa
-    const existingIndex = configs.findIndex(c => c.variationName === variationName);
+    
+    const existingIndex = configs.findIndex(c => c.variationId === variationId);
+
+    const newConfig = {
+      variationId: parseInt(variationId, 10),
+      variationOptionId: parseInt(variationOptionId, 10),
+      variationName,
+      value
+    };
 
     if (existingIndex >= 0) {
-      // Update existing
-      configs[existingIndex] = {
-        variationOptionId: parseInt(variationOptionId),
-        variationName,
-        value
-      };
+      configs[existingIndex] = newConfig;
     } else {
-      // Add new
-      configs.push({
-        variationOptionId: parseInt(variationOptionId),
-        variationName,
-        value
-      });
+      configs.push(newConfig);
     }
 
     newItems[itemIndex].configurations = configs;
@@ -186,7 +211,8 @@ function Products() {
       items: newItems
     }));
   };
-  // Thêm biến thể mới
+
+  
   const handleAddItem = () => {
     setFormData(prev => ({
       ...prev,
@@ -203,7 +229,7 @@ function Products() {
     }));
   };
 
-  // Xóa biến thể
+  
   const handleRemoveItem = (index) => {
     if (formData.items.length > 1) {
       const newItems = formData.items.filter((_, i) => i !== index);
@@ -212,136 +238,151 @@ function Products() {
         items: newItems
       }));
 
-      // Xóa preview
+      
       const newPreviews = { ...itemImagePreviews };
       delete newPreviews[index];
       setItemImagePreviews(newPreviews);
     }
   };
-  // Đóng modal và reset form
+  
   const handleCloseModal = () => {
     setShowModal(false);
     setFormData(getInitialFormData());
     setImagePreview(null);
     setItemImagePreviews({});
   };
-  // Submit form thêm sản phẩm
-  // Trong Products.jsx (trang admin)
 
+  
+  const buildItemsPayload = (items) => {
+    return items.map(item => {
+      
+      const mapByVariation = (item.configurations || []).reduce((acc, c) => {
+        const vid = c.variationId != null ? c.variationId : findVariationIdByOptionId(c.variationOptionId);
+        const key = vid != null ? `vid_${vid}` : `vname_${c.variationName || 'unknown'}`;
+        acc[key] = {
+          variationId: vid,
+          variationOptionId: c.variationOptionId
+        };
+        return acc;
+      }, {});
+
+      const variationSelections = Object.values(mapByVariation).filter(Boolean);
+
+      
+      const variationOptionIds = variationSelections.map(s => s.variationOptionId);
+
+      return {
+        productItemId: item.productItemId ?? null,
+        sku: item.sku,
+        qtyInStock: parseInt(item.qtyInStock, 10) || 0,
+        price: parseFloat(item.price) || 0,
+        variationOptionIds
+      };
+    });
+  };
+
+  
   const handleAddProductSubmit = async (event) => {
     event.preventDefault();
-
+    
     try {
       setLoading(true);
 
       const formDataToSend = new FormData();
 
-      // 1. Thêm các trường text
+      
       formDataToSend.append('productName', formData.productName);
       formDataToSend.append('categoryId', formData.categoryId);
       formDataToSend.append('productDescription', formData.productDescription);
 
-      // 2. Thêm ảnh chính (bắt buộc)
+      
       if (formData.productMainImage) {
         formDataToSend.append('productMainImage', formData.productMainImage);
       } else {
         throw new Error("Vui lòng chọn ảnh chính cho sản phẩm.");
       }
 
-      // 3. Chuẩn bị mảng items (chỉ gửi ID của variation)
-      const itemsData = formData.items.map((item, index) => ({
-        sku: item.sku,
-        qtyInStock: parseInt(item.qtyInStock),
-        price: parseFloat(item.price),
-        // Chỉ gửi mảng các ID
-        variationOptionIds: item.configurations.map(c => c.variationOptionId),
-      }));
+      
+      const itemsData = buildItemsPayload(formData.items);
 
-      // 4. Append mảng items dưới dạng chuỗi JSON
+      
+      console.log('itemsData to send (ADD):', itemsData);
+
+      
       formDataToSend.append('items', JSON.stringify(itemsData));
 
-      // 5. Append tất cả file ảnh của items (với cùng 1 key là "itemImages")
-      // Backend sẽ nhận chúng dưới dạng List<MultipartFile>
+      
       formData.items.forEach((item, index) => {
-        if (item.itemImage) {
-          // Dùng chung key "itemImages"
+        if (item.itemImage && typeof item.itemImage !== 'string') {
+          
           formDataToSend.append(`itemImages`, item.itemImage);
         }
       });
-
-      // In ra để kiểm tra
-      // for (let [key, value] of formDataToSend.entries()) {
-      //   console.log(key, value);
-      // }
 
       await productService.createProduct(formDataToSend);
 
       alert('Thêm sản phẩm thành công!');
       handleCloseModal();
-      fetchProducts(); // Tải lại danh sách
+      fetchProducts(); 
 
     } catch (err) {
-      console.error('Lỗi khi thêm sản phẩm:', err); // Log lỗi chi tiết
+      console.error('Lỗi khi thêm sản phẩm:', err); 
       alert(`Lỗi khi thêm sản phẩm: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
-  //handle sửa sản phẩm
+
+  
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    setLoading(true); // Bật loading (có thể dùng state riêng cho modal)
+    setLoading(true); 
 
     try {
-      // --- 1. Tạo FormData (Giống hệt hàm Add) ---
+      
       const formDataToSend = new FormData();
       formDataToSend.append('productName', formData.productName);
       formDataToSend.append('categoryId', formData.categoryId);
       formDataToSend.append('productDescription', formData.productDescription);
 
-      // Xử lý ảnh chính: Nếu là file (đã chọn ảnh mới) thì append file
-      // Nếu là string (ảnh cũ) thì không append (backend sẽ giữ ảnh cũ)
+      
+      
       if (formData.productMainImage && typeof formData.productMainImage !== 'string') {
         formDataToSend.append('productMainImage', formData.productMainImage);
       }
 
-      // Chuẩn bị mảng items
-      const itemsData = formData.items.map(item => ({
-        productItemId: item.productItemId, // Gửi ID item (null nếu là item mới)
-        sku: item.sku,
-        qtyInStock: parseInt(item.qtyInStock),
-        price: parseFloat(item.price),
-        // Chỉ gửi mảng ID
-        variationOptionIds: item.configurations.map(c => c.variationOptionId),
-      }));
+      
+      const itemsData = buildItemsPayload(formData.items);
 
-      // Append mảng items JSON
+      
+      console.log('itemsData to send (FORM SUBMIT):', itemsData);
+
+      
       formDataToSend.append('items', JSON.stringify(itemsData));
 
-      // Append ảnh items
+      
       formData.items.forEach((item, index) => {
-        // Chỉ append nếu 'itemImage' là File (ảnh mới)
+        
         if (item.itemImage && typeof item.itemImage !== 'string') {
           formDataToSend.append('itemImages', item.itemImage);
         }
-        // Nếu là string (ảnh cũ) hoặc null, không gửi gì cả
-        // (Backend update cần logic để xử lý việc này)
+        
       });
 
-      // --- 2. Quyết định gọi API nào (Add hay Edit) ---
+      
       if (modalMode === 'ADD') {
-        // GỌI API TẠO MỚI
+        
         await productService.createProduct(formDataToSend);
         alert('Thêm sản phẩm thành công!');
       } else {
-        // GỌI API CẬP NHẬT
+        
         await productService.updateProduct(formData.productId, formDataToSend);
         alert('Cập nhật sản phẩm thành công!');
       }
 
-      // --- 3. Dọn dẹp ---
+      
       handleCloseModal();
-      fetchProducts(); // Tải lại danh sách sản phẩm
+      fetchProducts(); 
 
     } catch (err) {
       console.error(`Lỗi khi ${modalMode === 'ADD' ? 'thêm' : 'cập nhật'} sản phẩm:`, err);
@@ -350,7 +391,8 @@ function Products() {
       setLoading(false);
     }
   };
-  // --- Effect 1: Tải danh mục ---
+
+  
   useEffect(() => {
     const fetchCategories = async () => {
       setLoadingCategories(true);
@@ -367,7 +409,7 @@ function Products() {
     fetchCategories();
   }, []);
 
-  // --- Debounce Search Term ---
+  
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -379,7 +421,7 @@ function Products() {
     };
   }, [searchTerm]);
 
-  // --- Effect 2: Tải sản phẩm ---
+  
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -409,7 +451,7 @@ function Products() {
     }
   }, [fetchProducts, loadingCategories]);
 
-  // --- Handlers ---
+  
   const handlePageClick = (event) => {
     setCurrentPage(event.selected);
   };
@@ -436,15 +478,15 @@ function Products() {
 
   const handleToggleStatus = (productId, currentStatus) => {
     console.log(`Thay đổi trạng thái sản phẩm ${productId}`);
-    // TODO: Gọi API để cập nhật status
+    
   };
 
   const handleEditProduct = (product) => {
     console.log("Edit product:", product);
-    // TODO: Mở modal sửa hoặc điều hướng đến trang sửa
+    
   };
 
-  // --- Helper Functions ---
+  
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
@@ -452,43 +494,57 @@ function Products() {
     }).format(amount);
   };
 
-
-  // sửa sản phẩm
+  
   const handleOpenAddModal = () => {
-    setFormData(getInitialFormData()); // Reset form về rỗng
+    setFormData(getInitialFormData()); 
     setImagePreview(null);
     setItemImagePreviews({});
     setModalMode('ADD');
     setShowModal(true);
   };
-  // Mở modal ở chế độ "Sửa"
+
+  
   const handleOpenEditModal = (product) => {
-    // Chuyển đổi cấu trúc product từ API sang cấu trúc formData
+    
+    
+    
+    const items = (product.items || []).map(item => {
+      const reducedConfigs = (item.configurations || []).reduce((acc, config) => {
+        
+        const variationIdFromConfig = config.variationId != null ? config.variationId : findVariationIdByOptionId(config.variationOptionId);
+        const key = variationIdFromConfig != null ? `vid_${variationIdFromConfig}` : `vname_${config.variationName}`;
+        if (!acc[key]) {
+          acc[key] = {
+            variationId: variationIdFromConfig,
+            variationOptionId: config.variationOptionId,
+            variationName: config.variationName,
+            value: config.value
+          };
+        }
+        return acc;
+      }, {});
+      return {
+        productItemId: item.productItemId,
+        sku: item.sku,
+        qtyInStock: item.qtyInStock,
+        price: item.price,
+        itemImage: item.itemImage, 
+        configurations: Object.values(reducedConfigs)
+      };
+    });
+
     const editData = {
       productId: product.productId,
       productName: product.productName,
       categoryId: product.category?.categoryId || '',
       productDescription: product.productDescription,
-      productMainImage: product.productMainImage, // Đây là URL ảnh cũ (string)
-      items: product.items.map(item => ({
-        productItemId: item.productItemId,
-        sku: item.sku,
-        qtyInStock: item.qtyInStock,
-        price: item.price,
-        itemImage: item.itemImage, // Đây là URL ảnh cũ (string)
-        // Chuyển 'configurations' thành 'variationOptionIds' (như frontend cần)
-        // LƯU Ý: Đây là logic quan trọng
-        configurations: item.configurations.map(config => ({
-          variationOptionId: config.variationOptionId,
-          variationName: config.variationName,
-          value: config.value
-        }))
-      }))
+      productMainImage: product.productMainImage, 
+      items
     };
     setFormData(editData);
 
-    // Đặt ảnh preview là ảnh cũ
-    setImagePreview(`/Product/${product.productMainImage}`);
+    
+    setImagePreview(product.productMainImage ? `/Product/${product.productMainImage}` : null);
     const itemPreviews = {};
     product.items.forEach((item, index) => {
       if (item.itemImage) {
@@ -497,21 +553,119 @@ function Products() {
     });
     setItemImagePreviews(itemPreviews);
 
-    setModalMode('EDIT'); // Đặt chế độ
-    setShowModal(true);  // Mở modal
+    setModalMode('EDIT'); 
+    setShowModal(true);  
+  };
+  const handleOpenPromoModal = async (product) => {
+    setCurrentProductForPromo(product);
+    setLoadingPromo(true);
+    setShowPromotionModal(true);
+
+    try {
+      
+      const data = await promotionService.getPromotionByProductId(product.productId);
+      
+      setPromoFormData({
+        promotionId: data.promotionId || data.id, 
+        name: data.name || '',
+        description: data.description || '',
+        discountRate: data.discountRate || '',
+        startDate: data.startDate || '',
+        endDate: data.endDate || '',
+        productId: product.productId
+      });
+    } catch (err) {
+      
+      if (err.response && err.response.status === 404) {
+        setPromoFormData({
+          promotionId: null,
+          name: '',
+          description: '',
+          discountRate: '',
+          startDate: '',
+          endDate: '',
+          productId: product.productId
+        });
+      } else {
+        console.error("Lỗi tải khuyến mãi:", err);
+      }
+    } finally {
+      setLoadingPromo(false);
+    }
   };
 
+  
+  const handleClosePromoModal = () => {
+    setShowPromotionModal(false);
+    setCurrentProductForPromo(null);
+  };
 
-  // --- Render ---
+  
+  const handlePromoInputChange = (e) => {
+    const { name, value } = e.target;
+    setPromoFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  
+  const handlePromoSubmit = async (e) => {
+    e.preventDefault();
+    setLoadingPromo(true);
+
+    const payload = {
+      ...promoFormData,
+      productId: currentProductForPromo.productId
+    };
+
+    try {
+      if (promoFormData.promotionId) {
+        
+        await promotionService.updatePromotion(promoFormData.promotionId, payload);
+        alert("Cập nhật khuyến mãi thành công!");
+      } else {
+        
+        await promotionService.createPromotion(payload);
+        alert("Tạo khuyến mãi thành công!");
+      }
+      handleClosePromoModal();
+      fetchProducts(); 
+    } catch (err) {
+      alert("Lỗi lưu khuyến mãi: " + (err.response?.data?.message || err.message));
+    } finally {
+      setLoadingPromo(false);
+    }
+  };
+
+  
+  const handleDeletePromo = async () => {
+    if(!promoFormData.promotionId) return;
+    if(window.confirm("Bạn chắc chắn muốn xóa khuyến mãi này?")) {
+      setLoadingPromo(true);
+      try {
+        await promotionService.deletePromotion(promoFormData.promotionId);
+        alert("Đã xóa khuyến mãi!");
+        handleClosePromoModal();
+        fetchProducts();
+      } catch (err) {
+        alert("Lỗi xóa: " + (err.response?.data?.message || err.message));
+      } finally {
+        setLoadingPromo(false);
+      }
+    }
+  };
+
+  
+  
+  
+  
   return (
     <div className={styles.products}>
-      {/* Page header */}
+      {}
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Quản lý sản phẩm</h1>
         <p className={styles.pageSubtitle}>Thêm, chỉnh sửa và quản lý sản phẩm</p>
       </div>
 
-      {/* Filters and actions */}
+      {}
       <div className={styles.filters}>
         <div className={styles.searchBox}>
           <input
@@ -553,10 +707,10 @@ function Products() {
         </div>
       </div>
 
-      {/* Hiển thị lỗi */}
+      {}
       {error && <p className={styles.errorText}>Lỗi: {error}</p>}
 
-      {/* Products table */}
+      {}
       <div className={styles.tableContainer}>
         <table className={styles.productTable}>
           <thead>
@@ -566,7 +720,7 @@ function Products() {
               <th>Danh mục</th>
               <th>Giá (Item đầu)</th>
               <th>Tồn kho (Tổng)</th>
-              <th>Trạng thái</th>
+              <th>Giảm giá</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -601,14 +755,25 @@ function Products() {
                   <td>
                     {product.items ? product.items.reduce((sum, item) => sum + (item.qtyInStock || 0), 0) : 0}
                   </td>
+                  {}
                   <td>
+                  {}
+                  {(Number(product.discountRate) > 0 || (product.items && product.items[0]?.discountRate > 0)) ? (
                     <span
                       className={styles.statusBadge}
-                      style={{ backgroundColor: '#10b981' }}
+                      style={{ backgroundColor: '#ef4444', color: 'white' }}
                     >
-                      Đang bán
+                      -{Number(product.discountRate || product.items[0]?.discountRate)}%
                     </span>
-                  </td>
+                  ) : (
+                    <span
+                      className={styles.statusBadge}
+                      style={{ backgroundColor: '#e5e7eb', color: '#374151' }}
+                    >
+                      Không
+                    </span>
+                  )}
+                </td>
                   <td>
                     <div className={styles.tableActions}>
                       <button
@@ -617,10 +782,13 @@ function Products() {
                         title="Chỉnh sửa"
                       >✏️</button>
                       <button
-                        className={`${styles.actionBtn} ${styles.toggleBtn}`}
-                        onClick={() => handleToggleStatus(product.productId, 'active')}
-                        title={'Ngừng bán'}
-                      >⏸️</button>
+                        className={`${styles.actionBtn} ${styles.promoBtn}`}
+                        onClick={() => handleOpenPromoModal(product)} 
+                        title="Quản lý giảm giá"
+                        style={{ backgroundColor: '#8b5cf6', color: 'white', border: 'none' }}
+                      >
+                        🏷️
+                      </button>
                       <button
                         className={`${styles.actionBtn} ${styles.deleteBtn}`}
                         onClick={() => handleDeleteProduct(product.productId, product.productName)}
@@ -635,7 +803,7 @@ function Products() {
         </table>
       </div>
 
-      {/* PAGINATION */}
+      {}
       {!loading && pageCount > 1 && (
         <ReactPaginate
           previousLabel={'<'}
@@ -658,12 +826,12 @@ function Products() {
         />
       )}
 
-      {/* Add Product Modal - CHỈ GIỮ LẠI 1 MODAL NÀY */}
+      {}
       {showModal && (<div className={styles.modalOverlay} onClick={handleCloseModal}>
         <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-          <form onSubmit={handleFormSubmit}> {/* Gọi 1 hàm submit chung */}
+          <form onSubmit={handleFormSubmit}> {}
             <div className={styles.modalHeader}>
-              {/* Tiêu đề động */}
+              {}
               <h3>{modalMode === 'ADD' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'}</h3>
               <button
                 type="button"
@@ -675,7 +843,7 @@ function Products() {
             </div>
 
             <div className={styles.modalContent}>
-              {/* Tên sản phẩm */}
+              {}
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
                   Tên sản phẩm <span className={styles.required}>*</span>
@@ -691,7 +859,7 @@ function Products() {
                 />
               </div>
 
-              {/* Danh mục */}
+              {}
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
                   Danh mục <span className={styles.required}>*</span>
@@ -715,7 +883,7 @@ function Products() {
                 </select>
               </div>
 
-              {/* Mô tả */}
+              {}
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>Mô tả sản phẩm</label>
                 <textarea
@@ -728,7 +896,7 @@ function Products() {
                 />
               </div>
 
-              {/* Hình ảnh chính */}
+              {}
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
                   Hình ảnh chính <span className={styles.required}>*</span>
@@ -755,7 +923,7 @@ function Products() {
                 </div>
               </div>
 
-              {/* Biến thể sản phẩm */}
+              {}
               <div className={styles.formGroup}>
                 <div className={styles.sectionHeader}>
                   <label className={styles.formLabel}>
@@ -786,7 +954,7 @@ function Products() {
                     </div>
 
                     <div className={styles.itemFields}>
-                      {/* SKU */}
+                      {}
                       <div className={styles.formField}>
                         <label>SKU <span className={styles.required}>*</span></label>
                         <input
@@ -799,7 +967,7 @@ function Products() {
                         />
                       </div>
 
-                      {/* Giá */}
+                      {}
                       <div className={styles.formField}>
                         <label>Giá (₫) <span className={styles.required}>*</span></label>
                         <input
@@ -814,7 +982,7 @@ function Products() {
                         />
                       </div>
 
-                      {/* Tồn kho */}
+                      {}
                       <div className={styles.formField}>
                         <label>Tồn kho <span className={styles.required}>*</span></label>
                         <input
@@ -828,7 +996,7 @@ function Products() {
                         />
                       </div>
 
-                      {/* Hình ảnh item (optional) */}
+                      {}
                       <div className={styles.formField}>
                         <label>Hình ảnh (tùy chọn)</label>
                         <input
@@ -850,7 +1018,7 @@ function Products() {
                       </div>
                     </div>
 
-                    {/* Configurations (Color, Size, etc.) */}
+                    {}
                     {loadingVariations ? (
                       <p className={styles.loadingText}>Đang tải biến thể...</p>
                     ) : (
@@ -858,8 +1026,9 @@ function Products() {
                         <label className={styles.configLabel}>Cấu hình biến thể:</label>
                         <div className={styles.configurationsGrid}>
                           {variations.map(variation => {
+                            
                             const currentValue = item.configurations.find(
-                              c => c.variationName === variation.variationName
+                              c => c.variationId === variation.variationId
                             );
 
                             return (
@@ -868,12 +1037,16 @@ function Products() {
                                 <select
                                   value={currentValue?.variationOptionId || ''}
                                   onChange={(e) => {
+                                    const selectedOptionId = parseInt(e.target.value, 10);
+                                    
                                     const selectedOption = variation.options.find(
-                                      opt => opt.variationOptionId === parseInt(e.target.value)
+                                      opt => opt.variationOptionId === selectedOptionId
                                     );
                                     if (selectedOption) {
+                                      
                                       handleConfigurationChange(
                                         index,
+                                        variation.variationId,
                                         selectedOption.variationOptionId,
                                         variation.variationName,
                                         selectedOption.value
@@ -921,9 +1094,133 @@ function Products() {
         </div>
       </div>
       )}
+      {}
+      {}
+      {}
+      
+      {showPromotionModal && (
+        <div className={styles.modalOverlay} onClick={handleClosePromoModal}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={handlePromoSubmit}>
+              <div className={styles.modalHeader}>
+                {}
+                <h3>🏷️ {promoFormData.promotionId ? 'Cập nhật KM' : 'Tạo KM mới'} cho: {currentProductForPromo?.productName}</h3>
+                <button type="button" className={styles.closeBtn} onClick={handleClosePromoModal}>✕</button>
+              </div>
+
+              <div className={styles.modalContent}>
+                {loadingPromo ? <p className={styles.loadingText}>Đang tải dữ liệu...</p> : (
+                  <>
+                    {}
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Tên chương trình <span className={styles.required}>*</span></label>
+                      <input 
+                        type="text" 
+                        name="name" 
+                        className={styles.formInput} 
+                        required 
+                        value={promoFormData.name} 
+                        onChange={handlePromoInputChange} 
+                        placeholder="Ví dụ: Sale xả kho, Black Friday..."
+                      />
+                    </div>
+
+                    {}
+                    <div className={styles.formGroup}>
+                       <label className={styles.formLabel}>Mức giảm (%) <span className={styles.required}>*</span></label>
+                       <input 
+                         type="number" 
+                         name="discountRate" 
+                         className={styles.formInput} 
+                         required 
+                         min="1" 
+                         max="100" 
+                         step="0.1"
+                         value={promoFormData.discountRate} 
+                         onChange={handlePromoInputChange}
+                         placeholder="Nhập số % (VD: 20)"
+                       />
+                    </div>
+
+                    {}
+                    <div className={styles.formGroup} style={{display:'flex', gap:'15px'}}>
+                      <div style={{flex:1}}>
+                        <label className={styles.formLabel}>Từ ngày <span className={styles.required}>*</span></label>
+                        <input 
+                          type="date" 
+                          name="startDate" 
+                          className={styles.formInput} 
+                          required 
+                          value={promoFormData.startDate} 
+                          onChange={handlePromoInputChange}
+                        />
+                      </div>
+                      <div style={{flex:1}}>
+                        <label className={styles.formLabel}>Đến ngày <span className={styles.required}>*</span></label>
+                        <input 
+                          type="date" 
+                          name="endDate" 
+                          className={styles.formInput} 
+                          required 
+                          value={promoFormData.endDate} 
+                          onChange={handlePromoInputChange}
+                        />
+                      </div>
+                    </div>
+                    
+                    {}
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>Mô tả chi tiết</label>
+                      <textarea 
+                        name="description" 
+                        className={styles.formTextarea} 
+                        rows="3"
+                        value={promoFormData.description} 
+                        onChange={handlePromoInputChange}
+                        placeholder="Mô tả thêm về chương trình khuyến mãi này..."
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {}
+              <div className={styles.modalActions}>
+                {}
+                {promoFormData.promotionId && (
+                   <button 
+                     type="button" 
+                     className={styles.deleteBtn} 
+                     onClick={handleDeletePromo} 
+                     disabled={loadingPromo} 
+                     style={{marginRight:'auto'}} 
+                   >
+                     🗑️ Xóa KM
+                   </button>
+                )}
+
+                <button 
+                  type="button" 
+                  className={styles.cancelBtn} 
+                  onClick={handleClosePromoModal}
+                >
+                  Hủy
+                </button>
+                
+                <button 
+                  type="submit" 
+                  className={styles.submitBtn} 
+                  disabled={loadingPromo}
+                >
+                  {loadingPromo ? 'Đang lưu...' : (promoFormData.promotionId ? '✓ Cập nhật' : '✓ Tạo mới')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default Products;
-

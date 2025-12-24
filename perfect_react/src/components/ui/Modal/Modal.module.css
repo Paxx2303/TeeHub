@@ -24,7 +24,7 @@
   flex-direction: column;
 }
 
-/* Sizes */
+
 .sm {
   width: 100%;
   max-width: 400px;
@@ -51,7 +51,7 @@
   height: 95vh;
 }
 
-/* Header */
+
 .header {
   display: flex;
   align-items: center;
@@ -92,14 +92,14 @@
   outline-offset: 2px;
 }
 
-/* Content */
+
 .content {
   padding: var(--spacing-lg);
   overflow-y: auto;
   flex: 1;
 }
 
-/* Animations */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -120,7 +120,7 @@
   }
 }
 
-/* Dark theme adjustments */
+
 [data-theme="dark"] .modal {
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -134,7 +134,7 @@
   background-color: var(--bg-tertiary);
 }
 
-/* Responsive */
+
 @media (max-width: 640px) {
   .overlay {
     padding: var(--spacing-sm);
@@ -157,7 +157,7 @@
   }
 }
 
-/* Scrollbar styling for content */
+
 .content::-webkit-scrollbar {
   width: 6px;
 }

@@ -34,7 +34,7 @@ public class UserReview {
 
     @Column(name = "comment", length = Integer.MAX_VALUE)
     private String comment;
-    @CreationTimestamp // Tự động gán thời gian khi tạo
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false) // Map với cột DB
-    private LocalDateTime createdAt; // Kiểu dữ liệu thời gian
+    private LocalDateTime createdAt;
 }

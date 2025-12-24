@@ -11,16 +11,17 @@ public class UserReviewResponse {
     private Integer id;
     private Integer ratingValue;
     private String comment;
-    private String userName;     // Sửa thành fullName
-    private String userAvatar; // Thêm avatar
+    private String userName;
+    private String userAvatar;
     private String createdAt;
+
+    private UserReviewUserResponse user;
 
     public UserReviewResponse(UserReview entity) {
         this.id = entity.getId();
         this.ratingValue = entity.getRatingValue();
         this.comment = entity.getComment();
 
-        // Kiểm tra an toàn: tránh gọi getter trên proxy chưa được nạp
         try {
             if (entity.getUser() != null) {
                 this.userName = entity.getUser().getFullName();
@@ -29,10 +30,10 @@ public class UserReviewResponse {
                 this.userName = "Anonymous";
             }
         } catch (org.hibernate.LazyInitializationException ex) {
-            // user chưa được nạp — đặt giá trị mặc định
             this.userName = "Anonymous";
             this.userAvatar = null;
         }
         this.createdAt = entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null;
+        this.user = new UserReviewUserResponse(entity.getUser());
     }
 }

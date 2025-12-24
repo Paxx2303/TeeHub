@@ -37,14 +37,8 @@ public class ProductUpdateService {
     // Tiêm service Đọc (GET) để gọi lại sau khi cập nhật xong
     @Autowired
     private ProductService productService;
-    private final Path rootImageLocation = Paths.get("E:/nam4//Project1/TeeHub/perfect_react/public/Product");
-    /**
-     * Cập nhật một sản phẩm (PUT)
-     */
+    private final Path rootImageLocation = Paths.get("E:\\nam4\\Project\\TeeHub-main\\perfect_react\\public\\Product");
 
-    /**
-     * Hàm helper để xử lý logic Create, Update, Delete cho ProductItems
-     */
     private void reconcileProductItems(
             Product product,
             List<UpdateProductRequest.ItemSaveRequest> requestItems,
@@ -60,12 +54,10 @@ public class ProductUpdateService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        // --- 4a. XOÁ (Delete) ---
         List<ProductItem> itemsToDelete = existingItemMap.values().stream()
                 .filter(item -> !requestItemIds.contains(item.getId()))
                 .collect(Collectors.toList());
 
-        // TODO: (Tùy chọn) Xóa file ảnh của các itemsToDelete
         itemRepo.deleteAll(itemsToDelete);
 
         // --- 4b. TẠO MỚI (Create) hoặc CẬP NHẬT (Update) ---
@@ -90,12 +82,10 @@ public class ProductUpdateService {
             itemToSave.setQtyInStock(reqItem.getQtyInStock());
             itemToSave.setPrice(reqItem.getPrice());
 
-            // 4c. Cập nhật ảnh item (NẾU CÓ)
             if (itemImageFiles != null && imageFileIndex < itemImageFiles.size()) {
                 MultipartFile itemImageFile = itemImageFiles.get(imageFileIndex);
                 if (itemImageFile != null && !itemImageFile.isEmpty()) {
                     String itemImageFilename = saveFile(itemImageFile);
-                    // TODO: (Tùy chọn) Xóa file ảnh item cũ (itemToSave.getProductImage())
                     itemToSave.setProductImage(itemImageFilename);
                 }
                 imageFileIndex++; // Dịch chuyển đến file ảnh tiếp theo
@@ -104,14 +94,11 @@ public class ProductUpdateService {
 
             ProductItem savedItem = itemRepo.save(itemToSave);
 
-            // --- 5. Hòa giải Configurations (Giữ nguyên) ---
             reconcileConfigurations(savedItem, reqItem.getVariationOptionIds());
         }
     }
 
-    /**
-     * Hàm helper để xử lý logic Create, Delete cho bảng join ProductConfiguration
-     */
+
     private void reconcileConfigurations(ProductItem item, List<Integer> requestOptionIds) {
 
         List<ProductConfiguration> existingConfigs = configRepo.findByProductItemId(item.getId());
@@ -122,14 +109,13 @@ public class ProductUpdateService {
 
         Set<Integer> requestOptionIdSet = new HashSet<>(requestOptionIds);
 
-        // --- 4a. XOÁ (Delete) ---
         List<ProductConfiguration> configsToDelete = existingConfigs.stream()
                 .filter(config -> !requestOptionIdSet.contains(config.getVariationOption().getId()))
                 .collect(Collectors.toList());
 
         configRepo.deleteAll(configsToDelete);
 
-        // --- 4b. TẠO MỚI (Create) ---
+        // TẠO MỚI
         for (Integer optionId : requestOptionIds) {
             if (!existingOptionIds.contains(optionId)) {
                 VariationOption option = variationOptionRepo.findById(optionId)
@@ -170,32 +156,31 @@ public class ProductUpdateService {
             List<MultipartFile> itemImageFiles
     ) throws IOException {
 
-        // --- 1. Cập nhật Product chính ---
+        // cập nhật Product
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
         product.setName(request.getProductName());
         product.setDescription(request.getProductDescription());
 
-        // 2. Cập nhật ảnh chính (NẾU CÓ ẢNH MỚI)
+        // 2. Cập nhật ảnh chính
         String mainImageFilename = saveFile(mainImageFile);
         if (mainImageFilename != null) {
-            // TODO: (Tùy chọn) Xóa file ảnh cũ (product.getProductImage())
             product.setProductImage(mainImageFilename); // Đặt tên file mới
         }
         // Nếu mainImageFile là null, nó sẽ giữ nguyên ảnh cũ
 
-        // --- 3. Cập nhật Category (Giữ nguyên) ---
+        // 3. Cập nhật Category
         if (request.getCategoryId() != null) {
             ProductCategory category = categoryRepo.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
             product.setCategory(category);
         }
 
-        // --- 4. Hòa giải ProductItems (Phiên bản mới) ---
+        //  4. Hòa giải ProductItems
         reconcileProductItems(product, request.getItems(), itemImageFiles);
 
-        // --- 5. Trả về DTO đã cập nhật ---
+        //  5. Trả về DTO đã cập nhật
         return productService.getProductById(productId);
     }
 }

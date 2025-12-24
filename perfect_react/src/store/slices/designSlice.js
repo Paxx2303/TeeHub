@@ -52,15 +52,15 @@ const designSlice = createSlice({
       state.isDrawing = action.payload;
     },
     
-    // History management
+    
     addToHistory: (state, action) => {
       const newState = action.payload;
-      // Remove any history after current index
+      
       state.history = state.history.slice(0, state.historyIndex + 1);
-      // Add new state
+      
       state.history.push(newState);
       state.historyIndex = state.history.length - 1;
-      // Limit history size
+      
       if (state.history.length > 50) {
         state.history.shift();
         state.historyIndex--;
@@ -93,7 +93,7 @@ const designSlice = createSlice({
       state.historyIndex = -1;
     },
     
-    // Design management
+    
     setCurrentDesign: (state, action) => {
       state.currentDesign = { ...state.currentDesign, ...action.payload };
     },
@@ -131,7 +131,7 @@ const designSlice = createSlice({
       state.historyIndex = -1;
     },
     
-    // Templates and custom designs
+    
     setTemplates: (state, action) => {
       state.templates = action.payload;
     },
@@ -153,7 +153,7 @@ const designSlice = createSlice({
       state.customDesigns = state.customDesigns.filter(design => design.id !== designId);
     },
     
-    // Canvas operations
+    
     clearCanvas: (state) => {
       if (state.canvas) {
         state.canvas.clear();
@@ -171,7 +171,7 @@ const designSlice = createSlice({
       return null;
     },
     
-    // Loading states
+    
     setSaving: (state, action) => {
       state.isSaving = action.payload;
     },

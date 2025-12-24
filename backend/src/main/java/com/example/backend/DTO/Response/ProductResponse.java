@@ -37,8 +37,8 @@ public class ProductResponse {
         private String sku;
         private Integer qtyInStock;
         private String itemImage;
-        private BigDecimal price; // Đây sẽ là GIÁ ĐÃ GIẢM
-        private BigDecimal originalPrice; // Đây là giá gốc
+        private BigDecimal price; // GIÁ ĐÃ GIẢM
+        private BigDecimal originalPrice; // giá gốc
         private BigDecimal discountRate; // % giảm giá (ví dụ: 20.00)
         private List<ConfigurationInfo> configurations;
     }

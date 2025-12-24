@@ -7,11 +7,10 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor // Cần constructor không tham số cho Jackson
-@AllArgsConstructor // Constructor với tất cả tham số
+@NoArgsConstructor
+@AllArgsConstructor
 public class CategoryWithCountResponse {
     private Integer categoryId;
     private String categoryName;
-    // Thêm các trường khác của Category nếu cần (vd: parentCategoryId)
     private long productCount; // Số lượng sản phẩm
 }

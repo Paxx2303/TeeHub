@@ -1,4 +1,4 @@
-/* Enhanced Button Styles - Thay thế toàn bộ file Button.module.css */
+
 
 .button {
   position: relative;
@@ -28,7 +28,7 @@
   transform: scale(0.98);
 }
 
-/* Content container */
+
 .content {
   display: flex;
   align-items: center;
@@ -46,7 +46,7 @@
   white-space: nowrap;
 }
 
-/* Icon styles */
+
 .icon {
   display: flex;
   align-items: center;
@@ -66,7 +66,7 @@
   transform: scale(1.1);
 }
 
-/* Ripple Effect */
+
 .rippleContainer {
   position: absolute;
   top: 0;
@@ -86,7 +86,7 @@
   pointer-events: none;
 }
 
-/* Loading States */
+
 .loadingContainer {
   position: absolute;
   top: 50%;
@@ -109,7 +109,7 @@
   cursor: wait;
 }
 
-/* Gradient Overlay */
+
 .gradientOverlay {
   position: absolute;
   top: 0;
@@ -126,7 +126,7 @@
   transform: translateX(100%);
 }
 
-/* Glow Effect */
+
 .glowEffect {
   position: absolute;
   top: -2px;
@@ -145,11 +145,9 @@
   opacity: 1;
 }
 
-/* =================
-   VARIANT STYLES
-   ================= */
 
-/* Primary */
+
+
 .primary {
   background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   color: white;
@@ -172,7 +170,7 @@
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
 }
 
-/* Secondary */
+
 .secondary {
   background: rgba(255, 255, 255, 0.95);
   color: #374151;
@@ -188,7 +186,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-/* Outline */
+
 .outline {
   background: transparent;
   color: #3b82f6;
@@ -220,7 +218,7 @@
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
 }
 
-/* Ghost */
+
 .ghost {
   background: transparent;
   color: #374151;
@@ -249,7 +247,7 @@
   transform: translateY(-1px);
 }
 
-/* Danger */
+
 .danger {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
@@ -262,7 +260,7 @@
   box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
 }
 
-/* Success */
+
 .success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
@@ -275,7 +273,7 @@
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
 }
 
-/* Warning */
+
 .warning {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   color: white;
@@ -288,9 +286,7 @@
   box-shadow: 0 8px 25px rgba(245, 158, 11, 0.35);
 }
 
-/* =================
-   SIZE STYLES
-   ================= */
+
 
 .xs {
   padding: 6px 12px;
@@ -327,9 +323,7 @@
   border-radius: 16px;
 }
 
-/* =================
-   STATE STYLES
-   ================= */
+
 
 .disabled {
   opacity: 0.5;
@@ -351,9 +345,7 @@
   width: 100%;
 }
 
-/* =================
-   ANIMATIONS
-   ================= */
+
 
 @keyframes rippleAnimation {
   0% {
@@ -416,11 +408,9 @@
   }
 }
 
-/* =================
-   SPECIAL EFFECTS
-   ================= */
 
-/* Glassmorphism effect */
+
+
 .glassmorphism {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
@@ -434,7 +424,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
-/* Neon effect */
+
 .neon {
   background: #000;
   color: #00ff88;
@@ -453,9 +443,7 @@
   transform: translateY(-2px);
 }
 
-/* =================
-   DARK THEME
-   ================= */
+
 
 [data-theme="dark"] .secondary {
   background: rgba(31, 41, 55, 0.95);
@@ -476,9 +464,7 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* =================
-   RESPONSIVE
-   ================= */
+
 
 @media (max-width: 768px) {
   .lg {
@@ -494,9 +480,7 @@
   }
 }
 
-/* =================
-   ACCESSIBILITY
-   ================= */
+
 
 @media (prefers-reduced-motion: reduce) {
   .button {
@@ -516,7 +500,7 @@
   }
 }
 
-/* High contrast mode */
+
 @media (prefers-contrast: high) {
   .button {
     border: 2px solid;

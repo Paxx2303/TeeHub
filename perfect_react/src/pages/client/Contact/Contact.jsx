@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styles from './Contact.module.css';
+import { contactService } from '../../../services/contactService';
 
 export default function Contact() {
     const [formData, setFormData] = useState({
@@ -23,27 +24,32 @@ export default function Contact() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setSubmitStatus(null); 
 
-        // Giả lập gửi form
-        setTimeout(() => {
+        try {
+            
+            await contactService.sendContactMessage(formData);
+
+            
             setSubmitStatus('success');
-            setIsSubmitting(false);
-            setFormData({
-                name: '',
-                email: '',
-                phone: '',
-                subject: '',
-                message: ''
+            setFormData({ 
+                name: '', email: '', phone: '', subject: '', message: ''
             });
+            setTimeout(() => setSubmitStatus(null), 5000); 
 
-            setTimeout(() => setSubmitStatus(null), 5000);
-        }, 1500);
+        } catch (error) {
+            
+            console.error(error);
+            setSubmitStatus('error'); 
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className={styles.contactContainer}>
             <div className={styles.contactWrapper}>
-                {/* Header */}
+                {}
                 <div className={styles.header}>
                     <h1 className={styles.title}>Liên Hệ Với Chúng Tôi</h1>
                     <p className={styles.subtitle}>
@@ -53,7 +59,7 @@ export default function Contact() {
                 </div>
 
                 <div className={styles.contentGrid}>
-                    {/* Contact Info */}
+                    {}
                     <div className={styles.infoSection}>
                         <div className={styles.infoCard}>
                             <h2 className={styles.infoTitle}>Thông Tin Liên Hệ</h2>
@@ -64,8 +70,8 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <h3 className={styles.infoLabel}>Điện thoại</h3>
-                                    <p className={styles.infoText}>0123 456 789</p>
-                                    <p className={styles.infoText}>0987 654 321</p>
+                                    <p className={styles.infoText}>0373259560</p>
+
                                 </div>
                             </div>
 
@@ -75,8 +81,7 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <h3 className={styles.infoLabel}>Email</h3>
-                                    <p className={styles.infoText}>contact@aophong.vn</p>
-                                    <p className={styles.infoText}>support@aophong.vn</p>
+                                    <p className={styles.infoText}>longlo@261295@gmail.com</p>
                                 </div>
                             </div>
 
@@ -87,8 +92,8 @@ export default function Contact() {
                                 <div>
                                     <h3 className={styles.infoLabel}>Địa chỉ</h3>
                                     <p className={styles.infoText}>
-                                        123 Đường Nguyễn Huệ<br />
-                                        Quận 1, TP. Hồ Chí Minh
+                                        3 Phố Cầu Giấy, Hà Nội<br />
+
                                     </p>
                                 </div>
                             </div>
@@ -100,12 +105,12 @@ export default function Contact() {
                                 <div>
                                     <h3 className={styles.infoLabel}>Giờ làm việc</h3>
                                     <p className={styles.infoText}>Thứ 2 - Thứ 6: 8:00 - 18:00</p>
-                                    <p className={styles.infoText}>Thứ 7 - CN: 9:00 - 17:00</p>
+
                                 </div>
                             </div>
                         </div>
 
-                        {/* Features */}
+                        {}
                         <div className={styles.featuresCard}>
                             <h3 className={styles.featuresTitle}>Dịch Vụ Của Chúng Tôi</h3>
                             <ul className={styles.featuresList}>
@@ -129,11 +134,15 @@ export default function Contact() {
                         </div>
                     </div>
 
-                    {/* Contact Form */}
+                    {}
                     <div className={styles.formSection}>
                         <div className={styles.formCard}>
                             <h2 className={styles.formTitle}>Gửi Tin Nhắn</h2>
-
+                            {submitStatus === 'error' && (
+                                <div className={styles.errorMessage}>
+                                    ❌ Gửi thất bại. Vui lòng thử lại.
+                                </div>
+                            )}
                             {submitStatus === 'success' && (
                                 <div className={styles.successMessage}>
                                     <span className={styles.successIcon}>✓</span>
@@ -186,7 +195,7 @@ export default function Contact() {
                                             value={formData.phone}
                                             onChange={handleChange}
                                             className={styles.input}
-                                            placeholder="0123 456 789"
+                                            placeholder="0373259560"
                                         />
                                     </div>
                                 </div>

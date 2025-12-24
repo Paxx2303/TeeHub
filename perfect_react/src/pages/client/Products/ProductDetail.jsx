@@ -1,9 +1,13 @@
+
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService } from '../../../services/productService';
 import styles from './ProductDetail.module.css';
 import { reviewService } from '../../../services/userReviewService';
-// ==================== CAROUSEL COMPONENT ====================
+import CartService from '../../../services/cart_service';
+import { getUserId } from '../../../utils/auth';
+
+
 const Carousel = ({ children, itemsPerView = 3, className = '' }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const items = React.Children.toArray(children);
@@ -45,7 +49,7 @@ const Carousel = ({ children, itemsPerView = 3, className = '' }) => {
   );
 };
 
-// ==================== IMAGE MODAL COMPONENT ====================
+
 const ImageModal = ({ src, alt, isOpen, onClose }) => {
   useEffect(() => {
     const handleEscape = (e) => {
@@ -73,7 +77,7 @@ const ImageModal = ({ src, alt, isOpen, onClose }) => {
   );
 };
 
-// ==================== MOCK DATA ====================
+
 const mockFAQs = [
   {
     question: 'Sản phẩm này có bảo hành không?',
@@ -101,100 +105,52 @@ const mockFAQs = [
   }
 ];
 
-const mockSuggestedProducts = [
-  {
-    id: '1',
-    name: 'Áo sơ mi cao cấp',
-    price: 450000,
-    image: '/images/product1.jpg',
-    rating: 4.5,
-    discount: 20
-  },
-  {
-    id: '2',
-    name: 'Quần jean slim fit',
-    price: 680000,
-    image: '/images/product2.jpg',
-    rating: 4.8,
-    discount: 15
-  },
-  {
-    id: '3',
-    name: 'Giày thể thao nam',
-    price: 890000,
-    image: '/images/product3.jpg',
-    rating: 4.6,
-    discount: 25
-  },
-  {
-    id: '4',
-    name: 'Túi xách nữ thời trang',
-    price: 320000,
-    image: '/images/product4.jpg',
-    rating: 4.7,
-    discount: 10
-  },
-  {
-    id: '5',
-    name: 'Đồng hồ thông minh',
-    price: 1200000,
-    image: '/images/product5.jpg',
-    rating: 4.9,
-    discount: 30
-  },
-  {
-    id: '6',
-    name: 'Kính mát cao cấp',
-    price: 750000,
-    image: '/images/product6.jpg',
-    rating: 4.4,
-    discount: 18
-  }
-];
-
-const mockComments = [
-  {
-    text: 'Sản phẩm rất tốt, đóng gói cẩn thận, giao hàng nhanh!',
-    rating: 5,
-    date: new Date('2024-10-15'),
-    userName: 'Nguyễn Văn A'
-  },
-  {
-    text: 'Chất lượng ổn, giá hợp lý. Sẽ ủng hộ shop tiếp.',
-    rating: 4,
-    date: new Date('2024-10-10'),
-    userName: 'Trần Thị B'
-  },
-  {
-    text: 'Đúng như mô tả, mình rất hài lòng với sản phẩm này.',
-    rating: 5,
-    date: new Date('2024-10-05'),
-    userName: 'Lê Văn C'
-  }
-];
 const CURRENT_USER_ID = 1;
-// ==================== MAIN COMPONENT ====================
-const ProductDetail = () => {
-  const { id } = useParams();
 
-  // State cho dữ liệu sản phẩm
+
+function broadcastCartChange() {
+  try {
+    window.dispatchEvent(new Event('cartUpdated'));
+  } catch (e) {  }
+
+  try {
+    localStorage.setItem('cart', String(Date.now()));
+  } catch (e) {  }
+}
+
+
+
+const ProductDetail = () => {
+
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  
   const [product, setProduct] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  // State cho biến thể
+  
   const [options, setOptions] = useState({});
   const [selectedOptions, setSelectedOptions] = useState({});
   const [currentItem, setCurrentItem] = useState(null);
 
-  // State cho commentsconst [comments, setComments] = useState([]); // <- Bắt đầu rỗng
-  const [comments, setComments] = useState([]); // <-- KIỂM TRA DÒNG NÀY
+  
+  const [comments, setComments] = useState([]);
   const [ratingStats, setRatingStats] = useState({ averageRating: 0.0, reviewCount: 0 });
   const [newComment, setNewComment] = useState('');
   const [userRating, setUserRating] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false); 
 
-  // hàm helper cho giá và giảm giá
+  
+  const [relatedProducts, setRelatedProducts] = useState([]); 
+  const [loadingRelated, setLoadingRelated] = useState(true); 
+
+  
+  const [isAdding, setIsAdding] = useState(false);
+
+  
   const formatCurrency = (amount) => {
     if (amount == null) return '';
     return new Intl.NumberFormat('vi-VN', {
@@ -203,7 +159,7 @@ const ProductDetail = () => {
     }).format(amount);
   };
 
-  // ==================== EFFECT 1: Load Product ====================
+  
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
@@ -219,7 +175,7 @@ const ProductDetail = () => {
         setRatingStats(statsData);
       } catch (err) {
         console.error(">>> Lỗi thực sự trong useEffect:", err);
-        setError(err?.message || 'Không thể tải dữ liệu sản phẩm'); // Sửa thông báo lỗi
+        setError(err?.message || 'Không thể tải dữ liệu sản phẩm');
       } finally {
         setIsLoading(false);
       }
@@ -227,13 +183,12 @@ const ProductDetail = () => {
     fetchData();
   }, [id]);
 
-  // ==================== EFFECT 2: Parse Options ====================
+  
   useEffect(() => {
     if (product && product.items && product.items.length > 0) {
       const newOptions = {};
       const initialSelection = {};
 
-      // Thu thập tất cả các variation
       product.items.forEach(item => {
         if (item.configurations && Array.isArray(item.configurations)) {
           item.configurations.forEach(config => {
@@ -245,7 +200,6 @@ const ProductDetail = () => {
         }
       });
 
-      // Chuyển Set thành Array và chọn giá trị đầu tiên
       const finalOptions = {};
       Object.keys(newOptions).forEach(key => {
         finalOptions[key] = Array.from(newOptions[key]);
@@ -257,31 +211,234 @@ const ProductDetail = () => {
     }
   }, [product]);
 
-  // ==================== EFFECT 3: Find Current Item ====================
+  
   useEffect(() => {
     if (product && product.items && Object.keys(selectedOptions).length > 0) {
       const foundItem = product.items.find(item => {
-        // Kiểm tra item có configurations không
         if (!item.configurations || !Array.isArray(item.configurations)) {
           return false;
         }
-
-        // Kiểm tra số lượng configurations có khớp với số lượng options không
         if (item.configurations.length !== Object.keys(selectedOptions).length) {
           return false;
         }
-
-        // Kiểm tra mọi configuration có khớp với selectedOptions không
         return item.configurations.every(config => {
           return config.value === selectedOptions[config.variationName];
         });
       });
-
       setCurrentItem(foundItem || null);
     }
   }, [product, selectedOptions]);
 
-  // ==================== HANDLERS ====================
+  
+  useEffect(() => {
+    const fetchRelatedProducts = async () => {
+      if (product && product.category) {
+        try {
+          setLoadingRelated(true);
+          const categoryId = product.category.categoryId;
+
+          
+          
+          const data = await productService.getAllProducts(0, 5, categoryId, null, 'hot');
+
+          
+          const related = data.content.filter(
+            p => p.productId !== product.productId
+          );
+
+          
+          setRelatedProducts(related.slice(0, 4));
+
+        } catch (err) {
+          console.error("Lỗi khi tải sản phẩm liên quan:", err);
+        } finally {
+          setLoadingRelated(false);
+        }
+      }
+    };
+    fetchRelatedProducts();
+  }, [product]);
+
+  
+  const findMatchingCartEntry = (cartData, itemToMatch, selectedOptionIds = []) => {
+    if (!cartData || !Array.isArray(cartData.items)) return null;
+    for (const it of cartData.items) {
+      const pid1 = it?.productItemId ?? it?.product_item_id ?? it?.productItem ?? it?.itemId ?? it?.item_id ?? null;
+      const sku1 = it?.sku ?? it?.SKU ?? null;
+      const code1 = it?.productCode ?? it?.product_code ?? null;
+
+      const pid2 = itemToMatch?.productItemId ?? itemToMatch?.product_item_id ?? null;
+      const sku2 = itemToMatch?.sku ?? itemToMatch?.SKU ?? null;
+      const code2 = itemToMatch?.productCode ?? itemToMatch?.product_code ?? null;
+
+      if (pid1 != null && pid2 != null && String(pid1) === String(pid2)) {
+        return {
+          cartEntryId: it.id ?? it.cartItemId ?? it.cart_item_id ?? it?.itemId ?? it?.item_id,
+          qty: Number(it.qty || it.quantity || it.count || 1),
+          raw: it
+        };
+      }
+      if (sku1 && sku2 && String(sku1) === String(sku2)) {
+        return {
+          cartEntryId: it.id ?? it.cartItemId ?? it.cart_item_id ?? it?.itemId ?? it?.item_id,
+          qty: Number(it.qty || it.quantity || it.count || 1),
+          raw: it
+        };
+      }
+      if (code1 && code2 && String(code1) === String(code2)) {
+        return {
+          cartEntryId: it.id ?? it.cartItemId ?? it.cart_item_id ?? it?.itemId ?? it?.item_id,
+          qty: Number(it.qty || it.quantity || it.count || 1),
+          raw: it
+        };
+      }
+    }
+    return null;
+  };
+
+  
+  const handleAddToCart = async () => {
+    if (isAdding) return;
+    setIsAdding(true);
+
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        alert("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng!");
+        return;
+      }
+
+      if (!currentItem) {
+        alert("Vui lòng chọn đầy đủ các tùy chọn (màu sắc, kích thước...) trước khi thêm vào giỏ!");
+        return;
+      }
+
+      if (!currentItem.qtyInStock || currentItem.qtyInStock <= 0) {
+        alert("Sản phẩm hiện đã hết hàng. Vui lòng chọn biến thể khác hoặc quay lại sau!");
+        return;
+      }
+
+      const selectedOptionIds = (currentItem.configurations || []).map(c => c.variationOptionId).filter(Boolean);
+      let cartData = null;
+      try {
+        cartData = await CartService.getCart();
+      } catch (e) {
+        cartData = null;
+      }
+
+      const match = findMatchingCartEntry(cartData, currentItem, selectedOptionIds);
+
+      if (match && match.cartEntryId) {
+        const newQty = Math.max(1, (Number(match.qty) || 0) + 1);
+        if (typeof CartService.updateCartItem === 'function') {
+          await CartService.updateCartItem(match.cartEntryId, newQty);
+        } else if (typeof CartService.api === 'object' && typeof CartService.api.put === 'function') {
+          await CartService.api.put(`/api/cart/item/${match.cartEntryId}`, { qty: newQty });
+        } else {
+          await CartService.addToCart({
+            productItemId: currentItem.productItemId,
+            qty: 1,
+            price: currentItem.price ?? currentItem.originalPrice ?? 0,
+            isCustomed: false,
+            selectedOptions: selectedOptionIds
+          });
+        }
+        alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+      } else {
+        await CartService.addToCart({
+          productItemId: currentItem.productItemId,
+          qty: 1,
+          price: currentItem.price ?? currentItem.originalPrice ?? 0,
+          isCustomed: false,
+          selectedOptions: selectedOptionIds
+        });
+        alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+      }
+      try { broadcastCartChange(); } catch (e) { console.warn('broadcastCartChange failed', e); }
+    } catch (err) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", err);
+      const msg = err?.response?.data?.message || err?.message || 'Không thể thêm vào giỏ hàng.';
+      alert(msg);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  
+  const handleBuyNow = async () => {
+    if (isAdding) return;
+    setIsAdding(true);
+
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        alert("Bạn cần đăng nhập để thanh toán!");
+        return;
+      }
+
+      if (!currentItem) {
+        alert("Vui lòng chọn đầy đủ các tùy chọn trước khi mua!");
+        return;
+      }
+
+      if (!currentItem.qtyInStock || currentItem.qtyInStock <= 0) {
+        alert("Sản phẩm hiện đã hết hàng. Vui lòng chọn biến thể khác hoặc quay lại sau!");
+        return;
+      }
+
+      const selectedOptionIds = (currentItem.configurations || []).map(c => c.variationOptionId).filter(Boolean);
+      let cartData = null;
+      try {
+        cartData = await CartService.getCart();
+      } catch (e) {
+        cartData = null;
+      }
+
+      const match = findMatchingCartEntry(cartData, currentItem, selectedOptionIds);
+
+      if (match && match.cartEntryId) {
+        const newQty = Math.max(1, (Number(match.qty) || 0) + 1);
+        if (typeof CartService.updateCartItem === 'function') {
+          await CartService.updateCartItem(match.cartEntryId, newQty);
+        } else if (typeof CartService.api === 'object' && typeof CartService.api.put === 'function') {
+          await CartService.api.put(`/api/cart/item/${match.cartEntryId}`, { qty: newQty });
+        } else {
+          await CartService.addToCart({
+            productItemId: currentItem.productItemId,
+            qty: 1,
+            price: currentItem.price ?? currentItem.originalPrice ?? 0,
+            isCustomed: false,
+            selectedOptions: selectedOptionIds
+          });
+        }
+      } else {
+        await CartService.addToCart({
+          productItemId: currentItem.productItemId,
+          qty: 1,
+          price: currentItem.price ?? currentItem.originalPrice ?? 0,
+          isCustomed: false,
+          selectedOptions: selectedOptionIds
+        });
+      }
+
+      try { broadcastCartChange(); } catch (_) { }
+      try {
+        localStorage.setItem('cart_selected', JSON.stringify([String(currentItem.productItemId)]));
+      } catch (e) {
+        console.warn('Could not set cart_selected in localStorage', e);
+      }
+      const encoded = encodeURIComponent(String(currentItem.productItemId));
+      navigate(`/cart?select=${encoded}`);
+    } catch (err) {
+      console.error("Lỗi khi mua ngay:", err);
+      const msg = err?.response?.data?.message || err?.message || 'Không thể thực hiện mua ngay.';
+      alert(msg);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  
   const handleOptionClick = (optionName, value) => {
     setSelectedOptions(prev => ({
       ...prev,
@@ -293,47 +450,73 @@ const ProductDetail = () => {
     setIsImageModalOpen(true);
   };
 
+  
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (!currentItem) {
-      alert('Vui lòng chọn một biến thể sản phẩm để đánh giá.');
+    setIsSubmitting(true);
+
+    if (!currentItem || !currentItem.productItemId) {
+      alert('Vui lòng chọn một phân loại sản phẩm (size/màu) để đánh giá.');
+      setIsSubmitting(false);
       return;
     }
 
     if (newComment.trim() && userRating > 0) {
       try {
         const reviewData = {
-          // SỬA: Dùng productItemId thay vì id (nếu API trả về productItemId)
           productItemId: currentItem.productItemId,
-          userId: CURRENT_USER_ID,
           ratingValue: userRating,
           comment: newComment
         };
+        console.log("Đang gửi reviewData:", reviewData);
 
+        
         const newReview = await reviewService.postReview(reviewData);
 
-        // Cập nhật state với review mới NHẤT lên đầu
+        
         setComments(prevComments => [newReview, ...prevComments]);
-
-        // Gọi lại API để cập nhật stats
         const statsData = await reviewService.getRatingStats(id);
         setRatingStats(statsData);
-
-        // Reset form
         setNewComment('');
         setUserRating(0);
         alert('Cảm ơn bạn đã đánh giá sản phẩm!');
 
-      } catch (err) {
-        alert('Gửi đánh giá thất bại: ' + err.message);
+      } catch (error) {
+        if (error.response) {
+          const status = error.response.status;
+          
+          if (status === 401 || (status === 500 && error.config?._retry)) {
+            alert('Vui lòng đăng nhập để đánh giá.');
+            navigate('/login');
+            return;
+          }
+          switch (status) {
+            case 403:
+              alert('Bạn cần mua sản phẩm này để được đánh giá.');
+              break;
+            case 409:
+              alert('Bạn đã đánh giá sản phẩm này rồi.');
+              break;
+            default:
+              alert(error.response.data?.message || 'Gửi đánh giá thất bại: Lỗi máy chủ.');
+          }
+        } else {
+          
+          alert('Gửi đánh giá thất bại: ' + error.message);
+        }
+        console.error(error);
+      } finally {
+        setIsSubmitting(false);
       }
-      // Di chuyển else ra ngoài try-catch
     } else {
       alert('Vui lòng nhập bình luận và chọn đánh giá sao.');
+      setIsSubmitting(false);
     }
   };
+
   const hasSale = currentItem && currentItem.discountRate > 0;
-  // ==================== RENDER LOADING ====================
+
+  
   if (isLoading) {
     return (
       <div className={styles.productDetail}>
@@ -357,7 +540,7 @@ const ProductDetail = () => {
     );
   }
 
-  // ==================== RENDER ERROR ====================
+  
   if (error) {
     return (
       <div className={styles.productDetail}>
@@ -378,11 +561,11 @@ const ProductDetail = () => {
     return null;
   }
 
-  // ==================== RENDER MAIN ====================
+  
   return (
     <div className={styles.productDetail}>
       <div className={styles.container}>
-        {/* Breadcrumb */}
+        {}
         <nav className={styles.breadcrumbs}>
           <Link to="/">🏠 Trang chủ</Link>
           <span>/</span>
@@ -397,13 +580,12 @@ const ProductDetail = () => {
           <span>{product.productName}</span>
         </nav>
 
-        {/* Main Content */}
+        {}
         <div className={styles.content}>
-          {/* Image Section */}
+          {}
           <div className={styles.imageWrapper}>
-
             <img
-              src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // <-- Sửa: Lấy ảnh item trước
+              src={`/Product/${currentItem?.itemImage || product.productMainImage}`}
               alt={product.productName}
               className={styles.image}
               onDoubleClick={handleImageDoubleClick}
@@ -411,11 +593,11 @@ const ProductDetail = () => {
             />
           </div>
 
-          {/* Info Section */}
+          {}
           <div className={styles.info}>
             <h1 className={styles.title}>{product.productName}</h1>
 
-            {/* Rating Info */}
+            {}
             <div className={styles.ratingInfo}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ color: '#f59e0b', fontSize: '16px' }}>
@@ -435,17 +617,14 @@ const ProductDetail = () => {
                     </div>
                   )}
                 </span>
-                {/* (Tạm ẩn lượt mua vì API không có) */}
               </div>
             </div>
 
-            {/* Price */}
+            {}
             <div className={styles.priceContainer}>
               {!currentItem ? (
-                // Chưa chọn biến thể
                 <span className={styles.price} style={{ color: '#6b7280' }}>Vui lòng chọn biến thể</span>
               ) : hasSale ? (
-                // CÓ SALE: Hiển thị 3 thành phần
                 <>
                   <span className={styles.newPrice}>
                     {formatCurrency(currentItem.price)}
@@ -458,14 +637,13 @@ const ProductDetail = () => {
                   </span>
                 </>
               ) : (
-                // KHÔNG SALE: Hiển thị 1 giá
                 <span className={styles.price} style={{ color: '#1e293b' }}>
                   {formatCurrency(currentItem.originalPrice)}
                 </span>
               )}
             </div>
 
-            {/* Meta Info */}
+            {}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {currentItem && (
                 <>
@@ -492,7 +670,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Description */}
+            {}
             {product.productDescription && (
               <div>
                 <h3 style={{ fontSize: '18px', marginBottom: '12px', color: '#1e293b' }}>📝 Mô tả sản phẩm</h3>
@@ -500,7 +678,7 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Options (Color, Size, etc.) */}
+            {}
             {Object.entries(options).map(([optionName, values]) => (
               <div className={styles.optionGroup} key={optionName}>
                 <div className={styles.optionLabel}>🎨 {optionName}</div>
@@ -524,25 +702,25 @@ const ProductDetail = () => {
               </div>
             ))}
 
-            {/* Action Buttons */}
+            {}
             <div className={styles.actions}>
               <button
                 className={styles.primaryBtn}
-                onClick={() => alert(`Đã thêm item SKU: ${currentItem?.sku}`)}
-                disabled={!currentItem || currentItem.qtyInStock === 0}
+                onClick={handleAddToCart}
+                disabled={isAdding || currentItem?.qtyInStock === 0}
               >
-                {currentItem?.qtyInStock === 0 ? 'Hết hàng' : '🛒 Thêm vào giỏ'}
+                {isAdding ? 'Đang thêm...' : (currentItem?.qtyInStock === 0 ? 'Hết hàng' : '🛒 Thêm vào giỏ')}
               </button>
               <button
                 className={styles.secondaryBtn}
-                onClick={() => alert('Chuyển đến trang thanh toán')}
-                disabled={!currentItem || currentItem.qtyInStock === 0}
+                onClick={handleBuyNow}
+                disabled={isAdding || !currentItem || currentItem.qtyInStock === 0}
               >
-                💳 Mua ngay
+                {isAdding ? 'Đang xử lý...' : '💳 Mua ngay'}
               </button>
             </div>
 
-            {/* Benefits */}
+            {}
             <div style={{
               background: 'linear-gradient(135deg, #f0f9ff, #e0f2fe)',
               padding: '16px',
@@ -568,7 +746,7 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Specs Section */}
+        {}
         {Array.isArray(product.specs) && product.specs.length > 0 && (
           <section className={styles.specs}>
             <h2 className={styles.sectionTitle}>📊 Thông số kỹ thuật</h2>
@@ -583,7 +761,7 @@ const ProductDetail = () => {
           </section>
         )}
 
-        {/* FAQs Section */}
+        {}
         <section className={styles.faqs}>
           <h2 className={styles.sectionTitle}>❓ Câu hỏi thường gặp</h2>
           <Carousel itemsPerView={2} className={styles.faqsCarousel}>
@@ -596,11 +774,11 @@ const ProductDetail = () => {
           </Carousel>
         </section>
 
-        {/* Comments Section */}
+        {}
         <section className={styles.comments}>
           <h2 className={styles.sectionTitle}>💬 Đánh giá & Bình luận</h2>
 
-          {/* Comment Form */}
+          {}
           <form onSubmit={handleCommentSubmit} className={styles.commentForm}>
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontWeight: '600', color: '#1e293b', marginBottom: '8px', display: 'block' }}>
@@ -641,17 +819,21 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <button type="submit" className={styles.submitComment}>
-              📝 Gửi đánh giá
+            <button
+              type="submit"
+              className={styles.submitComment}
+              disabled={isSubmitting} 
+              style={{ opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+            >
+              {isSubmitting ? '⏳ Đang gửi...' : '📝 Gửi đánh giá'}
             </button>
           </form>
 
-          {/* Comments List */}
+          {}
           <div className={styles.commentList}>
             <h3 style={{ marginBottom: '20px', color: '#1e293b' }}>
               📋 Tất cả đánh giá ({ratingStats.reviewCount})
             </h3>
-            {/* Hiển thị nếu không có review */}
             {comments.length === 0 && !isLoading && (
               <p>Chưa có đánh giá nào cho sản phẩm này.</p>
             )}
@@ -662,7 +844,6 @@ const ProductDetail = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <img
-                        // SỬA: Đường dẫn avatar mặc định
                         src={comment.userAvatar || '/default-avatar.png'}
                         alt={comment.userName}
                         style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
@@ -677,16 +858,16 @@ const ProductDetail = () => {
                       </div>
                     </div>
                     <span className={styles.commentDate}>
-                      {comment.createdAt ? ( // Kiểm tra xem createdAt có tồn tại không
+                      {comment.createdAt ? (
                         new Intl.DateTimeFormat('vi-VN', {
                           year: 'numeric',
                           month: 'long',
                           day: 'numeric',
-                          hour: '2-digit',   // Thêm giờ
-                          minute: '2-digit'  // Thêm phút
-                        }).format(new Date(comment.createdAt)) // Chuyển đổi sang Date object
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }).format(new Date(comment.createdAt))
                       ) : (
-                        'Unknown date' // Hoặc hiển thị gì đó nếu không có ngày
+                        'Unknown date'
                       )}
                     </span>
                   </div>
@@ -700,16 +881,66 @@ const ProductDetail = () => {
           </div>
         </section>
 
-        {/* Suggestions Section */}
+        {}
         <section className={styles.suggestions}>
-          <h2 className={styles.sectionTitle}>🔥 Sản phẩm gợi ý</h2>
+          <h2 className={styles.sectionTitle}>🔥 Sản phẩm liên quan</h2>
 
+          {loadingRelated && <p>Đang tải...</p>}
+
+          {!loadingRelated && relatedProducts.length > 0 && (
+            <Carousel itemsPerView={4} className={styles.relatedCarousel}>
+              {relatedProducts.map((relProduct) => {
+                const displayItem = relProduct.items?.[0];
+                const hasSale = displayItem && displayItem.discountRate > 0;
+
+                return (
+                  <div key={relProduct.productId} className={styles.relatedCard}>
+                    <Link to={`/products/${relProduct.productId}`} className={styles.relatedLink}>
+                      {hasSale && (
+                        <div className={styles.relatedBadge}>
+                          -{Math.round(displayItem.discountRate)}%
+                        </div>
+                      )}
+                      <img
+                        src={`/Product/${relProduct.productMainImage}`}
+                        alt={relProduct.productName}
+                        className={styles.relatedImage}
+                      />
+                      <div className={styles.relatedInfo}>
+                        <h3 className={styles.relatedName}>{relProduct.productName}</h3>
+                        <div className={styles.relatedPriceContainer}>
+                          {hasSale ? (
+                            <>
+                              <span className={styles.relatedNewPrice}>
+                                {formatCurrency(displayItem.price)}
+                              </span>
+                              <span className={styles.relatedOldPrice}>
+                                {formatCurrency(displayItem.originalPrice)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className={styles.relatedPrice}>
+                              {formatCurrency(displayItem?.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
+            </Carousel>
+          )}
+
+          {!loadingRelated && relatedProducts.length === 0 && (
+            <p style={{ fontStyle: 'italic', color: '#64748b' }}>Không có sản phẩm liên quan nào.</p>
+          )}
         </section>
       </div>
 
-      {/* Image Modal */}
+      {}
       <ImageModal
-        src={`/Product/${currentItem?.itemImage || product.productMainImage}`} // Sửa: Lấy ảnh item trước
+        src={`/Product/${currentItem?.itemImage || product.productMainImage}`}
         alt={product.productName}
         isOpen={isImageModalOpen}
         onClose={() => setIsImageModalOpen(false)}
@@ -717,6 +948,5 @@ const ProductDetail = () => {
     </div>
   );
 };
-
 
 export default ProductDetail;

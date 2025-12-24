@@ -61,7 +61,6 @@ public class ShopOrder {
     @Column(name = "order_total", precision = 10, scale = 2)
     private BigDecimal orderTotal;
 
-    // ✅ Thêm danh sách order lines (mỗi đơn hàng có nhiều dòng sản phẩm)
     @OneToMany(mappedBy = "shopOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderLine> items;
 }

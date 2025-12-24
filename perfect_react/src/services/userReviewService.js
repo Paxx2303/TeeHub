@@ -1,8 +1,6 @@
 import api from './api';
 export const reviewService = {
-    /**
-     * Lấy tất cả review của 1 sản phẩm
-     */
+    
     getReviews: async (productId) => {
         try {
             const response = await api.get(`/api/products/${productId}/reviews`);
@@ -13,9 +11,7 @@ export const reviewService = {
         }
     },
 
-    /**
-     * Lấy thông số (AVG, Count)
-     */
+    
     getRatingStats: async (productId) => {
         try {
             const response = await api.get(`/api/products/${productId}/rating-stats`);
@@ -26,11 +22,9 @@ export const reviewService = {
         }
     },
 
-    /**
-     * Post 1 review mới
-     */
+    
     postReview: async (reviewData) => {
-        // reviewData = { productItemId, ratingValue, comment, userName }
+        
         try {
             const response = await api.post('/api/reviews', reviewData);
             return response.data;
@@ -38,5 +32,16 @@ export const reviewService = {
             console.error('Error posting review:', error);
             throw error;
         }
+    },
+    getFeaturedReviews: async (limit = 3) => {
+        try {
+            
+            const response = await api.get(`/api/reviews/featured?limit=${limit}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching featured reviews:', error);
+            throw error;
+        }
     }
+
 };

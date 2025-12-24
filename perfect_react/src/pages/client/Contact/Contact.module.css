@@ -1,4 +1,4 @@
-/* Container chính */
+
 .contactContainer {
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -10,7 +10,7 @@
     margin: 0 auto;
 }
 
-/* Header */
+
 .header {
     text-align: center;
     margin-bottom: 50px;
@@ -32,7 +32,7 @@
     line-height: 1.6;
 }
 
-/* Grid layout */
+
 .contentGrid {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
@@ -40,7 +40,7 @@
     align-items: start;
 }
 
-/* Info Section */
+
 .infoSection {
     display: flex;
     flex-direction: column;
@@ -102,7 +102,7 @@
     margin: 2px 0;
 }
 
-/* Features Card */
+
 .featuresCard {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 15px;
@@ -141,7 +141,7 @@
     font-weight: bold;
 }
 
-/* Form Section */
+
 .formSection {
     position: relative;
 }
@@ -160,7 +160,7 @@
     margin-bottom: 25px;
 }
 
-/* Success Message */
+
 .successMessage {
     background: #d4edda;
     border: 1px solid #c3e6cb;
@@ -187,7 +187,7 @@
     flex-shrink: 0;
 }
 
-/* Form Elements */
+
 .form {
     display: flex;
     flex-direction: column;
@@ -245,7 +245,7 @@
     background-color: white;
 }
 
-/* Submit Button */
+
 .submitBtn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -281,7 +281,7 @@
     font-size: 1.2rem;
 }
 
-/* Loading Spinner */
+
 .spinner {
     width: 16px;
     height: 16px;
@@ -297,7 +297,7 @@
     }
 }
 
-/* Responsive */
+
 @media (max-width: 968px) {
     .contentGrid {
         grid-template-columns: 1fr;

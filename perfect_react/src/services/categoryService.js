@@ -1,4 +1,4 @@
-// service/categoryService.js
+
 import api from './api';
 
 export const categoryService = {
@@ -9,7 +9,7 @@ export const categoryService = {
                 params.search = search;
             }
             const response = await api.get('/api/categories', { params });
-            return response.data; // { content, totalPages, totalElements, ... }
+            return response.data; 
         } catch (error) {
             console.error('Error fetching categories:', error);
             throw error;

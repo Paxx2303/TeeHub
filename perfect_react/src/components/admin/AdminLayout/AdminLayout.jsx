@@ -1,4 +1,4 @@
-// AdminLayout.jsx
+
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AdminHeader from "../AdminHeader";
@@ -18,7 +18,7 @@ export default function AdminLayout() {
         <AdminHeader onToggleSidebar={toggleSidebar} />
         <main className={styles.pageContent}>
           <div className={styles.contentWrapper}>
-            {/* QUAN TRỌNG: nơi render các route con */}
+            {}
             <Outlet />
           </div>
         </main>

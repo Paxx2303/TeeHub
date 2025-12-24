@@ -14,5 +14,5 @@ public class PromotionRequest {
     private BigDecimal discountRate;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Integer categoryId; // ID của danh mục sẽ áp dụng
+    private Integer productId; // ID của danh mục sẽ áp dụng
 }
